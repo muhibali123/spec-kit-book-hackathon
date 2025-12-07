@@ -1,0 +1,286 @@
+---
+title: "Bipedal Locomotion and Walking Patterns"
+description: "Understanding the principles of bipedal walking and gait generation for humanoid robots"
+tags: [bipedal-locomotion, walking-patterns, gait-generation, zero-moment-point, humanoid-locomotion]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Bipedal Locomotion and Walking Patterns
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Understand the biomechanics of human walking and its application to humanoid robots
+- Implement basic gait generation algorithms for stable bipedal locomotion
+- Analyze Zero Moment Point (ZMP) based walking control
+- Design walking patterns that maintain robot balance during locomotion
+
+## Key Concepts
+
+- **Zero Moment Point (ZMP)**: Point where the net moment of ground reaction forces is zero
+- **Gait Cycle**: Complete sequence of stance and swing phases in walking
+- **Capture Point**: Location where a robot can come to a stop without falling
+- **Foot Placement**: Strategic positioning of feet to maintain balance during walking
+- **Compliance Control**: Using compliant actuators or control to absorb impacts
+
+## Theory Summary
+
+Bipedal locomotion is one of the most challenging aspects of humanoid robotics, requiring precise control to maintain balance while moving. Unlike wheeled robots, humanoid robots must manage their center of mass and ground contact points dynamically. The human walking gait involves complex coordination of multiple joints, balance control, and adaptive responses to disturbances.
+
+The Zero Moment Point (ZMP) is a critical concept in bipedal locomotion, representing the point on the ground where the sum of all moments of ground reaction forces equals zero. For stable walking, the ZMP must remain within the support polygon defined by the feet. Maintaining ZMP within this region requires careful planning of the center of mass trajectory.
+
+Walking patterns for humanoid robots typically involve alternating support phases where one foot is in contact with the ground (stance phase) while the other moves forward (swing phase). The transition between these phases must be carefully controlled to maintain balance and avoid falls.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="zmp-simulation" label="ZMP Simulation">
+Simulate ZMP-based walking control for a simplified humanoid model.
+</TabItem>
+<TabItem value="gait-generation" label="Gait Generation">
+Implement a basic gait generation algorithm for bipedal walking.
+</TabItem>
+<TabItem value="balance-control" label="Balance Control">
+Test balance control during walking with external disturbances.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with NumPy and SciPy
+- Physics simulation environment (PyBullet)
+- Basic understanding of dynamics and control theory
+- Visualization tools for gait analysis
+
+## Step-by-Step Instructions
+
+1. Set up simplified bipedal robot model in simulation
+2. Implement ZMP calculation and visualization
+3. Develop basic gait generation algorithm
+4. Test walking stability with different parameters
+5. Analyze the effect of external disturbances on walking
+6. Optimize gait parameters for stability
+
+## Code Snippets
+
+```python
+import numpy as np
+from typing import Tuple, List
+import matplotlib.pyplot as plt
+
+class ZMPCalculator:
+    def __init__(self, robot_height: float = 0.8, gravity: float = 9.81):
+        self.robot_height = robot_height
+        self.gravity = gravity
+
+    def calculate_zmp(self, com_pos: np.ndarray, com_acc: np.ndarray) -> np.ndarray:
+        """Calculate Zero Moment Point from center of mass position and acceleration"""
+        # ZMP_x = com_x - (h/g) * com_acc_x
+        # ZMP_y = com_y - (h/g) * com_acc_y
+        zmp = np.zeros(2)
+        zmp[0] = com_pos[0] - (self.robot_height / self.gravity) * com_acc[0]
+        zmp[1] = com_pos[1] - (self.robot_height / self.gravity) * com_acc[1]
+        return zmp
+
+    def is_stable(self, zmp: np.ndarray, support_polygon: np.ndarray) -> bool:
+        """Check if ZMP is within support polygon"""
+        # Simple check for rectangular support polygon
+        # In reality, this would use point-in-polygon algorithms
+        min_x = np.min(support_polygon[:, 0])
+        max_x = np.max(support_polygon[:, 0])
+        min_y = np.min(support_polygon[:, 1])
+        max_y = np.max(support_polygon[:, 1])
+
+        return (min_x <= zmp[0] <= max_x) and (min_y <= zmp[1] <= max_y)
+
+class CapturePointCalculator:
+    def __init__(self, robot_height: float = 0.8, gravity: float = 9.81):
+        self.robot_height = robot_height
+        self.gravity = gravity
+        self.omega = np.sqrt(gravity / robot_height)
+
+    def calculate_capture_point(self, com_pos: np.ndarray, com_vel: np.ndarray) -> np.ndarray:
+        """Calculate capture point where robot can come to stop"""
+        # Capture point = CoM position + (CoM velocity / omega)
+        capture_point = com_pos + com_vel / self.omega
+        return capture_point
+
+class GaitGenerator:
+    def __init__(self, step_length: float = 0.3, step_height: float = 0.1,
+                 step_duration: float = 1.0, robot_height: float = 0.8):
+        self.step_length = step_length
+        self.step_height = step_height
+        self.step_duration = step_duration
+        self.robot_height = robot_height
+        self.zmp_calculator = ZMPCalculator(robot_height)
+        self.capture_calculator = CapturePointCalculator(robot_height)
+
+    def generate_foot_trajectory(self, start_pos: np.ndarray, goal_pos: np.ndarray,
+                               time: float) -> np.ndarray:
+        """Generate smooth foot trajectory for walking"""
+        # Simple 5th order polynomial trajectory for foot movement
+        t = (time % self.step_duration) / self.step_duration  # Normalize time
+
+        # 5th order polynomial coefficients for smooth trajectory
+        # Position: s(t) = a0 + a1*t + a2*t^2 + a3*t^3 + a4*t^4 + a5*t^5
+        # For smooth start and end: s(0)=0, s(1)=1, s'(0)=0, s'(1)=0, s''(0)=0, s''(1)=0
+        a0, a1, a2, a3, a4, a5 = 0, 0, 0, 10, -15, 6
+
+        s = a0 + a1*t + a2*t**2 + a3*t**3 + a4*t**4 + a5*t**5
+
+        # Calculate foot position
+        foot_pos = start_pos + s * (goal_pos - start_pos)
+
+        # Add step height for swing phase (middle 40% of step)
+        if 0.3 < t < 0.7:
+            height_factor = 0.5 * (1 - np.cos((t - 0.3) / 0.4 * np.pi))  # Sinusoidal lift
+            foot_pos[2] = start_pos[2] + self.step_height * height_factor
+        else:
+            foot_pos[2] = start_pos[2]
+
+        return foot_pos
+
+    def generate_com_trajectory(self, start_pos: np.ndarray, goal_pos: np.ndarray,
+                              time: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Generate CoM trajectory following ZMP stability criteria"""
+        # Simple inverted pendulum model for CoM motion
+        t = (time % (2 * self.step_duration)) / (2 * self.step_duration)
+
+        # Follow a sinusoidal trajectory to maintain stability
+        com_x = start_pos[0] + t * (goal_pos[0] - start_pos[0])
+        com_y = start_pos[1] + 0.05 * np.sin(np.pi * t)  # Small lateral sway
+        com_z = self.robot_height + 0.02 * np.sin(2 * np.pi * t)  # Small vertical movement
+
+        com_pos = np.array([com_x, com_y, com_z])
+
+        # Calculate approximate velocity (numerical derivative)
+        dt = 0.01
+        next_t = ((time + dt) % (2 * self.step_duration)) / (2 * self.step_duration)
+        next_com_x = start_pos[0] + next_t * (goal_pos[0] - start_pos[0])
+        next_com_y = start_pos[1] + 0.05 * np.sin(np.pi * next_t)
+        next_com_z = self.robot_height + 0.02 * np.sin(2 * np.pi * next_t)
+        next_com_pos = np.array([next_com_x, next_com_y, next_com_z])
+
+        com_vel = (next_com_pos - com_pos) / dt
+
+        return com_pos, com_vel
+
+class WalkingController:
+    def __init__(self, robot_height: float = 0.8):
+        self.robot_height = robot_height
+        self.gait_generator = GaitGenerator(robot_height=robot_height)
+        self.zmp_calculator = ZMPCalculator(robot_height)
+        self.capture_calculator = CapturePointCalculator(robot_height)
+
+        # Walking state
+        self.left_foot_pos = np.array([0.0, 0.1, 0.0])
+        self.right_foot_pos = np.array([0.0, -0.1, 0.0])
+        self.com_pos = np.array([0.0, 0.0, robot_height])
+        self.com_vel = np.zeros(3)
+        self.time = 0.0
+        self.step_phase = 'double_support'  # double_support, left_stance, right_stance
+
+    def step(self, dt: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Execute one step of walking control"""
+        self.time += dt
+
+        # Update foot positions based on gait phase
+        step_count = int(self.time / self.gait_generator.step_duration)
+        is_left_support = step_count % 2 == 0
+
+        if is_left_support:
+            self.step_phase = 'left_stance'
+            # Move right foot forward
+            target_right_pos = self.left_foot_pos + np.array([self.gait_generator.step_length, 0, 0])
+            self.right_foot_pos = self.gait_generator.generate_foot_trajectory(
+                self.right_foot_pos, target_right_pos, self.time
+            )
+        else:
+            self.step_phase = 'right_stance'
+            # Move left foot forward
+            target_left_pos = self.right_foot_pos + np.array([self.gait_generator.step_length, 0, 0])
+            self.left_foot_pos = self.gait_generator.generate_foot_trajectory(
+                self.left_foot_pos, target_left_pos, self.time
+            )
+
+        # Update CoM trajectory
+        target_com = np.array([
+            (self.left_foot_pos[0] + self.right_foot_pos[0]) / 2,  # Between feet
+            (self.left_foot_pos[1] + self.right_foot_pos[1]) / 2,  # Between feet
+            self.robot_height
+        ])
+
+        self.com_pos, self.com_vel = self.gait_generator.generate_com_trajectory(
+            self.com_pos, target_com, self.time
+        )
+
+        # Calculate ZMP
+        # Approximate acceleration (in a real system, this would come from dynamics model)
+        com_acc = np.zeros(3)  # Simplified - in practice would be calculated from control inputs
+        zmp = self.zmp_calculator.calculate_zmp(self.com_pos, com_acc)
+
+        # Define support polygon (rectangle between feet)
+        support_polygon = np.array([
+            [self.left_foot_pos[0], self.left_foot_pos[1]],
+            [self.right_foot_pos[0], self.right_foot_pos[1]],
+            [self.left_foot_pos[0], self.left_foot_pos[1] - 0.05],  # Foot width
+            [self.right_foot_pos[0], self.right_foot_pos[1] + 0.05]  # Foot width
+        ])
+
+        # Check stability
+        is_stable = self.zmp_calculator.is_stable(zmp, support_polygon)
+
+        # Calculate capture point for balance
+        capture_point = self.capture_calculator.calculate_capture_point(self.com_pos[:2], self.com_vel[:2])
+
+        return {
+            'left_foot_pos': self.left_foot_pos,
+            'right_foot_pos': self.right_foot_pos,
+            'com_pos': self.com_pos,
+            'zmp': zmp,
+            'capture_point': capture_point,
+            'is_stable': is_stable,
+            'step_phase': self.step_phase
+        }
+
+# Example usage
+walking_controller = WalkingController(robot_height=0.8)
+
+# Simulate walking for a few steps
+results = []
+for t in np.arange(0, 5, 0.05):
+    state = walking_controller.step(0.05)
+    state['time'] = t
+    results.append(state)
+```
+
+## Review Questions
+
+1. What is the Zero Moment Point (ZMP) and why is it important for bipedal walking?
+2. How does the Capture Point concept help in balance control during walking?
+3. What are the key phases of the human walking gait cycle?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="stability-analysis" label="Stability Analysis">
+Analyze the stability of different walking patterns using ZMP criteria.
+</TabItem>
+<TabItem value="gait-optimization" label="Gait Optimization">
+Optimize gait parameters to improve walking stability and efficiency.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Implement a complete walking controller for a humanoid robot simulation that uses ZMP-based control to maintain balance during locomotion. Test the controller with different walking speeds and external disturbances.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the principles of bipedal locomotion
+- Be able to implement basic walking control algorithms
+- Recognize the importance of ZMP in walking stability
+- Appreciate the complexity of human-like walking in robotics

@@ -1,0 +1,739 @@
+---
+title: "Industrial and Manufacturing Applications"
+description: "Explore how humanoid robots are transforming industrial and manufacturing processes through enhanced dexterity and human-like capabilities."
+tags: ["industrial robotics", "manufacturing", "humanoid applications", "factory automation", "assembly"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Industrial and Manufacturing Applications
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Analyze the role of humanoid robots in industrial and manufacturing environments
+- Evaluate the technical requirements for manufacturing robotics applications
+- Understand the differences between traditional industrial robots and humanoid robots in manufacturing
+- Design robotic systems appropriate for manufacturing tasks
+- Assess the economic impact and ROI of humanoid manufacturing robots
+
+## Key Concepts
+
+- **Industrial Robotics**: Robots designed for manufacturing and industrial applications
+- **Manufacturing Automation**: Automated systems for production processes
+- **Human-Robot Collaboration**: Safe cooperation between humans and robots in manufacturing
+- **Flexible Manufacturing**: Systems that can adapt to different products and processes
+- **Assembly Line Integration**: Incorporating humanoid robots into existing production lines
+- **Quality Control**: Using robots for inspection and quality assurance
+- **Safety Standards**: Industrial safety requirements for human-robot interaction
+- **Economic Analysis**: Cost-benefit analysis of humanoid manufacturing systems
+
+## Theory Summary
+
+Industrial and manufacturing applications represent a significant opportunity for humanoid robots, which can bring human-like dexterity and adaptability to production environments. Unlike traditional industrial robots that are typically fixed in place and optimized for specific, repetitive tasks, humanoid robots offer the potential for more flexible and adaptive manufacturing processes.
+
+Traditional industrial robots have dominated manufacturing for decades due to their precision, speed, and reliability in performing repetitive tasks. However, they are typically isolated from human workers for safety reasons and require significant reprogramming for any changes in production requirements. Humanoid robots, with their human-like form factor and dexterity, can potentially work more closely with human workers and adapt more easily to new tasks.
+
+The technical requirements for manufacturing humanoid robots are particularly demanding. These robots must be robust enough to operate in industrial environments with dust, temperature variations, and potential exposure to chemicals or oils. They must also meet strict safety standards to operate around human workers, which often requires advanced sensing and collision avoidance systems.
+
+Human-robot collaboration in manufacturing environments requires careful design of interaction protocols and safety systems. The robot must be able to work alongside humans without causing harm, which may involve force limiting, collision detection, and emergency stop capabilities. The collaboration can take various forms, from robots handling heavy or dangerous materials while humans perform detailed assembly, to robots learning from human demonstrations.
+
+Flexible manufacturing is a key advantage that humanoid robots can offer. Traditional manufacturing lines are often designed for specific products and require significant retooling to accommodate new products. Humanoid robots, with their anthropomorphic form and dexterity, can potentially handle a wider variety of tasks with minimal reprogramming, making them suitable for low-volume, high-variety production scenarios.
+
+Assembly line integration presents unique challenges for humanoid robots. Manufacturing environments often have tight spaces, precise timing requirements, and established workflows that must accommodate the new robotic systems. Integration requires careful planning to ensure that humanoid robots can perform their assigned tasks without disrupting the overall production flow.
+
+Quality control applications leverage the humanoid robot's ability to perform detailed visual inspections and precise measurements. With human-like manipulation capabilities, these robots can handle parts for inspection, operate measuring instruments, and perform detailed quality checks that might be difficult for traditional fixed automation.
+
+Safety standards in industrial environments are governed by organizations such as ISO (International Organization for Standardization) and ANSI (American National Standards Institute). These standards specify requirements for collaborative robots (cobots) including power and force limits, safety-rated monitoring, and protective measures to ensure safe human-robot interaction.
+
+Economic analysis of humanoid manufacturing systems must consider not just the initial cost of the robot, but also factors such as flexibility, adaptability, reduced need for specialized tooling, and potential for human-robot collaboration. The return on investment (ROI) calculation is more complex than for traditional automation due to the broader range of capabilities that humanoid robots can offer.
+
+## Hands-on Activity
+
+### Activity: Designing a Manufacturing Robot Task Management System
+
+In this activity, you'll implement a simulation of a humanoid robot working in a manufacturing environment, managing tasks, quality control, and human collaboration.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple, Optional, Any
+import random
+import json
+from dataclasses import dataclass, asdict
+from enum import Enum
+from datetime import datetime, timedelta
+import time
+
+class ManufacturingTask(Enum):
+    """Types of manufacturing tasks"""
+    ASSEMBLY = "assembly"
+    INSPECTION = "inspection"
+    MATERIAL_HANDLING = "material_handling"
+    QUALITY_CONTROL = "quality_control"
+    PACKAGING = "packaging"
+    MACHINING = "machining"
+
+class TaskPriority(Enum):
+    """Priority levels for manufacturing tasks"""
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
+    CRITICAL = 4
+
+class RobotState(Enum):
+    """Current state of the manufacturing robot"""
+    IDLE = "idle"
+    EXECUTING_TASK = "executing_task"
+    CHANGING_TOOL = "changing_tool"
+    MAINTENANCE = "maintenance"
+    EMERGENCY_STOP = "emergency_stop"
+
+class QualityResult(Enum):
+    """Result of quality control checks"""
+    PASS = "pass"
+    FAIL = "fail"
+    REWORK = "rework"
+
+@dataclass
+class ManufacturingTaskItem:
+    """Represents a single manufacturing task"""
+    id: str
+    task_type: ManufacturingTask
+    description: str
+    priority: TaskPriority
+    estimated_time: int  # in minutes
+    required_skills: List[str]
+    parts_needed: List[str]
+    quality_criteria: Dict[str, Any]
+    assigned_robot: Optional[str] = None
+    status: str = "pending"  # pending, in_progress, completed, failed
+    start_time: Optional[datetime] = None
+    completion_time: Optional[datetime] = None
+
+@dataclass
+class Product:
+    """Represents a manufactured product"""
+    id: str
+    name: str
+    assembly_steps: List[Dict]  # List of assembly operations
+    quality_standards: Dict[str, float]
+    current_stage: int = 0
+    status: str = "in_progress"  # in_progress, completed, failed
+
+@dataclass
+class Worker:
+    """Represents a human worker in the manufacturing environment"""
+    id: str
+    name: str
+    skills: List[str]
+    current_task: Optional[str] = None
+    safety_rating: float = 5.0  # 1-5 scale
+
+class ManufacturingRobot:
+    """Humanoid robot for industrial manufacturing applications"""
+
+    def __init__(self, robot_id: str, name: str, max_payload: float = 5.0):
+        self.robot_id = robot_id
+        self.name = name
+        self.max_payload = max_payload  # Maximum weight in kg
+        self.current_state = RobotState.IDLE
+        self.current_task: Optional[ManufacturingTaskItem] = None
+        self.assigned_tasks: List[ManufacturingTaskItem] = []
+        self.completed_tasks: List[ManufacturingTaskItem] = []
+        self.skills = ["assembly", "inspection", "material_handling", "quality_control"]
+        self.safety_systems = {
+            'collision_detection': True,
+            'emergency_stop': True,
+            'force_limiting': True,
+            'safety_zone_monitoring': True
+        }
+        self.tool_inventory = {
+            'gripper': True,
+            'suction_cup': True,
+            'torque_wrench': False,
+            'precision_tweezers': True,
+            'screwdriver_set': True
+        }
+        self.performance_metrics = {
+            'tasks_completed': 0,
+            'quality_pass_rate': 0.0,
+            'efficiency_rating': 0.0,
+            'uptime_hours': 0.0
+        }
+        self.operational_start = datetime.now()
+
+    def assign_task(self, task: ManufacturingTaskItem) -> bool:
+        """Assign a task to the robot"""
+        # Check if robot has required skills
+        for skill in task.required_skills:
+            if skill not in self.skills:
+                print(f"Robot {self.name} lacks required skill: {skill}")
+                return False
+
+        # Check if robot has required tools
+        if task.task_type == ManufacturingTask.ASSEMBLY and not self.tool_inventory['screwdriver_set']:
+            print(f"Robot {self.name} lacks required tools for assembly")
+            return False
+
+        if task.task_type == ManufacturingTask.INSPECTION and not self.tool_inventory['precision_tweezers']:
+            print(f"Robot {self.name} lacks required tools for inspection")
+            return False
+
+        # Assign the task
+        task.assigned_robot = self.robot_id
+        task.status = "in_progress"
+        task.start_time = datetime.now()
+
+        self.current_task = task
+        self.assigned_tasks.append(task)
+        self.current_state = RobotState.EXECUTING_TASK
+
+        print(f"Task {task.id} assigned to robot {self.name}")
+        return True
+
+    def execute_task(self) -> bool:
+        """Execute the currently assigned task"""
+        if not self.current_task or self.current_state != RobotState.EXECUTING_TASK:
+            print(f"Robot {self.name} has no task to execute")
+            return False
+
+        task = self.current_task
+
+        # Simulate task execution time
+        execution_time = random.uniform(0.8, 1.2) * task.estimated_time
+        time.sleep(min(execution_time / 100, 0.1))  # Scale down for simulation
+
+        # Determine if task was completed successfully
+        success_rate = 0.95  # 95% success rate
+        task_successful = random.random() < success_rate
+
+        if task_successful:
+            task.status = "completed"
+            task.completion_time = datetime.now()
+            self.completed_tasks.append(task)
+            self.performance_metrics['tasks_completed'] += 1
+
+            # Update quality metrics
+            if self.performance_metrics['tasks_completed'] > 0:
+                self.performance_metrics['quality_pass_rate'] = (
+                    len([t for t in self.completed_tasks if self._check_quality(t)]) /
+                    len(self.completed_tasks)
+                )
+
+            print(f"Task {task.id} completed successfully by robot {self.name}")
+            self.current_task = None
+            self.current_state = RobotState.IDLE
+            return True
+        else:
+            task.status = "failed"
+            print(f"Task {task.id} failed for robot {self.name}")
+            self.current_task = None
+            self.current_state = RobotState.IDLE
+            return False
+
+    def _check_quality(self, task: ManufacturingTaskItem) -> bool:
+        """Check if task meets quality criteria"""
+        # Simulate quality check with 90% pass rate
+        return random.random() < 0.9
+
+    def change_tool(self, tool_name: str) -> bool:
+        """Change the robot's end effector tool"""
+        if tool_name in self.tool_inventory and self.tool_inventory[tool_name]:
+            print(f"Robot {self.name} changing to {tool_name}")
+            self.current_state = RobotState.CHANGING_TOOL
+            time.sleep(0.1)  # Simulate tool change time
+            self.current_state = RobotState.IDLE
+            return True
+        else:
+            print(f"Tool {tool_name} not available or not in inventory")
+            return False
+
+    def perform_quality_inspection(self, product: Product) -> QualityResult:
+        """Perform quality inspection on a product"""
+        # Simulate quality inspection based on product standards
+        inspection_passed = True
+        issues_found = []
+
+        # Check various quality metrics
+        for standard, target_value in product.quality_standards.items():
+            # Simulate measurement with some variance
+            actual_value = target_value * random.uniform(0.95, 1.05)
+            tolerance = target_value * 0.05  # 5% tolerance
+
+            if abs(actual_value - target_value) > tolerance:
+                inspection_passed = False
+                issues_found.append(f"{standard}: expected {target_value}, got {actual_value}")
+
+        if inspection_passed:
+            product.status = "completed"
+            return QualityResult.PASS
+        elif len(issues_found) <= 2:  # Few issues - can be reworked
+            product.status = "needs_rework"
+            return QualityResult.REWORK
+        else:  # Too many issues
+            product.status = "failed"
+            return QualityResult.FAIL
+
+    def get_robot_status(self) -> Dict:
+        """Get current status of the robot"""
+        uptime = (datetime.now() - self.operational_start).total_seconds() / 3600  # in hours
+        self.performance_metrics['uptime_hours'] = uptime
+
+        return {
+            'robot_id': self.robot_id,
+            'name': self.name,
+            'state': self.current_state.value,
+            'current_task': self.current_task.id if self.current_task else None,
+            'assigned_tasks_count': len(self.assigned_tasks),
+            'completed_tasks_count': len(self.completed_tasks),
+            'performance_metrics': self.performance_metrics
+        }
+
+class ManufacturingCell:
+    """Represents a manufacturing cell with robots and workers"""
+
+    def __init__(self, name: str, location: str):
+        self.name = name
+        self.location = location
+        self.robots: List[ManufacturingRobot] = []
+        self.workers: List[Worker] = []
+        self.pending_tasks: List[ManufacturingTaskItem] = []
+        self.products_in_process: List[Product] = []
+        self.completed_products: List[Product] = []
+        self.quality_log: List[Dict] = []
+
+    def add_robot(self, robot: ManufacturingRobot):
+        """Add a robot to the manufacturing cell"""
+        self.robots.append(robot)
+        print(f"Robot {robot.name} added to {self.name}")
+
+    def add_worker(self, worker: Worker):
+        """Add a worker to the manufacturing cell"""
+        self.workers.append(worker)
+        print(f"Worker {worker.name} added to {self.name}")
+
+    def add_task(self, task: ManufacturingTaskItem):
+        """Add a task to the pending queue"""
+        self.pending_tasks.append(task)
+        print(f"Task {task.id} added to {self.name} queue")
+
+    def add_product(self, product: Product):
+        """Add a product to the manufacturing process"""
+        self.products_in_process.append(product)
+        print(f"Product {product.name} added to {self.name} for manufacturing")
+
+    def schedule_tasks(self):
+        """Schedule tasks to available robots based on priority and skills"""
+        # Sort tasks by priority (highest first)
+        sorted_tasks = sorted(self.pending_tasks, key=lambda t: t.priority.value, reverse=True)
+
+        for task in sorted_tasks:
+            # Find an available robot with required skills
+            available_robot = None
+            for robot in self.robots:
+                if (robot.current_state == RobotState.IDLE and
+                    all(skill in robot.skills for skill in task.required_skills)):
+                    available_robot = robot
+                    break
+
+            if available_robot:
+                if available_robot.assign_task(task):
+                    # Remove task from pending queue
+                    self.pending_tasks.remove(task)
+                    print(f"Task {task.id} scheduled to robot {available_robot.name}")
+
+    def execute_cycle(self):
+        """Execute one cycle of manufacturing operations"""
+        # Schedule any pending tasks
+        self.schedule_tasks()
+
+        # Execute tasks that are in progress
+        for robot in self.robots:
+            if robot.current_state == RobotState.EXECUTING_TASK and robot.current_task:
+                robot.execute_task()
+
+        # Process products that need quality inspection
+        for product in self.products_in_process:
+            if product.status == "completed":
+                # Find a robot to perform quality inspection
+                for robot in self.robots:
+                    if robot.current_state == RobotState.IDLE:
+                        result = robot.perform_quality_inspection(product)
+                        quality_record = {
+                            'product_id': product.id,
+                            'timestamp': datetime.now().isoformat(),
+                            'result': result.value,
+                            'inspected_by': robot.name
+                        }
+                        self.quality_log.append(quality_record)
+
+                        if result == QualityResult.PASS:
+                            self.completed_products.append(product)
+                            self.products_in_process.remove(product)
+                            print(f"Product {product.name} passed quality inspection")
+                        else:
+                            print(f"Product {product.name} {result.value}ed quality inspection")
+                        break
+
+    def get_cell_metrics(self) -> Dict:
+        """Get overall metrics for the manufacturing cell"""
+        total_products = len(self.completed_products)
+        total_tasks = sum(len(robot.assigned_tasks) for robot in self.robots)
+        completed_tasks = sum(len(robot.completed_tasks) for robot in self.robots)
+
+        # Calculate overall quality pass rate
+        if self.quality_log:
+            passed_count = sum(1 for q in self.quality_log if q['result'] == 'pass')
+            overall_quality = passed_count / len(self.quality_log)
+        else:
+            overall_quality = 1.0
+
+        return {
+            'cell_name': self.name,
+            'robots_count': len(self.robots),
+            'workers_count': len(self.workers),
+            'products_completed': total_products,
+            'tasks_completed': completed_tasks,
+            'task_completion_rate': completed_tasks / max(total_tasks, 1),
+            'quality_pass_rate': overall_quality,
+            'pending_tasks': len(self.pending_tasks)
+        }
+
+def simulate_manufacturing_cell():
+    """Simulate a manufacturing cell with humanoid robots"""
+    print("Manufacturing Cell Simulation")
+    print("=" * 35)
+
+    # Create manufacturing cell
+    cell = ManufacturingCell("Assembly Cell A", "Factory Floor 1")
+
+    # Create robots
+    robot1 = ManufacturingRobot("HR-001", "AssemblyBot-1", max_payload=3.0)
+    robot2 = ManufacturingRobot("HR-002", "InspectorBot-1", max_payload=1.0)
+
+    cell.add_robot(robot1)
+    cell.add_robot(robot2)
+
+    # Create workers
+    worker1 = Worker("HW-001", "John Smith", ["electronics", "assembly", "quality_control"])
+    worker2 = Worker("HW-002", "Maria Garcia", ["machining", "assembly", "safety"])
+
+    cell.add_worker(worker1)
+    cell.add_worker(worker2)
+
+    # Create sample products
+    smartphone = Product(
+        id="PROD-001",
+        name="Smartphone Model X",
+        assembly_steps=[
+            {"step": "Install motherboard", "time": 5},
+            {"step": "Attach screen", "time": 3},
+            {"step": "Install battery", "time": 2},
+            {"step": "Final assembly", "time": 4}
+        ],
+        quality_standards={
+            "weight": 180.0,  # grams
+            "screen_size": 6.1,  # inches
+            "battery_capacity": 3500.0  # mAh
+        }
+    )
+
+    cell.add_product(smartphone)
+
+    # Create sample tasks
+    task1 = ManufacturingTaskItem(
+        id="TASK-001",
+        task_type=ManufacturingTask.ASSEMBLY,
+        description="Install motherboard in smartphone",
+        priority=TaskPriority.HIGH,
+        estimated_time=5,
+        required_skills=["assembly", "electronics"],
+        parts_needed=["motherboard", "case"],
+        quality_criteria={"torque": 0.5, "alignment": "precise"}
+    )
+
+    task2 = ManufacturingTaskItem(
+        id="TASK-002",
+        task_type=ManufacturingTask.INSPECTION,
+        description="Visual inspection of smartphone screen",
+        priority=TaskPriority.MEDIUM,
+        estimated_time=2,
+        required_skills=["inspection", "quality_control"],
+        parts_needed=["smartphone", "screen"],
+        quality_criteria={"scratches": 0, "alignment": "perfect"}
+    )
+
+    task3 = ManufacturingTaskItem(
+        id="TASK-003",
+        task_type=ManufacturingTask.MATERIAL_HANDLING,
+        description="Move components to assembly station",
+        priority=TaskPriority.LOW,
+        estimated_time=3,
+        required_skills=["material_handling"],
+        parts_needed=["components_box"],
+        quality_criteria={"handling_care": "high"}
+    )
+
+    cell.add_task(task1)
+    cell.add_task(task2)
+    cell.add_task(task3)
+
+    # Simulate manufacturing cycles
+    print(f"\nStarting manufacturing simulation for 10 cycles...")
+    for cycle in range(10):
+        print(f"\nCycle {cycle + 1}:")
+        cell.execute_cycle()
+
+        # Add a new task occasionally to keep the simulation interesting
+        if cycle == 5:
+            task4 = ManufacturingTaskItem(
+                id="TASK-004",
+                task_type=ManufacturingTask.QUALITY_CONTROL,
+                description="Final quality check of smartphone",
+                priority=TaskPriority.CRITICAL,
+                estimated_time=4,
+                required_skills=["quality_control", "inspection"],
+                parts_needed=["completed_smartphone"],
+                quality_criteria={"functionality": "all_tests_passed", "appearance": "flawless"}
+            )
+            cell.add_task(task4)
+
+        # Show current status
+        for robot in cell.robots:
+            status = robot.get_robot_status()
+            print(f"  {status['name']}: {status['state']}, "
+                  f"Tasks completed: {status['completed_tasks_count']}")
+
+    # Show final metrics
+    print(f"\nFinal Manufacturing Cell Metrics:")
+    metrics = cell.get_cell_metrics()
+    for key, value in metrics.items():
+        print(f"  {key}: {value}")
+
+    print(f"\nQuality Inspection Results:")
+    for record in cell.quality_log:
+        print(f"  {record['product_id']}: {record['result']} ({record['inspected_by']})")
+
+    print(f"\nCompleted Products: {len(cell.completed_products)}")
+    for product in cell.completed_products:
+        print(f"  - {product.name}")
+
+    print("\nManufacturing cell simulation completed!")
+
+# Run the simulation
+simulate_manufacturing_cell()
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy for numerical computations
+- Basic understanding of manufacturing processes and industrial systems
+- Knowledge of robotics and automation concepts
+- Understanding of quality control and safety standards
+
+## Step-by-Step Instructions
+
+1. **Design Manufacturing Data Structures**: Create classes for tasks, products, and workers in manufacturing
+2. **Implement Manufacturing Robot**: Build a robot class that can handle various manufacturing tasks
+3. **Create Task Management System**: Implement systems for scheduling and executing manufacturing tasks
+4. **Add Quality Control**: Build quality inspection and control capabilities
+5. **Implement Human-Robot Collaboration**: Create systems for worker-robot interaction
+6. **Simulate Manufacturing Operations**: Test the system with various manufacturing scenarios
+7. **Track Performance Metrics**: Monitor and evaluate manufacturing performance
+
+## Code Snippets
+
+### Task Assignment and Execution System
+
+```python
+def assign_task(self, task: ManufacturingTaskItem) -> bool:
+    """Assign a task to the robot"""
+    # Check if robot has required skills
+    for skill in task.required_skills:
+        if skill not in self.skills:
+            print(f"Robot {self.name} lacks required skill: {skill}")
+            return False
+
+    # Check if robot has required tools
+    if task.task_type == ManufacturingTask.ASSEMBLY and not self.tool_inventory['screwdriver_set']:
+        print(f"Robot {self.name} lacks required tools for assembly")
+        return False
+
+    if task.task_type == ManufacturingTask.INSPECTION and not self.tool_inventory['precision_tweezers']:
+        print(f"Robot {self.name} lacks required tools for inspection")
+        return False
+
+    # Assign the task
+    task.assigned_robot = self.robot_id
+    task.status = "in_progress"
+    task.start_time = datetime.now()
+
+    self.current_task = task
+    self.assigned_tasks.append(task)
+    self.current_state = RobotState.EXECUTING_TASK
+
+    print(f"Task {task.id} assigned to robot {self.name}")
+    return True
+
+def execute_task(self) -> bool:
+    """Execute the currently assigned task"""
+    if not self.current_task or self.current_state != RobotState.EXECUTING_TASK:
+        print(f"Robot {self.name} has no task to execute")
+        return False
+
+    task = self.current_task
+
+    # Simulate task execution time
+    execution_time = random.uniform(0.8, 1.2) * task.estimated_time
+    time.sleep(min(execution_time / 100, 0.1))  # Scale down for simulation
+
+    # Determine if task was completed successfully
+    success_rate = 0.95  # 95% success rate
+    task_successful = random.random() < success_rate
+
+    if task_successful:
+        task.status = "completed"
+        task.completion_time = datetime.now()
+        self.completed_tasks.append(task)
+        self.performance_metrics['tasks_completed'] += 1
+
+        # Update quality metrics
+        if self.performance_metrics['tasks_completed'] > 0:
+            self.performance_metrics['quality_pass_rate'] = (
+                len([t for t in self.completed_tasks if self._check_quality(t)]) /
+                len(self.completed_tasks)
+            )
+
+        print(f"Task {task.id} completed successfully by robot {self.name}")
+        self.current_task = None
+        self.current_state = RobotState.IDLE
+        return True
+    else:
+        task.status = "failed"
+        print(f"Task {task.id} failed for robot {self.name}")
+        self.current_task = None
+        self.current_state = RobotState.IDLE
+        return False
+```
+
+### Manufacturing Cell Management System
+
+```python
+def schedule_tasks(self):
+    """Schedule tasks to available robots based on priority and skills"""
+    # Sort tasks by priority (highest first)
+    sorted_tasks = sorted(self.pending_tasks, key=lambda t: t.priority.value, reverse=True)
+
+    for task in sorted_tasks:
+        # Find an available robot with required skills
+        available_robot = None
+        for robot in self.robots:
+            if (robot.current_state == RobotState.IDLE and
+                all(skill in robot.skills for skill in task.required_skills)):
+                available_robot = robot
+                break
+
+        if available_robot:
+            if available_robot.assign_task(task):
+                # Remove task from pending queue
+                self.pending_tasks.remove(task)
+                print(f"Task {task.id} scheduled to robot {available_robot.name}")
+
+def execute_cycle(self):
+    """Execute one cycle of manufacturing operations"""
+    # Schedule any pending tasks
+    self.schedule_tasks()
+
+    # Execute tasks that are in progress
+    for robot in self.robots:
+        if robot.current_state == RobotState.EXECUTING_TASK and robot.current_task:
+            robot.execute_task()
+
+    # Process products that need quality inspection
+    for product in self.products_in_process:
+        if product.status == "completed":
+            # Find a robot to perform quality inspection
+            for robot in self.robots:
+                if robot.current_state == RobotState.IDLE:
+                    result = robot.perform_quality_inspection(product)
+                    quality_record = {
+                        'product_id': product.id,
+                        'timestamp': datetime.now().isoformat(),
+                        'result': result.value,
+                        'inspected_by': robot.name
+                    }
+                    self.quality_log.append(quality_record)
+
+                    if result == QualityResult.PASS:
+                        self.completed_products.append(product)
+                        self.products_in_process.remove(product)
+                        print(f"Product {product.name} passed quality inspection")
+                    else:
+                        print(f"Product {product.name} {result.value}ed quality inspection")
+                    break
+```
+
+## Review Questions
+
+1. What are the key differences between traditional industrial robots and humanoid robots in manufacturing?
+2. What safety requirements must be met for human-robot collaboration in manufacturing?
+3. How does flexible manufacturing benefit from humanoid robot capabilities?
+4. What economic factors influence the ROI of humanoid manufacturing robots?
+5. What quality control advantages do humanoid robots offer in manufacturing?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**What is a key advantage of humanoid robots over traditional industrial robots in manufacturing?**
+
+A) Higher speed of operation
+B) Greater payload capacity
+C) Flexibility and adaptability to different tasks
+D) Lower initial cost
+
+<details>
+<summary>Answer</summary>
+C) Flexibility and adaptability to different tasks - Humanoid robots can potentially handle a wider variety of tasks with minimal reprogramming, making them suitable for flexible manufacturing.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**What is a critical requirement for human-robot collaboration in manufacturing environments?**
+
+A) High-speed operation
+B) Safety systems to prevent harm to human workers
+C) Complex manipulation capabilities
+D) Advanced AI processing
+
+<details>
+<summary>Answer</summary>
+B) Safety systems to prevent harm to human workers - Manufacturing robots must meet strict safety standards to operate around human workers.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the manufacturing robot system to include predictive maintenance capabilities. Implement a system that can monitor robot health, predict when maintenance is needed, and automatically schedule maintenance tasks. Consider how you would use sensor data to detect wear patterns and predict component failures before they occur.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Design humanoid robots for industrial manufacturing applications
+- Implement task management and scheduling systems for manufacturing
+- Create quality control and safety systems for manufacturing environments
+- Understand the economic factors in manufacturing robotics
+- Evaluate the benefits and challenges of humanoid robots in manufacturing

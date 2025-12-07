@@ -1,0 +1,684 @@
+---
+title: "Cultural and Ethical Considerations in HRI"
+description: "Examining the cultural sensitivity and ethical implications of human-robot interaction"
+tags: [ethics, culture, diversity, inclusion, hri, responsible-ai, social-implications]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Cultural and Ethical Considerations in HRI
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Identify cultural differences that affect human-robot interaction
+- Implement culturally adaptive robot behaviors
+- Understand the ethical implications of human-robot interaction
+- Design inclusive and responsible HRI systems
+
+## Key Concepts
+
+- **Cultural Adaptation**: Adjusting robot behavior to match cultural norms and expectations
+- **Ethical Frameworks**: Guidelines for responsible robot behavior and interaction
+- **Bias Mitigation**: Addressing algorithmic and behavioral biases in robots
+- **Privacy Protection**: Safeguarding user data and personal information
+- **Inclusive Design**: Creating robots accessible to diverse user populations
+
+## Theory Summary
+
+Human-robot interaction must account for significant cultural differences in communication styles, social norms, personal space preferences, and expectations about technology. What is considered polite, appropriate, or engaging in one culture may be perceived as rude, invasive, or unsettling in another. This cultural sensitivity is crucial for the global deployment of humanoid robots.
+
+Ethical considerations in HRI encompass multiple domains including privacy, autonomy, safety, and fairness. As robots become more integrated into human environments, they must be designed and operated according to ethical principles that protect human dignity and rights. This includes transparency about capabilities, informed consent for interactions, and respect for human autonomy.
+
+Cultural adaptation in robots involves adjusting not only surface-level behaviors like gestures and language, but also deeper interaction patterns like turn-taking, eye contact norms, and emotional expression styles. This requires careful consideration of cultural dimensions such as power distance, individualism vs. collectivism, and uncertainty avoidance.
+
+The ethical implications of HRI extend beyond individual interactions to broader societal impacts including potential job displacement, changes in human social behavior, and the digital divide. Responsible development of HRI systems requires ongoing consideration of these broader implications.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="cultural-adaptation" label="Cultural Adaptation">
+Implement a system that adapts robot behavior to different cultural contexts.
+</TabItem>
+<TabItem value="ethical-framework" label="Ethical Framework">
+Design ethical decision-making capabilities for robot interactions.
+</TabItem>
+<TabItem value="bias-mitigation" label="Bias Mitigation">
+Create systems to detect and mitigate cultural and social biases.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with cultural modeling libraries
+- Ethical reasoning frameworks
+- Bias detection tools
+- Cross-cultural interaction databases
+
+## Step-by-Step Instructions
+
+1. Research cultural dimensions and their impact on HRI
+2. Implement cultural adaptation mechanisms
+3. Design ethical decision-making systems
+4. Create bias detection and mitigation tools
+5. Test with diverse cultural scenarios
+6. Evaluate ethical and cultural sensitivity
+
+## Code Snippets
+
+```python
+import numpy as np
+from typing import Dict, List, Tuple, Optional
+import json
+from dataclasses import dataclass
+from enum import Enum
+import threading
+import time
+
+class CulturalDimension(Enum):
+    """Hofstede's cultural dimensions"""
+    POWER_DISTANCE = "power_distance"
+    INDIVIDUALISM = "individualism"
+    MASCULINITY = "masculinity"
+    UNCERTAINTY_AVOIDANCE = "uncertainty_avoidance"
+    LONG_TERM_ORIENTATION = "long_term_orientation"
+    INDULGENCE = "indulgence"
+
+@dataclass
+class CulturalProfile:
+    """Cultural profile for a user or region"""
+    country: str
+    power_distance: float  # 0-1 scale
+    individualism: float   # 0-1 scale
+    masculinity: float     # 0-1 scale
+    uncertainty_avoidance: float  # 0-1 scale
+    long_term_orientation: float  # 0-1 scale
+    indulgence: float      # 0-1 scale
+    communication_style: str  # formal, informal, direct, indirect
+    personal_space_pref: float  # preferred distance in meters
+
+class CulturalAdaptationSystem:
+    def __init__(self):
+        self.known_cultures = self._load_cultural_data()
+        self.current_cultural_context = None
+        self.cultural_sensitivity = 0.8  # How much to adapt to culture
+
+    def _load_cultural_data(self) -> Dict[str, CulturalProfile]:
+        """Load cultural data for different regions/countries"""
+        return {
+            "japan": CulturalProfile(
+                country="Japan",
+                power_distance=0.8,
+                individualism=0.2,
+                masculinity=0.6,
+                uncertainty_avoidance=0.7,
+                long_term_orientation=0.9,
+                indulgence=0.3,
+                communication_style="indirect_formal",
+                personal_space_pref=1.0
+            ),
+            "united_states": CulturalProfile(
+                country="United States",
+                power_distance=0.4,
+                individualism=0.9,
+                masculinity=0.6,
+                uncertainty_avoidance=0.5,
+                long_term_orientation=0.3,
+                indulgence=0.7,
+                communication_style="direct_informal",
+                personal_space_pref=0.9
+            ),
+            "germany": CulturalProfile(
+                country="Germany",
+                power_distance=0.3,
+                individualism=0.7,
+                masculinity=0.7,
+                uncertainty_avoidance=0.9,
+                long_term_orientation=0.4,
+                indulgence=0.5,
+                communication_style="direct_formal",
+                personal_space_pref=0.8
+            ),
+            "saudi_arabia": CulturalProfile(
+                country="Saudi Arabia",
+                power_distance=0.9,
+                individualism=0.3,
+                masculinity=0.8,
+                uncertainty_avoidance=0.6,
+                long_term_orientation=0.4,
+                indulgence=0.4,
+                communication_style="formal_indirect",
+                personal_space_pref=1.2
+            )
+        }
+
+    def set_cultural_context(self, country: str) -> bool:
+        """Set the cultural context for interaction"""
+        if country.lower() in self.known_cultures:
+            self.current_cultural_context = self.known_cultures[country.lower()]
+            return True
+        return False
+
+    def adapt_behavior(self, base_behavior: Dict, user_culture: str = None) -> Dict:
+        """Adapt robot behavior based on cultural context"""
+        adapted_behavior = base_behavior.copy()
+
+        if user_culture:
+            culture = self.known_cultures.get(user_culture.lower())
+        else:
+            culture = self.current_cultural_context
+
+        if not culture:
+            return adapted_behavior
+
+        # Adjust formality based on power distance
+        if culture.power_distance > 0.7:
+            adapted_behavior['formality'] = 'high'
+            adapted_behavior['deference_level'] = 0.8
+        elif culture.power_distance < 0.3:
+            adapted_behavior['formality'] = 'low'
+            adapted_behavior['deference_level'] = 0.2
+
+        # Adjust communication style
+        if culture.communication_style == 'direct_formal':
+            adapted_behavior['communication_style'] = 'direct'
+            adapted_behavior['formality'] = 'high'
+        elif culture.communication_style == 'indirect_formal':
+            adapted_behavior['communication_style'] = 'indirect'
+            adapted_behavior['formality'] = 'high'
+        elif culture.communication_style == 'direct_informal':
+            adapted_behavior['communication_style'] = 'direct'
+            adapted_behavior['formality'] = 'low'
+
+        # Adjust personal space
+        adapted_behavior['preferred_distance'] = culture.personal_space_pref
+
+        # Adjust emotional expression based on indulgence
+        if culture.indulgence > 0.6:
+            adapted_behavior['emotional_expressiveness'] = 'high'
+        elif culture.indulgence < 0.4:
+            adapted_behavior['emotional_expressiveness'] = 'low'
+
+        # Adjust uncertainty avoidance behaviors
+        if culture.uncertainty_avoidance > 0.7:
+            adapted_behavior['explanation_thoroughness'] = 'high'
+            adapted_behavior['behavior_predictability'] = 'high'
+        else:
+            adapted_behavior['explanation_thoroughness'] = 'medium'
+            adapted_behavior['behavior_predictability'] = 'medium'
+
+        # Apply sensitivity factor
+        for key in adapted_behavior:
+            if isinstance(adapted_behavior[key], (int, float)):
+                # Gradually adapt to cultural preferences
+                adapted_behavior[key] = adapted_behavior[key] * self.cultural_sensitivity + \
+                                      base_behavior.get(key, 0) * (1 - self.cultural_sensitivity)
+
+        return adapted_behavior
+
+class EthicalDecisionFramework:
+    def __init__(self):
+        self.ethical_principles = {
+            'autonomy': 0.9,    # Respect for user autonomy
+            'beneficence': 0.9, # Promoting user welfare
+            'non_malfeasance': 1.0,  # Do no harm
+            'justice': 0.8,     # Fair treatment
+            'veracity': 0.95,   # Truthfulness
+            'privacy': 1.0      # Protecting privacy
+        }
+        self.decision_threshold = 0.7  # Minimum ethical score to proceed
+
+    def evaluate_action(self, action: Dict, user_context: Dict) -> Dict:
+        """Evaluate an action against ethical principles"""
+        evaluation = {
+            'action': action,
+            'ethical_score': 0.0,
+            'principle_violations': [],
+            'recommendation': 'proceed',
+            'confidence': 0.0
+        }
+
+        # Check each ethical principle
+        violations = []
+        total_score = 0
+        principle_count = 0
+
+        # Autonomy check: Does action respect user choice?
+        autonomy_score = self._check_autonomy(action, user_context)
+        total_score += autonomy_score * self.ethical_principles['autonomy']
+        principle_count += 1
+        if autonomy_score < 0.5:
+            violations.append(f"Action may compromise user autonomy ({autonomy_score:.2f})")
+
+        # Beneficence check: Does action promote user welfare?
+        beneficence_score = self._check_beneficence(action, user_context)
+        total_score += beneficence_score * self.ethical_principles['beneficence']
+        principle_count += 1
+        if beneficence_score < 0.5:
+            violations.append(f"Action may not promote user welfare ({beneficence_score:.2f})")
+
+        # Non-malfeasance check: Could action cause harm?
+        non_malfeasance_score = self._check_non_malfeasance(action, user_context)
+        total_score += non_malfeasance_score * self.ethical_principles['non_malfeasance']
+        principle_count += 1
+        if non_malfeasance_score < 0.5:
+            violations.append(f"Action may cause harm ({non_malfeasance_score:.2f})")
+
+        # Justice check: Is action fair?
+        justice_score = self._check_justice(action, user_context)
+        total_score += justice_score * self.ethical_principles['justice']
+        principle_count += 1
+        if justice_score < 0.5:
+            violations.append(f"Action may not be fair ({justice_score:.2f})")
+
+        # Veracity check: Is action truthful?
+        veracity_score = self._check_veracity(action, user_context)
+        total_score += veracity_score * self.ethical_principles['veracity']
+        principle_count += 1
+        if veracity_score < 0.5:
+            violations.append(f"Action may compromise truthfulness ({veracity_score:.2f})")
+
+        # Privacy check: Does action protect privacy?
+        privacy_score = self._check_privacy(action, user_context)
+        total_score += privacy_score * self.ethical_principles['privacy']
+        principle_count += 1
+        if privacy_score < 0.5:
+            violations.append(f"Action may compromise privacy ({privacy_score:.2f})")
+
+        # Calculate average ethical score
+        if principle_count > 0:
+            avg_score = total_score / principle_count
+        else:
+            avg_score = 0.0
+
+        evaluation['ethical_score'] = avg_score
+        evaluation['principle_violations'] = violations
+
+        # Determine recommendation
+        if avg_score < self.decision_threshold:
+            evaluation['recommendation'] = 'reject'
+        elif avg_score < 0.8:
+            evaluation['recommendation'] = 'proceed_with_caution'
+        else:
+            evaluation['recommendation'] = 'proceed'
+
+        evaluation['confidence'] = avg_score
+
+        return evaluation
+
+    def _check_autonomy(self, action: Dict, user_context: Dict) -> float:
+        """Check if action respects user autonomy"""
+        # Higher score if action supports user choice
+        if action.get('type') in ['request_permission', 'offer_choice', 'inform_decision']:
+            return 1.0
+        elif action.get('type') in ['command_user', 'make_decision_for_user']:
+            return 0.2
+        else:
+            return 0.7  # Neutral
+
+    def _check_beneficence(self, action: Dict, user_context: Dict) -> float:
+        """Check if action promotes user welfare"""
+        # Consider user's goals and well-being
+        user_goals = user_context.get('goals', [])
+        action_purpose = action.get('purpose', '')
+
+        if any(goal in action_purpose.lower() for goal in user_goals):
+            return 0.9
+        elif action.get('type') == 'assist_user':
+            return 0.8
+        else:
+            return 0.5  # Neutral, need more context
+
+    def _check_non_malfeasance(self, action: Dict, user_context: Dict) -> float:
+        """Check if action could cause harm"""
+        # Lower score for potentially harmful actions
+        if action.get('type') in ['physical_manipulation', 'navigation_near_user']:
+            # Check safety protocols
+            safety_protocols = action.get('safety_measures', [])
+            if len(safety_protocols) > 2:  # At least 3 safety measures
+                return 0.9
+            else:
+                return 0.4  # Risk of harm
+        elif action.get('type') == 'share_information':
+            # Check privacy settings
+            sensitive_info = action.get('information_type', 'general')
+            if sensitive_info in ['personal', 'private', 'confidential']:
+                return 0.2
+            else:
+                return 0.9
+        else:
+            return 0.9  # Generally safe
+
+    def _check_justice(self, action: Dict, user_context: Dict) -> float:
+        """Check if action is fair"""
+        # Consider user demographics and treatment
+        user_demographics = user_context.get('demographics', {})
+        action_targets = action.get('targets', ['all'])
+
+        if 'all' in action_targets or user_demographics.get('group', 'default') in action_targets:
+            return 0.9
+        else:
+            return 0.3  # May be discriminatory
+
+    def _check_veracity(self, action: Dict, user_context: Dict) -> float:
+        """Check if action maintains truthfulness"""
+        # Check if action involves deception or false information
+        if action.get('type') == 'provide_information':
+            confidence = action.get('confidence', 0.5)
+            return min(confidence + 0.2, 1.0)  # Add small margin for uncertainty
+        elif action.get('type') == 'deceive_user':
+            return 0.1
+        else:
+            return 0.9  # Presumed truthful
+
+    def _check_privacy(self, action: Dict, user_context: Dict) -> float:
+        """Check if action protects privacy"""
+        # Consider data collection and sharing
+        if action.get('type') == 'collect_data':
+            consent = action.get('consent_obtained', False)
+            data_type = action.get('data_type', 'general')
+            if consent and data_type == 'general':
+                return 0.8
+            elif consent and data_type in ['sensitive', 'biometric']:
+                return 0.6  # Even with consent, sensitive data is risky
+            else:
+                return 0.1
+        elif action.get('type') == 'share_information':
+            permission = action.get('permission_granted', False)
+            if permission:
+                return 0.8
+            else:
+                return 0.1
+        else:
+            return 0.9  # No privacy concern
+
+class BiasDetectionSystem:
+    def __init__(self):
+        self.bias_detection_rules = {
+            'gender_bias': self._detect_gender_bias,
+            'cultural_bias': self._detect_cultural_bias,
+            'age_bias': self._detect_age_bias,
+            'ability_bias': self._detect_ability_bias
+        }
+        self.bias_threshold = 0.7  # Above this is considered biased
+        self.detection_history = []
+
+    def detect_bias(self, interaction_data: Dict) -> Dict:
+        """Detect potential biases in robot interaction"""
+        bias_analysis = {
+            'gender_bias': 0.0,
+            'cultural_bias': 0.0,
+            'age_bias': 0.0,
+            'ability_bias': 0.0,
+            'overall_bias_score': 0.0,
+            'recommendations': []
+        }
+
+        for bias_type, detection_func in self.bias_detection_rules.items():
+            score = detection_func(interaction_data)
+            bias_analysis[bias_type] = score
+
+        # Calculate overall bias score
+        bias_analysis['overall_bias_score'] = np.mean(list(bias_analysis.values())[:4])
+
+        # Generate recommendations for high bias scores
+        for bias_type, score in bias_analysis.items():
+            if bias_type != 'overall_bias_score' and score > self.bias_threshold:
+                bias_analysis['recommendations'].append(
+                    f"Potential {bias_type.replace('_', ' ')} detected. Consider reviewing {bias_type.replace('_', ' ')} sensitivity in robot responses."
+                )
+
+        # Add to history
+        self.detection_history.append({
+            'timestamp': time.time(),
+            'analysis': bias_analysis.copy(),
+            'interaction_data': interaction_data
+        })
+
+        return bias_analysis
+
+    def _detect_gender_bias(self, interaction_data: Dict) -> float:
+        """Detect potential gender bias in interactions"""
+        # Check for differential treatment based on perceived gender
+        user_gender = interaction_data.get('user_gender', 'unknown')
+        if user_gender == 'unknown':
+            return 0.1  # Low confidence in detection
+
+        # Look for patterns in response times, formality, or offered services
+        response_patterns = interaction_data.get('response_patterns', {})
+        if user_gender in response_patterns:
+            # If there are significant differences in patterns, it may indicate bias
+            pattern = response_patterns[user_gender]
+            # This is a simplified check - in practice, would use more sophisticated analysis
+            if pattern.get('formality', 0.5) > 0.8 or pattern.get('formality', 0.5) < 0.2:
+                return 0.6  # Possible bias
+        return 0.2  # Low bias likely
+
+    def _detect_cultural_bias(self, interaction_data: Dict) -> float:
+        """Detect potential cultural bias in interactions"""
+        user_culture = interaction_data.get('user_culture', 'unknown')
+        if user_culture == 'unknown':
+            return 0.1
+
+        # Check if adaptation is happening appropriately
+        cultural_adaptation = interaction_data.get('cultural_adaptation', 0.0)
+        if cultural_adaptation < 0.3:
+            # Low adaptation might indicate bias or lack of cultural sensitivity
+            return 0.7
+        else:
+            return 0.2  # Appropriate adaptation
+
+    def _detect_age_bias(self, interaction_data: Dict) -> float:
+        """Detect potential age bias in interactions"""
+        user_age_group = interaction_data.get('user_age_group', 'unknown')
+        if user_age_group == 'unknown':
+            return 0.1
+
+        # Check for patronizing or age-inappropriate responses
+        interaction_style = interaction_data.get('interaction_style', {})
+        if user_age_group == 'child' and interaction_style.get('complexity', 0.5) > 0.7:
+            # Too complex for children
+            return 0.8
+        elif user_age_group == 'elderly' and interaction_style.get('speed', 0.5) > 0.8:
+            # Too fast for elderly users
+            return 0.7
+        return 0.2  # Appropriate for age group
+
+    def _detect_ability_bias(self, interaction_data: Dict) -> float:
+        """Detect potential ability bias in interactions"""
+        user_abilities = interaction_data.get('user_abilities', {})
+        accommodation_provided = interaction_data.get('accommodations', [])
+
+        # Check if appropriate accommodations are made
+        needed_accommodations = []
+        if user_abilities.get('vision_impaired'):
+            needed_accommodations.append('audio_feedback')
+        if user_abilities.get('hearing_impaired'):
+            needed_accommodations.append('visual_feedback')
+        if user_abilities.get('mobility_limited'):
+            needed_accommodations.append('minimal_physical_interaction')
+
+        if needed_accommodations and not accommodation_provided:
+            return 0.9  # Significant bias - no accommodations provided
+
+        return 0.3  # Moderate concern if some accommodations missing
+
+class EthicalCulturalHRIManager:
+    def __init__(self):
+        self.cultural_system = CulturalAdaptationSystem()
+        self.ethical_framework = EthicalDecisionFramework()
+        self.bias_detector = BiasDetectionSystem()
+        self.privacy_manager = PrivacyManager()
+
+    def process_interaction_request(self, user_request: Dict, user_profile: Dict) -> Dict:
+        """Process a user request with ethical and cultural considerations"""
+        response = {
+            'action': None,
+            'ethical_evaluation': None,
+            'cultural_adaptation': None,
+            'bias_analysis': None,
+            'privacy_compliance': None,
+            'final_decision': 'proceed'
+        }
+
+        # 1. Apply cultural adaptation
+        base_action = self._create_base_action(user_request)
+        cultural_adaptation = self.cultural_system.adapt_behavior(
+            base_action, user_profile.get('culture', 'unknown')
+        )
+        response['cultural_adaptation'] = cultural_adaptation
+
+        # 2. Evaluate ethical implications
+        ethical_evaluation = self.ethical_framework.evaluate_action(
+            cultural_adaptation, user_profile
+        )
+        response['ethical_evaluation'] = ethical_evaluation
+
+        # 3. Check for potential biases
+        interaction_data = {
+            'user_culture': user_profile.get('culture', 'unknown'),
+            'user_gender': user_profile.get('gender', 'unknown'),
+            'user_age_group': user_profile.get('age_group', 'unknown'),
+            'user_abilities': user_profile.get('abilities', {}),
+            'response_patterns': {'formality': cultural_adaptation.get('formality', 0.5)}
+        }
+        bias_analysis = self.bias_detector.detect_bias(interaction_data)
+        response['bias_analysis'] = bias_analysis
+
+        # 4. Check privacy compliance
+        privacy_compliance = self.privacy_manager.check_compliance(
+            cultural_adaptation, user_profile
+        )
+        response['privacy_compliance'] = privacy_compliance
+
+        # 5. Make final decision based on all considerations
+        if ethical_evaluation['recommendation'] == 'reject':
+            response['final_decision'] = 'reject'
+        elif bias_analysis['overall_bias_score'] > 0.8:
+            response['final_decision'] = 'reject'
+        elif privacy_compliance['compliant'] is False:
+            response['final_decision'] = 'reject'
+        elif ethical_evaluation['recommendation'] == 'proceed_with_caution':
+            response['final_decision'] = 'proceed_with_caution'
+        else:
+            response['final_decision'] = 'proceed'
+
+        return response
+
+    def _create_base_action(self, user_request: Dict) -> Dict:
+        """Create a base action from user request"""
+        return {
+            'type': user_request.get('intent', 'unknown'),
+            'target': user_request.get('target', 'unknown'),
+            'purpose': user_request.get('purpose', 'assistance'),
+            'required_resources': user_request.get('resources', []),
+            'estimated_duration': user_request.get('duration', 0),
+            'safety_measures': ['maintain_safe_distance', 'use_safety_routines']
+        }
+
+class PrivacyManager:
+    def __init__(self):
+        self.privacy_policies = {
+            'data_collection': 'minimal_necessary',
+            'data_storage': 'encrypted_anonymized',
+            'data_sharing': 'consent_required',
+            'data_retention': 'time_limited'
+        }
+
+    def check_compliance(self, action: Dict, user_profile: Dict) -> Dict:
+        """Check if action complies with privacy policies"""
+        compliance_check = {
+            'compliant': True,
+            'violations': [],
+            'recommendations': []
+        }
+
+        # Check data collection
+        if action.get('type') == 'collect_data':
+            data_type = action.get('data_type', 'general')
+            if data_type in ['biometric', 'behavioral', 'location']:
+                if not action.get('consent_obtained', False):
+                    compliance_check['compliant'] = False
+                    compliance_check['violations'].append(
+                        f"Collecting {data_type} data without consent"
+                    )
+
+        # Check data sharing
+        if action.get('type') == 'share_information':
+            if action.get('destination', 'local') != 'local':
+                if not action.get('permission_granted', False):
+                    compliance_check['compliant'] = False
+                    compliance_check['violations'].append(
+                        "Sharing data without explicit permission"
+                    )
+
+        # Generate recommendations for violations
+        if not compliance_check['compliant']:
+            compliance_check['recommendations'].append(
+                "Ensure all data collection and sharing follows privacy policies"
+            )
+            compliance_check['recommendations'].append(
+                "Obtain proper consent before collecting sensitive information"
+            )
+
+        return compliance_check
+
+# Example usage
+hri_manager = EthicalCulturalHRIManager()
+
+# Example user profile with cultural and demographic information
+user_profile = {
+    'culture': 'japan',
+    'gender': 'male',
+    'age_group': 'adult',
+    'abilities': {'vision_impaired': False, 'hearing_impaired': False},
+    'language_preference': 'japanese',
+    'communication_style': 'formal'
+}
+
+# Example user request
+user_request = {
+    'intent': 'navigation',
+    'target': 'kitchen',
+    'purpose': 'fetch_item',
+    'resources': ['navigation_system', 'object_recognition'],
+    'duration': 120
+}
+
+# Process the request with ethical and cultural considerations
+response = hri_manager.process_interaction_request(user_request, user_profile)
+
+print(f"Final decision: {response['final_decision']}")
+print(f"Ethical score: {response['ethical_evaluation']['ethical_score']:.2f}")
+print(f"Bias score: {response['bias_analysis']['overall_bias_score']:.2f}")
+```
+
+## Review Questions
+
+1. How do cultural differences affect human-robot interaction preferences?
+2. What are the main ethical principles that should guide HRI design?
+3. How can robots detect and mitigate cultural and social biases?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="cultural-database" label="Cultural Database">
+Expand the cultural adaptation system with more cultural profiles.
+</TabItem>
+<TabItem value="ethical-scenarios" label="Ethical Scenarios">
+Develop ethical evaluations for complex HRI scenarios.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a comprehensive ethical and cultural HRI system that can adapt to diverse users while maintaining ethical standards. Test the system with various cultural profiles and evaluate its sensitivity to cultural and ethical considerations.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand cultural differences in HRI and how to address them
+- Recognize the ethical implications of human-robot interaction
+- Be able to implement bias detection and mitigation systems
+- Appreciate the importance of responsible and inclusive robot design

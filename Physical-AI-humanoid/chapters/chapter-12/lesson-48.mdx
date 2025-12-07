@@ -1,0 +1,1043 @@
+---
+title: "Presentation and Documentation"
+description: "Create comprehensive documentation and presentations for the completed humanoid robot project."
+tags: ["documentation", "presentation", "project management", "technical writing", "knowledge transfer"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Presentation and Documentation
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Create comprehensive technical documentation for robotic systems
+- Develop effective presentations for different audiences
+- Document design decisions and implementation details
+- Create user manuals and maintenance guides
+- Present project outcomes and lessons learned
+
+## Key Concepts
+
+- **Technical Documentation**: Comprehensive written records of system design and implementation
+- **User Documentation**: Guides for operating and maintaining the robot system
+- **API Documentation**: Specifications for system interfaces and functions
+- **Project Reports**: Summaries of development process, challenges, and outcomes
+- **Presentation Skills**: Effectively communicating technical information
+- **Knowledge Transfer**: Ensuring project knowledge is preserved and accessible
+- **Version Control Documentation**: Tracking changes and evolution of the system
+- **Maintenance Documentation**: Procedures for ongoing system support
+
+## Theory Summary
+
+Presentation and documentation represent the final critical phase of the humanoid robot development project, ensuring that knowledge, designs, and implementations are properly captured, communicated, and preserved. This phase transforms the technical work into accessible information for various stakeholders including future developers, users, and business decision-makers.
+
+Technical documentation provides comprehensive records of system architecture, design decisions, implementation details, and system behavior. This includes architectural diagrams, interface specifications, algorithm descriptions, and performance characteristics. Well-documented systems enable future maintenance, upgrades, and knowledge transfer.
+
+User documentation focuses on helping end-users operate and maintain the robot system effectively. This includes user manuals, quick start guides, troubleshooting guides, and maintenance procedures. User documentation should be accessible to non-technical users while providing sufficient detail for effective operation.
+
+API documentation details the interfaces, functions, and protocols available for interacting with the robot system. This is crucial for developers who need to integrate with or extend the system. Good API documentation includes examples, parameter descriptions, return values, and usage patterns.
+
+Project reports summarize the development process, challenges encountered, solutions implemented, and outcomes achieved. These reports provide valuable insights for future projects and help justify the development effort to stakeholders.
+
+Presentation skills are essential for communicating technical information to different audiences. Technical presentations to engineers focus on implementation details and challenges, while business presentations emphasize value, return on investment, and strategic impact.
+
+Knowledge transfer ensures that project knowledge is preserved and accessible to others who may need to work with the system in the future. This includes design rationale, implementation details, and lessons learned during development.
+
+Version control documentation tracks the evolution of the system over time, providing a historical record of changes, improvements, and bug fixes. This is essential for understanding how the system developed and for maintaining it over time.
+
+Maintenance documentation provides procedures and guidelines for ongoing system support, including troubleshooting guides, replacement procedures, and calibration instructions.
+
+## Hands-on Activity
+
+### Activity: Create Project Documentation and Presentation
+
+In this activity, you'll create comprehensive documentation and a presentation for the completed humanoid robot project.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple, Optional, Any
+import random
+import json
+import os
+from datetime import datetime
+from dataclasses import dataclass
+from enum import Enum
+import markdown
+from pathlib import Path
+
+class DocumentType(Enum):
+    """Types of documentation"""
+    DESIGN_SPEC = "design_specification"
+    USER_MANUAL = "user_manual"
+    API_DOCS = "api_documentation"
+    TEST_REPORT = "test_report"
+    MAINTENANCE_GUIDE = "maintenance_guide"
+    PROJECT_SUMMARY = "project_summary"
+
+class AudienceType(Enum):
+    """Types of audiences for documentation"""
+    ENGINEERS = "engineers"
+    USERS = "users"
+    MANAGEMENT = "management"
+    MAINTENANCE = "maintenance_staff"
+    CUSTOMERS = "customers"
+
+@dataclass
+class DocumentationSection:
+    """A section of documentation"""
+    title: str
+    content: str
+    audience: AudienceType
+    document_type: DocumentType
+    importance: int  # 1-5 scale
+    dependencies: List[str]  # Other sections this section depends on
+
+@dataclass
+class PresentationSlide:
+    """A slide in a presentation"""
+    title: str
+    content: str
+    audience: AudienceType
+    slide_type: str  # "technical", "business", "overview", etc.
+    duration: float  # Expected presentation time in minutes
+
+class DocumentationGenerator:
+    """Generates comprehensive documentation for the robot project"""
+
+    def __init__(self):
+        self.sections: List[DocumentationSection] = []
+        self.presentation_slides: List[PresentationSlide] = []
+        self.project_data = {
+            "project_name": "Humanoid Robot Development Project",
+            "duration": "12 months",
+            "team_size": 8,
+            "budget": "$500,000",
+            "start_date": "2024-01-15",
+            "end_date": "2024-12-15",
+            "technologies": ["ROS", "Python", "C++", "Mechanical Design", "AI/ML"],
+            "components": ["Actuators", "Sensors", "Control Systems", "Power Systems"],
+            "challenges": ["Balance Control", "Real-time Performance", "Safety Systems"],
+            "outcomes": {
+                "working_robot": True,
+                "performance_metrics": {
+                    "walking_speed": "0.8 m/s",
+                    "balance_stability": "95%",
+                    "task_completion_rate": "87%"
+                },
+                "lessons_learned": [
+                    "Early integration testing is crucial",
+                    "Safety systems require extensive validation",
+                    "Modular design enables easier maintenance"
+                ]
+            }
+        }
+
+    def create_design_specification(self) -> List[DocumentationSection]:
+        """Create design specification documentation"""
+        sections = []
+
+        sections.append(DocumentationSection(
+            title="System Architecture Overview",
+            content=f"""
+# System Architecture
+
+## Overview
+The Humanoid Robot Capstone Project implements a humanoid robot with 24 degrees of freedom, designed for indoor navigation and basic manipulation tasks.
+
+## High-Level Architecture
+- **Mechanical System**: Aluminum frame with custom actuators
+- **Sensor System**: IMU, Force/Torque sensors, Stereo vision
+- **Control System**: Distributed architecture with main controller
+- **Power System**: 200Wh lithium battery pack
+- **Communication**: CAN bus for actuators, Ethernet for vision system
+
+## Design Rationale
+The modular architecture enables independent development and testing of subsystems while maintaining integration flexibility.
+            """,
+            audience=AudienceType.ENGINEERS,
+            document_type=DocumentType.DESIGN_SPEC,
+            importance=5,
+            dependencies=[]
+        ))
+
+        sections.append(DocumentationSection(
+            title="Component Specifications",
+            content=f"""
+# Component Specifications
+
+## Mechanical Components
+- Frame: Aluminum 6061-T6, 15kg total weight
+- Actuators: 24 custom servo actuators with 100-200Nm torque
+- Joints: 24 joints (12 per leg, 7 per arm, 2 per head)
+
+## Sensor Specifications
+- IMU: 1000Hz update rate, 0.01° accuracy
+- Force/Torque: 500Hz update rate, 0.1N accuracy
+- Vision: Stereo cameras, 30fps, 1920x1080 resolution
+
+## Control System
+- Main Controller: NVIDIA Jetson AGX Xavier
+- Real-time OS: RT Linux
+- Control Rate: 1kHz for safety-critical systems
+            """,
+            audience=AudienceType.ENGINEERS,
+            document_type=DocumentType.DESIGN_SPEC,
+            importance=5,
+            dependencies=["System Architecture Overview"]
+        ))
+
+        sections.append(DocumentationSection(
+            title="Safety Systems",
+            content=f"""
+# Safety Systems
+
+## Emergency Stop
+- Hardware emergency stop button on robot
+- Software emergency stop via ROS topic
+- Automatic stop on sensor failures
+
+## Collision Detection
+- Force/torque sensors detect unexpected contacts
+- Vision system detects obstacles
+- Maximum force limits on all actuators
+
+## Fall Detection and Recovery
+- IMU monitors orientation
+- Automatic fall recovery sequence
+- Safe shutdown on critical failures
+            """,
+            audience=AudienceType.ENGINEERS,
+            document_type=DocumentType.DESIGN_SPEC,
+            importance=5,
+            dependencies=["Component Specifications"]
+        ))
+
+        return sections
+
+    def create_user_manual(self) -> List[DocumentationSection]:
+        """Create user manual for the robot"""
+        sections = []
+
+        sections.append(DocumentationSection(
+            title="Getting Started",
+            content=f"""
+# Getting Started with Humanoid Robot Capstone Project
+
+## Safety First
+- Ensure adequate space (minimum 3x3 meters)
+- Keep emergency stop button accessible
+- Do not operate without supervision
+
+## Initial Setup
+1. Charge the robot for 4 hours before first use
+2. Connect to the robot's WiFi network
+3. Launch the control interface
+4. Run system diagnostics
+
+## Basic Operations
+- **Power On**: Press and hold power button for 3 seconds
+- **Power Off**: Use the shutdown command in control interface
+- **Calibration**: Run calibration sequence before each session
+            """,
+            audience=AudienceType.USERS,
+            document_type=DocumentType.USER_MANUAL,
+            importance=5,
+            dependencies=[]
+        ))
+
+        sections.append(DocumentationSection(
+            title="Basic Commands",
+            content=f"""
+# Basic Commands
+
+## Movement Commands
+- `walk_forward(distance)`: Move forward a specified distance
+- `turn(angle)`: Rotate by specified angle in degrees
+- `wave()`: Perform waving gesture
+- `sit()`: Sit down position
+- `stand()`: Stand up from sitting position
+
+## Example Usage
+```python
+# Import robot interface
+from robot_control import RobotInterface
+
+# Create robot instance
+robot = RobotInterface()
+
+# Connect to robot
+robot.connect()
+
+# Move forward 1 meter
+robot.walk_forward(1.0)
+
+# Wave hello
+robot.wave()
+
+# Disconnect
+robot.disconnect()
+```
+            """,
+            audience=AudienceType.USERS,
+            document_type=DocumentType.USER_MANUAL,
+            importance=4,
+            dependencies=["Getting Started"]
+        ))
+
+        return sections
+
+    def create_api_documentation(self) -> List[DocumentationSection]:
+        """Create API documentation"""
+        sections = []
+
+        sections.append(DocumentationSection(
+            title="Robot Control API",
+            content=f"""
+# Robot Control API
+
+## Class: RobotInterface
+
+### Methods
+
+#### connect()
+Establish connection to the robot.
+
+**Parameters:** None
+**Returns:** bool - True if connection successful
+**Example:**
+```python
+robot = RobotInterface()
+success = robot.connect()
+```
+
+#### disconnect()
+Disconnect from the robot.
+
+**Parameters:** None
+**Returns:** None
+
+#### walk_forward(distance: float)
+Command the robot to walk forward.
+
+**Parameters:**
+- distance (float): Distance to walk in meters
+**Returns:** bool - True if command accepted
+**Example:**
+```python
+robot.walk_forward(1.0)  # Walk 1 meter forward
+```
+
+#### turn(angle: float)
+Command the robot to turn.
+
+**Parameters:**
+- angle (float): Angle to turn in degrees (positive = clockwise)
+**Returns:** bool - True if command accepted
+**Example:**
+```python
+robot.turn(90)  # Turn 90 degrees clockwise
+```
+
+#### get_sensor_data() -> dict
+Get current sensor readings.
+
+**Parameters:** None
+**Returns:** dict - Sensor data including IMU, force/torque, and encoder values
+**Example:**
+```python
+sensors = robot.get_sensor_data()
+print(f"Roll: {sensors['imu']['roll']}")
+```
+
+#### get_robot_state() -> dict
+Get current robot state.
+
+**Parameters:** None
+**Returns:** dict - State including position, velocity, and status
+            """,
+            audience=AudienceType.ENGINEERS,
+            document_type=DocumentType.API_DOCS,
+            importance=5,
+            dependencies=[]
+        ))
+
+        return sections
+
+    def create_test_report(self) -> List[DocumentationSection]:
+        """Create test report documentation"""
+        sections = []
+
+        sections.append(DocumentationSection(
+            title="Test Report Summary",
+            content=f"""
+# Test Report for Humanoid Robot Capstone Project
+
+## Test Execution Summary
+- **Total Tests Executed:** 142
+- **Tests Passed:** 138
+- **Tests Failed:** 4
+- **Success Rate:** 97.2%
+
+## Test Categories
+- **Unit Tests:** 65 tests, 98.5% success
+- **Integration Tests:** 42 tests, 95.2% success
+- **System Tests:** 25 tests, 100% success
+- **Safety Tests:** 10 tests, 100% success
+
+## Critical Issues Found
+1. Balance controller instability at high walking speeds (>1.2 m/s)
+2. Vision system performance degradation in low light
+3. Communication timeout under high network load
+4. Power consumption higher than estimated during manipulation tasks
+
+## Recommendations
+- Implement speed limiting for stability
+- Add auxiliary lighting for vision system
+- Optimize communication protocols
+- Review power management strategies
+            """,
+            audience=AudienceType.ENGINEERS,
+            document_type=DocumentType.TEST_REPORT,
+            importance=5,
+            dependencies=[]
+        ))
+
+        return sections
+
+    def create_maintenance_guide(self) -> List[DocumentationSection]:
+        """Create maintenance guide"""
+        sections = []
+
+        sections.append(DocumentationSection(
+            title="Maintenance Schedule",
+            content=f"""
+# Maintenance Guide for Humanoid Robot Capstone Project
+
+## Daily Maintenance
+- Visual inspection for damage or wear
+- Check battery charge level
+- Verify emergency stop functionality
+- Clean vision system lenses
+
+## Weekly Maintenance
+- Lubricate joints according to schedule
+- Check all connection points
+- Update software if available
+- Backup configuration files
+
+## Monthly Maintenance
+- Calibrate sensors
+- Check actuator performance
+- Inspect mechanical components
+- Update maintenance log
+
+## Troubleshooting Common Issues
+
+### Robot Won't Power On
+1. Check battery charge level
+2. Inspect power connections
+3. Verify power button functionality
+4. Check for blown fuses
+
+### Balance Issues
+1. Verify IMU calibration
+2. Check leg joint encoders
+3. Review balance controller parameters
+4. Inspect for mechanical damage
+
+### Communication Problems
+1. Check network connections
+2. Verify ROS master status
+3. Test individual communication links
+4. Review firewall settings
+            """,
+            audience=AudienceType.MAINTENANCE,
+            document_type=DocumentType.MAINTENANCE_GUIDE,
+            importance=5,
+            dependencies=[]
+        ))
+
+        return sections
+
+    def create_project_summary(self) -> List[DocumentationSection]:
+        """Create project summary documentation"""
+        sections = []
+
+        sections.append(DocumentationSection(
+            title="Project Summary",
+            content=f"""
+# Project Summary: Humanoid Robot Capstone Project
+
+## Project Overview
+**Duration:** 12 months
+**Team Size:** 6 members
+**Budget:** $150,000
+**Timeline:** January 1, 2025 to December 31, 2025
+
+## Technologies Used
+- Python, ROS, NumPy, Matplotlib
+
+## Key Components
+- Actuators
+- Sensors
+- Control Systems
+- Power Systems
+
+## Major Challenges
+- Balance Control
+- Real-time Performance
+- Safety Systems
+
+## Outcomes
+- **Working Robot:** Yes
+- **Performance Metrics:**
+  - Walking Speed: 0.8 m/s
+  - Balance Stability: 95%
+  - Task Completion Rate: 87%
+
+## Lessons Learned
+- Early integration testing is crucial
+- Safety systems require extensive validation
+- Modular design enables easier maintenance
+
+## Future Recommendations
+- Implement machine learning for adaptive control
+- Add more dexterous hands for manipulation
+- Improve energy efficiency for longer operation
+- Enhance human-robot interaction capabilities
+            """,
+            audience=AudienceType.MANAGEMENT,
+            document_type=DocumentType.PROJECT_SUMMARY,
+            importance=5,
+            dependencies=[]
+        ))
+
+        return sections
+
+    def create_presentation_slides(self) -> List[PresentationSlide]:
+        """Create presentation slides for different audiences"""
+        slides = []
+
+        # Executive summary slide
+        slides.append(PresentationSlide(
+            title="Humanoid Robot Project - Executive Summary",
+            content=f"""
+**Project:** Humanoid Robot Capstone Project
+**Duration:** 12 months
+**Investment:** $150,000
+**Team:** 6 engineers
+
+**Key Outcomes:**
+- Successfully developed functional humanoid robot
+- Achieved 95% balance stability
+- Demonstrated indoor navigation capabilities
+- Validated safety systems
+
+**ROI Projections:**
+- Potential market: $2B+ in service robotics
+- Development cost recovery: 18 months
+- Competitive advantage: 2 years
+            """,
+            audience=AudienceType.MANAGEMENT,
+            slide_type="business",
+            duration=3.0
+        ))
+
+        # Technical overview slide
+        slides.append(PresentationSlide(
+            title="Technical Architecture",
+            content=f"""
+**System Components:**
+- 24 DOF mechanical system
+- Distributed control architecture
+- Multi-sensor fusion
+- Real-time safety systems
+
+**Key Technologies:**
+- Python, ROS, NumPy
+- Custom control algorithms
+- Machine learning integration
+
+**Performance:**
+- Walking speed: 0.8 m/s
+- Balance stability: 95%
+            """,
+            audience=AudienceType.ENGINEERS,
+            slide_type="technical",
+            duration=4.0
+        ))
+
+        # Challenges and solutions slide
+        slides.append(PresentationSlide(
+            title="Challenges and Solutions",
+            content=f"""
+**Major Challenges:**
+- Balance control in dynamic environments
+- Real-time performance requirements
+- Safety system integration
+- Multi-sensor fusion complexity
+
+**Solutions Implemented:**
+- Advanced balance control algorithms
+- Real-time performance optimization
+- Comprehensive safety architecture
+
+**Lessons Learned:**
+- Early integration testing is crucial
+- Safety systems require extensive validation
+- Modular design enables easier maintenance
+- Documentation is essential for maintenance
+            """,
+            audience=AudienceType.ENGINEERS,
+            slide_type="technical",
+            duration=3.0
+        ))
+
+        # Demo and future slide
+        slides.append(PresentationSlide(
+            title="Demonstration and Future Work",
+            content=f"""
+**Current Capabilities:**
+- Indoor navigation
+- Basic manipulation
+- Human interaction
+- Task execution
+
+**Future Enhancements:**
+- Machine learning integration
+- Enhanced dexterity
+- Extended autonomy
+- Cloud connectivity
+
+**Next Steps:**
+- Field testing program
+- Commercialization planning
+- Technology transfer
+            """,
+            audience=AudienceType.MANAGEMENT,
+            slide_type="business",
+            duration=2.0
+        ))
+
+        return slides
+
+```python
+    def generate_all_documentation(self) -> Dict[str, List[DocumentationSection]]:
+        """Generate all types of documentation"""
+        documentation = {
+            "design_specification": self.create_design_specification(),
+            "user_manual": self.create_user_manual(),
+            "api_documentation": self.create_api_documentation(),
+            "test_report": self.create_test_report(),
+            "maintenance_guide": self.create_maintenance_guide(),
+            "project_summary": self.create_project_summary()
+        }
+
+        # Store all sections
+        for doc_type, sections in documentation.items():
+            self.sections.extend(sections)
+
+        # Generate presentation slides
+        self.presentation_slides = self.create_presentation_slides()
+
+        return documentation
+
+    def export_documentation(self, output_dir: str = "robot_documentation"):
+        """Export all documentation to files"""
+        # Create output directory
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Export each document type
+        doc_mapping = {
+            "design_specification": self.create_design_specification(),
+            "user_manual": self.create_user_manual(),
+            "api_documentation": self.create_api_documentation(),
+            "test_report": self.create_test_report(),
+            "maintenance_guide": self.create_maintenance_guide(),
+            "project_summary": self.create_project_summary()
+        }
+
+        for doc_type, sections in doc_mapping.items():
+            # Create subdirectory for document type
+            doc_dir = os.path.join(output_dir, doc_type)
+            os.makedirs(doc_dir, exist_ok=True)
+
+            # Write each section to a file
+            for i, section in enumerate(sections):
+                filename = os.path.join(doc_dir, f"section_{i+1}_{section.title.lower().replace(' ', '_')}.md")
+                with open(filename, 'w', encoding='utf-8') as f:
+                    f.write(f"# {section.title}\n\n")
+                    f.write(section.content)
+
+        # Export presentation slides
+        pres_dir = os.path.join(output_dir, "presentation")
+        os.makedirs(pres_dir, exist_ok=True)
+
+        for i, slide in enumerate(self.presentation_slides):
+            filename = os.path.join(pres_dir, f"slide_{i+1}_{slide.title.lower().replace(' ', '_')}.md")
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(f"# {slide.title}\n\n")
+                f.write(slide.content)
+
+        print(f"Documentation exported to: {output_dir}")
+        return output_dir
+
+def create_robot_documentation():
+    """Create comprehensive documentation and presentation for the robot project"""
+    print("Humanoid Robot Project Documentation and Presentation")
+    print("=" * 54)
+
+    # Create documentation generator
+    generator = DocumentationGenerator()
+
+    # Generate all documentation
+    print("Generating comprehensive documentation...")
+    all_docs = generator.generate_all_documentation()
+
+    # Count documentation sections
+    total_sections = sum(len(sections) for sections in all_docs.values())
+    print(f"Generated {total_sections} documentation sections")
+
+    # Show documentation breakdown
+    print(f"\nDocumentation Breakdown:")
+    print("-" * 25)
+    for doc_type, sections in all_docs.items():
+        print(f"{doc_type.replace('_', ' ').title()}: {len(sections)} sections")
+
+    # Show presentation slides
+    print(f"\nPresentation Slides: {len(generator.presentation_slides)} slides")
+    for slide in generator.presentation_slides:
+        print(f"  - {slide.title} ({slide.audience.value}) - {slide.duration}min")
+
+    # Export documentation
+    print(f"\nExporting documentation...")
+    export_dir = generator.export_documentation()
+    print(f"Documentation exported to: {export_dir}")
+
+    # Generate statistics
+    print(f"\nDocumentation Statistics:")
+    print("-" * 25)
+    all_sections = generator.sections
+    print(f"Total sections: {len(all_sections)}")
+    print(f"Audiences covered: {len(set(s.audience for s in all_sections))}")
+    print(f"Document types: {len(set(s.document_type for s in all_sections))}")
+
+    # Show audience distribution
+    audience_dist = {}
+    for section in all_sections:
+        aud = section.audience.value
+        audience_dist[aud] = audience_dist.get(aud, 0) + 1
+
+    print(f"\nAudience Distribution:")
+    for audience, count in audience_dist.items():
+        print(f"  {audience.title()}: {count} sections")
+
+    # Show document type distribution
+    type_dist = {}
+    for section in all_sections:
+        doc_type = section.document_type.value
+        type_dist[doc_type] = type_dist.get(doc_type, 0) + 1
+
+    print(f"\nDocument Type Distribution:")
+    for doc_type, count in type_dist.items():
+        print(f"  {doc_type.replace('_', ' ').title()}: {count} sections")
+
+    # Create visualization
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+
+    # Plot 1: Document type distribution
+    axes[0, 0].bar(type_dist.keys(), type_dist.values())
+    axes[0, 0].set_title('Document Type Distribution')
+    axes[0, 0].set_ylabel('Number of Sections')
+    axes[0, 0].tick_params(axis='x', rotation=45)
+
+    # Plot 2: Audience distribution
+    axes[0, 1].pie(audience_dist.values(), labels=audience_dist.keys(), autopct='%1.1f%%')
+    axes[0, 1].set_title('Audience Distribution')
+
+    # Plot 3: Importance distribution
+    importance_counts = {}
+    for section in all_sections:
+        imp = section.importance
+        importance_counts[imp] = importance_counts.get(imp, 0) + 1
+
+    axes[1, 0].bar(importance_counts.keys(), importance_counts.values())
+    axes[1, 0].set_title('Section Importance Distribution')
+    axes[1, 0].set_xlabel('Importance Level (1-5)')
+    axes[1, 0].set_ylabel('Number of Sections')
+
+    # Plot 4: Document types by audience
+    import seaborn as sns
+    import pandas as pd
+
+    # Prepare data for heatmap
+    audience_list = [s.audience.value for s in all_sections]
+    type_list = [s.document_type.value for s in all_sections]
+
+    # Create a crosstab
+    df = pd.DataFrame({'Audience': audience_list, 'DocumentType': type_list})
+    crosstab = pd.crosstab(df['Audience'], df['DocumentType'])
+
+    if not crosstab.empty:
+        sns.heatmap(crosstab, annot=True, fmt='d', ax=axes[1, 1])
+        axes[1, 1].set_title('Document Types by Audience')
+        axes[1, 1].set_xlabel('Document Type')
+        axes[1, 1].set_ylabel('Audience')
+
+    plt.tight_layout()
+    plt.show()
+
+    # Summary
+    print(f"\nDocumentation and presentation creation completed!")
+    print(f"The project documentation provides comprehensive coverage for all stakeholders.")
+    print(f"Files are organized in the '{export_dir}' directory for easy access.")
+
+# Run the documentation creation
+create_robot_documentation()
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy for numerical computations
+- Matplotlib for visualization
+- Basic understanding of technical writing and documentation
+- Knowledge of project management and communication principles
+
+## Step-by-Step Instructions
+
+1. **Design Documentation Structure**: Create a framework for organizing different types of documentation
+2. **Create Design Specifications**: Document system architecture and component details
+3. **Develop User Manual**: Create guides for operating the robot system
+4. **Build API Documentation**: Document interfaces and functions
+5. **Generate Test Reports**: Summarize testing results and outcomes
+6. **Create Maintenance Guide**: Document maintenance procedures
+7. **Develop Presentations**: Create slides for different audiences
+
+## Code Snippets
+
+### Documentation Generator Framework
+
+```python
+@dataclass
+class DocumentationSection:
+    """A section of documentation"""
+    title: str
+    content: str
+    audience: AudienceType
+    document_type: DocumentType
+    importance: int  # 1-5 scale
+    dependencies: List[str]  # Other sections this section depends on
+
+class DocumentationGenerator:
+    """Generates comprehensive documentation for the robot project"""
+
+    def __init__(self):
+        self.sections: List[DocumentationSection] = []
+        self.presentation_slides: List[PresentationSlide] = []
+        self.project_data = {
+            "project_name": "Humanoid Robot Development Project",
+            "duration": "12 months",
+            "team_size": 8,
+            "budget": "$500,000",
+            "start_date": "2024-01-15",
+            "end_date": "2024-12-15",
+            "technologies": ["ROS", "Python", "C++", "Mechanical Design", "AI/ML"],
+            "components": ["Actuators", "Sensors", "Control Systems", "Power Systems"],
+            "challenges": ["Balance Control", "Real-time Performance", "Safety Systems"],
+            "outcomes": {
+                "working_robot": True,
+                "performance_metrics": {
+                    "walking_speed": "0.8 m/s",
+                    "balance_stability": "95%",
+                    "task_completion_rate": "87%"
+                },
+                "lessons_learned": [
+                    "Early integration testing is crucial",
+                    "Safety systems require extensive validation",
+                    "Modular design enables easier maintenance"
+                ]
+            }
+        }
+
+    def create_design_specification(self) -> List[DocumentationSection]:
+        """Create design specification documentation"""
+        sections = []
+
+        sections.append(DocumentationSection(
+            title="System Architecture Overview",
+            content=f"""
+# System Architecture
+
+## Overview
+The Humanoid Robot Capstone Project implements a humanoid robot with 24 degrees of freedom, designed for indoor navigation and basic manipulation tasks.
+
+## High-Level Architecture
+- **Mechanical System**: Aluminum frame with custom actuators
+- **Sensor System**: IMU, Force/Torque sensors, Stereo vision
+- **Control System**: Distributed architecture with main controller
+- **Power System**: 200Wh lithium battery pack
+- **Communication**: CAN bus for actuators, Ethernet for vision system
+
+## Design Rationale
+The modular architecture enables independent development and testing of subsystems while maintaining integration flexibility.
+            """,
+            audience=AudienceType.ENGINEERS,
+            document_type=DocumentType.DESIGN_SPEC,
+            importance=5,
+            dependencies=[]
+        ))
+
+        # Additional sections would follow the same pattern...
+        return sections
+```
+
+### Presentation System
+
+```python
+@dataclass
+class PresentationSlide:
+    """A slide in a presentation"""
+    title: str
+    content: str
+    audience: AudienceType
+    slide_type: str  # "technical", "business", "overview", etc.
+    duration: float  # Expected presentation time in minutes
+
+def create_presentation_slides(self) -> List[PresentationSlide]:
+    """Create presentation slides for different audiences"""
+    slides = []
+
+    # Executive summary slide
+    slides.append(PresentationSlide(
+        title="Humanoid Robot Project - Executive Summary",
+        content=f"""
+**Project:** Humanoid Robot Capstone Project
+**Duration:** 12 months
+**Investment:** $150,000
+**Team:** 6 engineers
+
+**Key Outcomes:**
+- Successfully developed functional humanoid robot
+- Achieved 95% balance stability
+- Demonstrated indoor navigation capabilities
+- Validated safety systems
+
+**ROI Projections:**
+- Potential market: $2B+ in service robotics
+- Development cost recovery: 18 months
+- Competitive advantage: 2 years
+            """,
+        audience=AudienceType.MANAGEMENT,
+        slide_type="business",
+        duration=3.0
+    ))
+
+    # Additional slides would follow the same pattern...
+    return slides
+
+def export_documentation(self, output_dir: str = "robot_documentation"):
+    """Export all documentation to files"""
+    # Create output directory
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Export each document type
+    doc_mapping = {
+        "design_specification": self.create_design_specification(),
+        "user_manual": self.create_user_manual(),
+        "api_documentation": self.create_api_documentation(),
+        "test_report": self.create_test_report(),
+        "maintenance_guide": self.create_maintenance_guide(),
+        "project_summary": self.create_project_summary()
+    }
+
+    for doc_type, sections in doc_mapping.items():
+        # Create subdirectory for document type
+        doc_dir = os.path.join(output_dir, doc_type)
+        os.makedirs(doc_dir, exist_ok=True)
+
+        # Write each section to a file
+        for i, section in enumerate(sections):
+            filename = os.path.join(doc_dir, f"section_{i+1}_{section.title.lower().replace(' ', '_')}.md")
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(f"# {section.title}\n\n")
+                f.write(section.content)
+
+    # Export presentation slides
+    pres_dir = os.path.join(output_dir, "presentation")
+    os.makedirs(pres_dir, exist_ok=True)
+
+    for i, slide in enumerate(self.presentation_slides):
+        filename = os.path.join(pres_dir, f"slide_{i+1}_{slide.title.lower().replace(' ', '_')}.md")
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(f"# {slide.title}\n\n")
+            f.write(slide.content)
+
+    print(f"Documentation exported to: {output_dir}")
+    return output_dir
+```
+
+## Review Questions
+
+1. What are the different types of documentation needed for a robot project?
+2. How do you tailor documentation for different audiences?
+3. What should be included in a technical specification document?
+4. How do you create effective user manuals for complex systems?
+5. What are the key elements of a project summary report?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**Why is it important to create different documentation for different audiences?**
+
+A) It makes the documentation longer
+B) Different audiences need different levels of technical detail and focus
+C) It reduces the need for testing
+D) It simplifies the design process
+
+<details>
+<summary>Answer</summary>
+B) Different audiences need different levels of technical detail and focus - Engineers need technical details, managers need business outcomes, and users need operational information.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**What is a key component of effective user documentation?**
+
+A) Complex technical diagrams
+B) Clear, step-by-step instructions with examples
+C) Detailed component specifications
+D) Source code listings
+
+<details>
+<summary>Answer</summary>
+B) Clear, step-by-step instructions with examples - User documentation should be accessible and practical for operation.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the documentation system to include interactive elements. Create a web-based documentation system that allows users to try code examples directly in their browser, view 3D models of the robot, and access video tutorials. Implement a search functionality that allows users to find relevant documentation quickly.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Create comprehensive documentation for robotic systems
+- Develop presentations tailored to different audiences
+- Document technical systems with appropriate detail
+- Organize information for effective knowledge transfer
+- Create user-friendly manuals and guides

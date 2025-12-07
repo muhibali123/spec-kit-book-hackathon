@@ -1,0 +1,356 @@
+---
+title: "Balance Control and Stability Systems"
+description: "Implementing control systems to maintain balance and stability in humanoid robots"
+tags: [balance-control, stability, inverted-pendulum, feedback-control, humanoid-dynamics]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Balance Control and Stability Systems
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement feedback control systems for humanoid balance maintenance
+- Understand the inverted pendulum model for humanoid balance
+- Design control strategies for dynamic balance recovery
+- Analyze the effects of disturbances on humanoid stability
+
+## Key Concepts
+
+- **Inverted Pendulum Model**: Simplified model representing humanoid balance dynamics
+- **Feedback Control**: Using sensor measurements to adjust robot behavior
+- **Center of Mass (CoM)**: Critical point for balance control
+- **Support Polygon**: Area where CoM must remain for stability
+- **Balance Recovery**: Strategies for recovering from disturbances
+
+## Theory Summary
+
+Balance control is fundamental to humanoid robotics, as these robots must maintain stability while performing tasks in human environments. The challenge lies in controlling a dynamically unstable system with many degrees of freedom. The inverted pendulum model provides a simplified representation of balance dynamics, treating the robot as a point mass on a moving support.
+
+Balance control systems typically use feedback from various sensors including IMUs (Inertial Measurement Units), force/torque sensors in feet, and joint encoders. These sensors provide information about the robot's state, which is used by control algorithms to generate appropriate motor commands to maintain balance.
+
+Different balance control strategies are employed depending on the situation: ankle strategies for small disturbances, hip strategies for medium disturbances, and stepping strategies for large disturbances. The choice of strategy depends on the magnitude and direction of the disturbance.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="inverted-pendulum" label="Inverted Pendulum">
+Simulate inverted pendulum balance control for a simplified humanoid model.
+</TabItem>
+<TabItem value="feedback-control" label="Feedback Control">
+Implement PID-based balance control using simulated sensor feedback.
+</TabItem>
+<TabItem value="disturbance-recovery" label="Disturbance Recovery">
+Test balance recovery from various external disturbances.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with NumPy and SciPy
+- Control systems library
+- Physics simulation environment
+- Basic understanding of control theory
+
+## Step-by-Step Instructions
+
+1. Set up inverted pendulum simulation model
+2. Implement sensor feedback simulation
+3. Design PID controller for balance
+4. Test with various disturbance scenarios
+5. Analyze stability margins and response
+6. Optimize control parameters
+
+## Code Snippets
+
+```python
+import numpy as np
+from typing import Tuple, Dict
+import matplotlib.pyplot as plt
+from scipy import signal
+
+class InvertedPendulumModel:
+    def __init__(self, mass: float = 75.0, height: float = 0.8, gravity: float = 9.81):
+        self.mass = mass
+        self.height = height
+        self.gravity = gravity
+        self.moment_of_inertia = mass * height**2 / 3  # Simplified rod model
+
+        # State: [angle, angular_velocity]
+        self.state = np.array([0.0, 0.0])
+        self.com_position = np.array([0.0, height])  # x, y position of CoM
+
+    def update(self, control_input: float, dt: float) -> np.ndarray:
+        """Update inverted pendulum state with control input"""
+        angle, angular_vel = self.state
+
+        # Dynamics: theta'' = (m*g*h*sin(theta) - control_input) / (m*h^2)
+        angular_acc = (self.gravity * np.sin(angle) - control_input / (self.mass * self.height)) / self.height
+
+        # Update state
+        new_angular_vel = angular_vel + angular_acc * dt
+        new_angle = angle + new_angular_vel * dt
+
+        self.state = np.array([new_angle, new_angular_vel])
+
+        # Update CoM position
+        self.com_position[0] = self.height * np.sin(new_angle)
+        self.com_position[1] = self.height * np.cos(new_angle)
+
+        return self.state.copy()
+
+    def get_zmp(self) -> float:
+        """Calculate Zero Moment Point for current state"""
+        angle, angular_vel = self.state
+        # Simplified ZMP calculation
+        zmp = self.com_position[0] - (self.height * angular_vel**2) / self.gravity
+        return zmp
+
+class BalanceController:
+    def __init__(self, kp: float = 100.0, ki: float = 10.0, kd: float = 20.0):
+        self.kp = kp  # Proportional gain
+        self.ki = ki  # Integral gain
+        self.kd = kd  # Derivative gain
+
+        self.integral_error = 0
+        self.previous_error = 0
+        self.previous_time = None
+
+    def compute(self, target_angle: float, current_angle: float,
+                current_angular_vel: float, dt: float) -> float:
+        """Compute control output using PID"""
+        error = target_angle - current_angle
+
+        # Proportional term
+        p_term = self.kp * error
+
+        # Integral term
+        self.integral_error += error * dt
+        i_term = self.ki * self.integral_error
+
+        # Derivative term
+        if self.previous_time is not None:
+            derivative_error = (error - self.previous_error) / dt
+        else:
+            derivative_error = 0
+        d_term = self.kd * derivative_error
+
+        self.previous_error = error
+        self.previous_time = time.time() if 'time' in globals() else 0
+
+        control_output = p_term + i_term + d_term
+
+        return control_output
+
+class AdvancedBalanceController:
+    def __init__(self, robot_height: float = 0.8, gravity: float = 9.81):
+        self.robot_height = robot_height
+        self.gravity = gravity
+        self.omega = np.sqrt(gravity / robot_height)
+
+        # LQR controller gains (pre-computed for inverted pendulum)
+        # These would be calculated using LQR design in practice
+        self.lqr_gains = np.array([1.0, 2.0])  # [position_gain, velocity_gain]
+
+        # Capture point controller
+        self.capture_point_controller = BalanceController(kp=80, ki=5, kd=15)
+
+    def lqr_control(self, com_pos: float, com_vel: float) -> float:
+        """LQR-based balance control"""
+        state = np.array([com_pos, com_vel])
+        control_input = -np.dot(self.lqr_gains, state)
+        return control_input
+
+    def capture_point_control(self, com_pos: np.ndarray, com_vel: np.ndarray,
+                           target_capture_point: np.ndarray) -> np.ndarray:
+        """Control based on capture point"""
+        current_capture_point = com_pos + com_vel / self.omega
+
+        # Error in capture point
+        capture_error = target_capture_point - current_capture_point
+
+        # Generate CoM reference to move toward target capture point
+        com_ref = target_capture_point - com_vel / self.omega
+
+        # Use PID controller to track CoM reference
+        dt = 0.01
+        control_force = self.capture_point_controller.compute(
+            com_ref[0], com_pos[0], com_vel[0], dt
+        )
+
+        return np.array([control_force, 0])  # Return x and y forces
+
+class WalkingBalanceController:
+    def __init__(self, robot_height: float = 0.8):
+        self.robot_height = robot_height
+        self.balance_controller = AdvancedBalanceController(robot_height)
+        self.com_filter = np.zeros(3)  # Low-pass filter for CoM
+        self.com_vel_filter = np.zeros(3)  # Low-pass filter for CoM velocity
+
+    def compute_balance_control(self, current_com: np.ndarray, current_com_vel: np.ndarray,
+                              support_polygon: np.ndarray, dt: float) -> Dict:
+        """Compute balance control commands for walking"""
+        control_commands = {
+            'ankle_torques': np.zeros(2),  # Roll and pitch ankle torques
+            'hip_torques': np.zeros(2),    # Roll and pitch hip torques
+            'step_needed': False,
+            'step_location': None
+        }
+
+        # Check if CoM is outside support polygon
+        com_in_support = self._point_in_polygon(current_com[:2], support_polygon)
+
+        if not com_in_support:
+            # Emergency balance recovery
+            control_commands['step_needed'] = True
+            control_commands['step_location'] = self._compute_step_location(
+                current_com[:2], support_polygon
+            )
+
+        # Compute ankle strategy control (small disturbances)
+        ankle_control = self._ankle_strategy(current_com, current_com_vel, dt)
+        control_commands['ankle_torques'] = ankle_control
+
+        # Compute hip strategy control (larger disturbances)
+        hip_control = self._hip_strategy(current_com, current_com_vel, dt)
+        control_commands['hip_torques'] = hip_control
+
+        return control_commands
+
+    def _point_in_polygon(self, point: np.ndarray, polygon: np.ndarray) -> bool:
+        """Check if point is inside polygon using ray casting"""
+        x, y = point
+        n = len(polygon)
+        inside = False
+
+        p1x, p1y = polygon[0]
+        for i in range(1, n + 1):
+            p2x, p2y = polygon[i % n]
+            if y > min(p1y, p2y):
+                if y <= max(p1y, p2y):
+                    if x <= max(p1x, p2x):
+                        if p1y != p2y:
+                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                        if p1x == p2x or x <= xinters:
+                            inside = not inside
+            p1x, p1y = p2x, p2y
+
+        return inside
+
+    def _compute_step_location(self, com_pos: np.ndarray, support_polygon: np.ndarray) -> np.ndarray:
+        """Compute optimal step location for balance recovery"""
+        # Simple strategy: step in direction of CoM displacement
+        # In practice, this would use capture point or other advanced methods
+        com_x, com_y = com_pos
+
+        # Find center of support polygon
+        support_center_x = np.mean(support_polygon[:, 0])
+        support_center_y = np.mean(support_polygon[:, 1])
+
+        # Compute step direction (towards support polygon)
+        step_direction = np.array([support_center_x - com_x, support_center_y - com_y])
+        step_direction = step_direction / (np.linalg.norm(step_direction) + 1e-6)
+
+        # Step location (beyond current CoM but within reasonable reach)
+        step_location = com_pos + step_direction * 0.3  # 30cm step
+
+        return step_location
+
+    def _ankle_strategy(self, com_pos: np.ndarray, com_vel: np.ndarray, dt: float) -> np.ndarray:
+        """Ankle-based balance control for small disturbances"""
+        # Calculate desired ankle angle to keep CoM over feet
+        desired_ankle_roll = 0.1 * (com_pos[1] - 0)  # Target CoM y to be 0
+        desired_ankle_pitch = 0.1 * (com_pos[0] - 0)  # Target CoM x to be 0
+
+        # Convert to torques (simplified model)
+        ankle_torques = np.array([desired_ankle_roll * 50, desired_ankle_pitch * 50])
+        return ankle_torques
+
+    def _hip_strategy(self, com_pos: np.ndarray, com_vel: np.ndarray, dt: float) -> np.ndarray:
+        """Hip-based balance control for larger disturbances"""
+        # Use LQR control for hip strategy
+        hip_control = self.balance_controller.lqr_control(com_pos[1], com_vel[1])
+        hip_torques = np.array([hip_control * 0.5, hip_control * 0.3])  # Roll and pitch
+        return hip_torques
+
+class BalanceSimulation:
+    def __init__(self):
+        self.pendulum = InvertedPendulumModel()
+        self.controller = BalanceController()
+        self.balance_controller = WalkingBalanceController(0.8)
+        self.time = 0.0
+
+    def step(self, dt: float, external_disturbance: float = 0.0) -> Dict:
+        """Simulate one step of balance control"""
+        self.time += dt
+
+        # Get current state
+        angle, angular_vel = self.pendulum.state
+        com_pos = self.pendulum.com_position.copy()
+
+        # Compute control
+        control_input = self.controller.compute(0.0, angle, angular_vel, dt)
+
+        # Add external disturbance
+        total_input = control_input + external_disturbance
+
+        # Update pendulum
+        new_state = self.pendulum.update(total_input, dt)
+
+        # Calculate ZMP
+        zmp = self.pendulum.get_zmp()
+
+        # Simulate support polygon (simplified as point at origin)
+        support_polygon = np.array([[-0.1, -0.05], [0.1, -0.05], [0.1, 0.05], [-0.1, 0.05]])
+
+        return {
+            'time': self.time,
+            'angle': angle,
+            'angular_velocity': angular_vel,
+            'com_position': com_pos,
+            'zmp': zmp,
+            'control_input': control_input,
+            'state': new_state
+        }
+
+# Example usage
+balance_sim = BalanceSimulation()
+
+# Simulate balance control with small disturbances
+results = []
+for t in np.arange(0, 10, 0.01):
+    disturbance = 0.1 * np.sin(t * 2) if 2 < t < 8 else 0  # Apply disturbance 2-8s
+    state = balance_sim.step(0.01, disturbance)
+    results.append(state)
+```
+
+## Review Questions
+
+1. What is the inverted pendulum model and how is it used in balance control?
+2. What are the different balance strategies (ankle, hip, stepping) and when are they used?
+3. How does feedback control help maintain humanoid balance?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="controller-design" label="Controller Design">
+Design and compare different PID controllers for balance control.
+</TabItem>
+<TabItem value="stability-analysis" label="Stability Analysis">
+Analyze the stability margins of the balance control system.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Implement a complete balance control system for a humanoid robot that can maintain stability during standing and recover from external disturbances. Test the system with various disturbance magnitudes and directions.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the principles of humanoid balance control
+- Be able to implement feedback control systems for balance
+- Recognize different balance strategies for various disturbances
+- Appreciate the challenges in maintaining dynamic stability

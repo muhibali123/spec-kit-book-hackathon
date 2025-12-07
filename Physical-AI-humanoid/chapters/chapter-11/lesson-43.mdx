@@ -1,0 +1,785 @@
+---
+title: "Regulatory and Legal Frameworks"
+description: "Examine the regulatory requirements and legal considerations that govern humanoid robot development and deployment."
+tags: ["regulations", "legal frameworks", "robotics law", "compliance", "standards"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Regulatory and Legal Frameworks
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Identify key regulatory bodies and standards organizations for robotics
+- Understand the safety and compliance requirements for humanoid robots
+- Analyze the legal implications of robot deployment in different sectors
+- Evaluate liability and responsibility frameworks for robotic systems
+- Assess the impact of regulations on robot development and commercialization
+
+## Key Concepts
+
+- **Safety Standards**: Requirements for ensuring robot safety in various environments
+- **Certification Processes**: Procedures for validating robot compliance with standards
+- **Liability Frameworks**: Legal structures for assigning responsibility for robot actions
+- **Privacy Regulations**: Rules governing data collection and processing by robots
+- **International Standards**: Global harmonization of robotics regulations
+- **Sector-Specific Regulations**: Different requirements for healthcare, manufacturing, etc.
+- **Ethical Guidelines**: Principles governing acceptable robot behavior
+- **Compliance Management**: Systems for ensuring ongoing regulatory compliance
+
+## Theory Summary
+
+Regulatory and legal frameworks for humanoid robots are rapidly evolving as these technologies transition from research laboratories to commercial applications. The regulatory landscape spans multiple domains including safety, privacy, liability, and ethical considerations, with different requirements for various application sectors.
+
+Safety standards form the foundation of robotics regulation, ensuring that robots can operate safely around humans and in various environments. Organizations such as the International Organization for Standardization (ISO), the International Electrotechnical Commission (IEC), and national bodies like the U.S. Occupational Safety and Health Administration (OSHA) develop standards for robot safety. These standards address mechanical safety, electrical safety, software reliability, and human-robot interaction safety.
+
+The certification process for humanoid robots involves demonstrating compliance with applicable standards through testing and documentation. This process can be lengthy and expensive, particularly for robots intended for safety-critical applications. The certification may need to be updated as robots are modified or as standards evolve.
+
+Liability frameworks address the complex question of who is responsible when robots cause harm or fail to perform as expected. Current legal systems are adapting to address scenarios involving autonomous systems, with potential liability resting with manufacturers, operators, software developers, or even the robots themselves in some proposed frameworks.
+
+Privacy regulations govern how robots collect, process, and store personal data. With humanoid robots often equipped with cameras, microphones, and other sensors, privacy compliance is critical. Regulations such as the European Union's General Data Protection Regulation (GDPR) and similar laws worldwide impose strict requirements on data handling.
+
+International standards harmonization is crucial for the global robotics industry, allowing robots to be developed and deployed across different jurisdictions. Organizations like ISO/TC 299 work on robotics standards that can be adopted globally, though implementation may vary by country.
+
+Sector-specific regulations address the unique requirements of different application areas. Healthcare robots must comply with medical device regulations, service robots in public spaces must meet accessibility requirements, and industrial robots must satisfy workplace safety standards.
+
+Ethical guidelines, while not always legally binding, influence regulatory development and industry best practices. These guidelines address issues such as robot behavior toward humans, transparency of robot capabilities, and the appropriate roles for robots in society.
+
+Compliance management systems help organizations maintain ongoing adherence to regulatory requirements as robots are deployed, updated, and maintained. These systems must track changing regulations, manage certification renewals, and ensure that robot updates do not compromise compliance.
+
+## Hands-on Activity
+
+### Activity: Regulatory Compliance Management System
+
+In this activity, you'll implement a system to track regulatory compliance for humanoid robots across different jurisdictions and applications.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple, Optional
+import random
+from dataclasses import dataclass
+from enum import Enum
+from datetime import datetime, timedelta
+import json
+
+class RegulatoryBody(Enum):
+    """Regulatory bodies that oversee robotics"""
+    ISO = "ISO (International Organization for Standardization)"
+    IEC = "IEC (International Electrotechnical Commission)"
+    FDA = "FDA (U.S. Food and Drug Administration)"
+    EU_MDR = "EU MDR (European Medical Device Regulation)"
+    OSHA = "OSHA (U.S. Occupational Safety and Health Administration)"
+    FTC = "FTC (U.S. Federal Trade Commission)"
+    GDPR = "GDPR (General Data Protection Regulation)"
+
+class ComplianceStatus(Enum):
+    """Status of regulatory compliance"""
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLIANT = "compliant"
+    NON_COMPLIANT = "non_compliant"
+    EXEMPT = "exempt"
+
+class ApplicationSector(Enum):
+    """Application sectors for humanoid robots"""
+    HEALTHCARE = "healthcare"
+    MANUFACTURING = "manufacturing"
+    SERVICE = "service"
+    RESEARCH = "research"
+    MILITARY = "military"
+    EDUCATION = "education"
+
+@dataclass
+class RegulatoryRequirement:
+    """A specific regulatory requirement"""
+    id: str
+    name: str
+    regulatory_body: RegulatoryBody
+    application_sectors: List[ApplicationSector]
+    mandatory: bool
+    deadline: Optional[datetime]
+    description: str
+    test_procedures: List[str]
+    documentation_requirements: List[str]
+
+@dataclass
+class RobotModel:
+    """Represents a humanoid robot model"""
+    id: str
+    name: str
+    application_sector: ApplicationSector
+    release_date: datetime
+    safety_rating: float  # 1-10 scale
+    privacy_compliance: bool
+    jurisdiction: str
+
+@dataclass
+class ComplianceRecord:
+    """Record of compliance status for a robot model"""
+    robot_id: str
+    requirement_id: str
+    status: ComplianceStatus
+    last_assessment: datetime
+    next_review: datetime
+    evidence: str
+    assessor: str
+    notes: str = ""
+
+class RegulatoryComplianceManager:
+    """Manages regulatory compliance for humanoid robots"""
+
+    def __init__(self):
+        self.requirements: List[RegulatoryRequirement] = self._initialize_requirements()
+        self.robot_models: List[RobotModel] = []
+        self.compliance_records: List[ComplianceRecord] = []
+        self.jurisdictions = ["USA", "EU", "Japan", "South Korea", "China"]
+        self.current_date = datetime.now()
+
+    def _initialize_requirements(self) -> List[RegulatoryRequirement]:
+        """Initialize regulatory requirements"""
+        requirements = [
+            RegulatoryRequirement(
+                id="ISO13482-2014",
+                name="Service robots - Safety requirements for personal care robots",
+                regulatory_body=RegulatoryBody.ISO,
+                application_sectors=[ApplicationSector.HEALTHCARE, ApplicationSector.SERVICE],
+                mandatory=True,
+                deadline=None,
+                description="Safety requirements for service robots that provide personal care",
+                test_procedures=["Collision detection tests", "Emergency stop functionality", "Electrical safety tests"],
+                documentation_requirements=["Risk assessment", "Safety manual", "User training materials"]
+            ),
+            RegulatoryRequirement(
+                id="ISO12100-2010",
+                name="Safety of machinery - General principles for design",
+                regulatory_body=RegulatoryBody.ISO,
+                application_sectors=[ApplicationSector.MANUFACTURING, ApplicationSector.RESEARCH],
+                mandatory=True,
+                deadline=None,
+                description="Fundamental principles for risk assessment and risk reduction",
+                test_procedures=["Risk assessment", "Safety system validation", "Emergency procedures"],
+                documentation_requirements=["Risk analysis", "Safety validation report", "Operating instructions"]
+            ),
+            RegulatoryRequirement(
+                id="GDPR-ART-25",
+                name="Data Protection by Design and by Default",
+                regulatory_body=RegulatoryBody.GDPR,
+                application_sectors=[ApplicationSector.SERVICE, ApplicationSector.HEALTHCARE, ApplicationSector.RESEARCH],
+                mandatory=True,
+                deadline=None,
+                description="Data protection requirements for systems processing personal data",
+                test_procedures=["Privacy impact assessment", "Data flow analysis", "Consent mechanism testing"],
+                documentation_requirements=["Privacy policy", "Data processing records", "Consent logs"]
+            ),
+            RegulatoryRequirement(
+                id="OSHA-3123",
+                name="Safety and Health Topics - Robotics",
+                regulatory_body=RegulatoryBody.OSHA,
+                application_sectors=[ApplicationSector.MANUFACTURING],
+                mandatory=True,
+                deadline=None,
+                description="Workplace safety requirements for industrial robotics",
+                test_procedures=["Workplace hazard assessment", "Safety zone validation", "Human-robot interaction tests"],
+                documentation_requirements=["Hazard analysis", "Safety procedures", "Training records"]
+            ),
+            RegulatoryRequirement(
+                id="FDA-21CFR820",
+                name="Quality System Regulation",
+                regulatory_body=RegulatoryBody.FDA,
+                application_sectors=[ApplicationSector.HEALTHCARE],
+                mandatory=True,
+                deadline=None,
+                description="Quality requirements for medical device manufacturers",
+                test_procedures=["Design validation", "Process validation", "Software verification"],
+                documentation_requirements=["Design controls", "Quality manual", "Validation records"]
+            )
+        ]
+        return requirements
+
+    def register_robot_model(self, robot: RobotModel):
+        """Register a new robot model for compliance tracking"""
+        self.robot_models.append(robot)
+
+        # Create initial compliance records for applicable requirements
+        for requirement in self.requirements:
+            if (robot.application_sector in requirement.application_sectors or
+                ApplicationSector.RESEARCH in requirement.application_sectors):
+                initial_status = ComplianceStatus.NOT_STARTED
+                if requirement.mandatory:
+                    initial_status = ComplianceStatus.NOT_STARTED
+                else:
+                    initial_status = ComplianceStatus.EXEMPT
+
+                record = ComplianceRecord(
+                    robot_id=robot.id,
+                    requirement_id=requirement.id,
+                    status=initial_status,
+                    last_assessment=self.current_date,
+                    next_review=self.current_date + timedelta(days=180),  # Review every 6 months
+                    evidence="Initial assessment pending",
+                    assessor="System"
+                )
+                self.compliance_records.append(record)
+
+    def update_compliance_status(self, robot_id: str, requirement_id: str,
+                                status: ComplianceStatus, evidence: str,
+                                assessor: str = "Manual") -> bool:
+        """Update compliance status for a specific robot and requirement"""
+        record = next((r for r in self.compliance_records
+                      if r.robot_id == robot_id and r.requirement_id == requirement_id), None)
+
+        if not record:
+            return False
+
+        record.status = status
+        record.last_assessment = self.current_date
+        record.next_review = self.current_date + timedelta(days=180)
+        record.evidence = evidence
+        record.assessor = assessor
+
+        return True
+
+    def get_robot_compliance_summary(self, robot_id: str) -> Dict:
+        """Get compliance summary for a specific robot"""
+        robot = next((r for r in self.robot_models if r.id == robot_id), None)
+        if not robot:
+            return {}
+
+        robot_records = [r for r in self.compliance_records if r.robot_id == robot_id]
+
+        total_requirements = len(robot_records)
+        compliant_requirements = len([r for r in robot_records if r.status == ComplianceStatus.COMPLIANT])
+        non_compliant_requirements = len([r for r in robot_records if r.status == ComplianceStatus.NON_COMPLIANT])
+        in_progress_requirements = len([r for r in robot_records if r.status == ComplianceStatus.IN_PROGRESS])
+
+        compliance_percentage = (compliant_requirements / total_requirements * 100) if total_requirements > 0 else 0
+
+        return {
+            "robot_id": robot_id,
+            "robot_name": robot.name,
+            "application_sector": robot.application_sector.value,
+            "total_requirements": total_requirements,
+            "compliant": compliant_requirements,
+            "non_compliant": non_compliant_requirements,
+            "in_progress": in_progress_requirements,
+            "compliance_percentage": compliance_percentage,
+            "compliance_records": [
+                {
+                    "requirement_id": r.requirement_id,
+                    "status": r.status.value,
+                    "last_assessment": r.last_assessment.isoformat(),
+                    "next_review": r.next_review.isoformat()
+                }
+                for r in robot_records
+            ]
+        }
+
+    def get_jurisdiction_requirements(self, jurisdiction: str) -> List[RegulatoryRequirement]:
+        """Get applicable requirements for a specific jurisdiction"""
+        # In a real system, this would be more complex based on jurisdiction-specific regulations
+        # For this example, we'll return all requirements but mark some as jurisdiction-specific
+        all_requirements = self.requirements.copy()
+
+        # Add jurisdiction-specific requirements
+        if jurisdiction == "EU":
+            gdpr_requirement = RegulatoryRequirement(
+                id="GDPR-SPECIFIC",
+                name="EU-Specific Data Protection Requirements",
+                regulatory_body=RegulatoryBody.GDPR,
+                application_sectors=[ApplicationSector.SERVICE, ApplicationSector.HEALTHCARE],
+                mandatory=True,
+                deadline=None,
+                description="Additional EU-specific privacy requirements",
+                test_procedures=["Data transfer compliance", "Right to erasure testing"],
+                documentation_requirements=["Data transfer impact assessment", "Privacy notice"]
+            )
+            all_requirements.append(gdpr_requirement)
+
+        return all_requirements
+
+    def generate_compliance_report(self, robot_id: str) -> Dict:
+        """Generate a detailed compliance report"""
+        summary = self.get_robot_compliance_summary(robot_id)
+        if not summary:
+            return {}
+
+        # Get detailed requirement information
+        detailed_compliance = []
+        for record in summary["compliance_records"]:
+            req = next((r for r in self.requirements if r.id == record["requirement_id"]), None)
+            if req:
+                detailed_compliance.append({
+                    "requirement_id": req.id,
+                    "requirement_name": req.name,
+                    "regulatory_body": req.regulatory_body.value,
+                    "status": record["status"],
+                    "mandatory": req.mandatory,
+                    "deadline": req.deadline.isoformat() if req.deadline else "None",
+                    "test_procedures": req.test_procedures,
+                    "documentation_required": req.documentation_requirements
+                })
+
+        return {
+            "report_date": self.current_date.isoformat(),
+            "robot_summary": summary,
+            "detailed_compliance": detailed_compliance,
+            "recommendations": self._generate_recommendations(detailed_compliance)
+        }
+
+    def _generate_recommendations(self, compliance_data: List[Dict]) -> List[str]:
+        """Generate compliance recommendations based on current status"""
+        recommendations = []
+
+        non_compliant = [c for c in compliance_data if c["status"] == "non_compliant"]
+        in_progress = [c for c in compliance_data if c["status"] == "in_progress"]
+
+        if non_compliant:
+            recommendations.append(f"Address {len(non_compliant)} non-compliant requirements immediately")
+
+        if in_progress:
+            recommendations.append(f"Complete {len(in_progress)} requirements in progress")
+
+        if not non_compliant and not in_progress:
+            recommendations.append("All requirements are compliant. Maintain current compliance status.")
+
+        return recommendations
+
+    def simulate_compliance_audits(self) -> Dict:
+        """Simulate compliance audits and their outcomes"""
+        audit_results = {}
+
+        for robot in self.robot_models:
+            # Simulate audit process
+            summary = self.get_robot_compliance_summary(robot.id)
+
+            # Calculate audit score based on compliance percentage
+            audit_score = summary.get("compliance_percentage", 0) / 100
+
+            # Add some randomness to simulate real-world audit variations
+            audit_score += random.uniform(-0.1, 0.1)
+            audit_score = max(0, min(1, audit_score))  # Clamp between 0 and 1
+
+            audit_results[robot.id] = {
+                "robot_name": robot.name,
+                "audit_score": audit_score,
+                "grade": self._calculate_audit_grade(audit_score),
+                "findings": self._generate_audit_findings(robot.id)
+            }
+
+        return audit_results
+
+    def _calculate_audit_grade(self, score: float) -> str:
+        """Calculate audit grade based on score"""
+        if score >= 0.95:
+            return "A+"
+        elif score >= 0.90:
+            return "A"
+        elif score >= 0.80:
+            return "B"
+        elif score >= 0.70:
+            return "C"
+        elif score >= 0.60:
+            return "D"
+        else:
+            return "F"
+
+    def _generate_audit_findings(self, robot_id: str) -> List[Dict]:
+        """Generate sample audit findings"""
+        findings = []
+
+        summary = self.get_robot_compliance_summary(robot_id)
+        non_compliant = [r for r in summary["compliance_records"] if r["status"] == "non_compliant"]
+
+        for nc in non_compliant[:2]:  # Limit to 2 findings for brevity
+            findings.append({
+                "requirement_id": nc["requirement_id"],
+                "finding": "Non-compliant requirement identified",
+                "severity": "High" if random.choice([True, False]) else "Medium",
+                "recommendation": f"Complete compliance assessment for {nc['requirement_id']}"
+            })
+
+        return findings
+
+def demonstrate_regulatory_compliance():
+    """Demonstrate regulatory compliance management for humanoid robots"""
+    print("Regulatory Compliance Management Demonstration")
+    print("=" * 48)
+
+    # Create compliance manager
+    manager = RegulatoryComplianceManager()
+
+    # Create sample robot models
+    robot1 = RobotModel(
+        id="HR-001",
+        name="CareBot Medical Assistant",
+        application_sector=ApplicationSector.HEALTHCARE,
+        release_date=datetime.now() - timedelta(days=365),
+        safety_rating=8.5,
+        privacy_compliance=False,
+        jurisdiction="USA"
+    )
+
+    robot2 = RobotModel(
+        id="HR-002",
+        name="ServiceBot Retail Assistant",
+        application_sector=ApplicationSector.SERVICE,
+        release_date=datetime.now() - timedelta(days=180),
+        safety_rating=7.8,
+        privacy_compliance=True,
+        jurisdiction="EU"
+    )
+
+    robot3 = RobotModel(
+        id="HR-003",
+        name="ResearchBot Academic Platform",
+        application_sector=ApplicationSector.RESEARCH,
+        release_date=datetime.now() - timedelta(days=90),
+        safety_rating=9.0,
+        privacy_compliance=True,
+        jurisdiction="USA"
+    )
+
+    # Register robots
+    manager.register_robot_model(robot1)
+    manager.register_robot_model(robot2)
+    manager.register_robot_model(robot3)
+
+    print(f"\nRegistered {len(manager.robot_models)} robot models for compliance tracking")
+
+    # Update some compliance statuses
+    print(f"\nUpdating compliance statuses...")
+    manager.update_compliance_status("HR-001", "ISO13482-2014", ComplianceStatus.COMPLIANT,
+                                   "Passed all safety tests and documentation review")
+    manager.update_compliance_status("HR-001", "FDA-21CFR820", ComplianceStatus.IN_PROGRESS,
+                                   "Quality system documentation in review")
+    manager.update_compliance_status("HR-002", "GDPR-ART-25", ComplianceStatus.COMPLIANT,
+                                   "Privacy impact assessment completed and approved")
+    manager.update_compliance_status("HR-003", "ISO12100-2010", ComplianceStatus.COMPLIANT,
+                                   "Risk assessment and safety validation completed")
+
+    # Show compliance summary for each robot
+    print(f"\nCompliance Summaries:")
+    print("-" * 20)
+
+    for robot in manager.robot_models:
+        summary = manager.get_robot_compliance_summary(robot.id)
+        print(f"\n{summary['robot_name']} ({summary['robot_id']}):")
+        print(f"  Application: {summary['application_sector']}")
+        print(f"  Compliance: {summary['compliance_percentage']:.1f}% ({summary['compliant']}/{summary['total_requirements']})")
+        print(f"  Status: {summary['compliant']} compliant, {summary['in_progress']} in progress, {summary['non_compliant']} non-compliant")
+
+    # Show jurisdiction-specific requirements
+    print(f"\nEU-Specific Requirements:")
+    print("-" * 25)
+    eu_requirements = manager.get_jurisdiction_requirements("EU")
+    for req in eu_requirements:
+        if "EU-Specific" in req.name:
+            print(f"  {req.name}: {req.description}")
+
+    # Generate detailed compliance report for one robot
+    print(f"\nDetailed Compliance Report for {robot1.name}:")
+    print("-" * 40)
+    report = manager.generate_compliance_report("HR-001")
+    print(f"Compliance Percentage: {report['robot_summary']['compliance_percentage']:.1f}%")
+    print(f"Recommendations: {', '.join(report['recommendations'])}")
+
+    # Simulate compliance audits
+    print(f"\nSimulated Compliance Audit Results:")
+    print("-" * 35)
+    audits = manager.simulate_compliance_audits()
+    for robot_id, result in audits.items():
+        robot = next(r for r in manager.robot_models if r.id == robot_id)
+        print(f"  {robot.name}: Grade {result['grade']}, Score {result['audit_score']:.2f}")
+        if result['findings']:
+            print(f"    Findings: {len(result['findings'])} issues identified")
+
+    # Visualize compliance status
+    plt.figure(figsize=(15, 10))
+
+    # Plot 1: Compliance by robot
+    plt.subplot(2, 3, 1)
+    robot_names = [r.name for r in manager.robot_models]
+    compliance_scores = [manager.get_robot_compliance_summary(r.id)['compliance_percentage'] for r in manager.robot_models]
+    plt.bar(robot_names, compliance_scores, color=['green' if score >= 80 else 'red' for score in compliance_scores])
+    plt.title('Compliance Percentage by Robot')
+    plt.ylabel('Compliance (%)')
+    plt.xticks(rotation=45)
+    plt.grid(True, alpha=0.3)
+
+    # Plot 2: Status distribution
+    plt.subplot(2, 3, 2)
+    all_records = manager.compliance_records
+    status_counts = {
+        'Compliant': len([r for r in all_records if r.status == ComplianceStatus.COMPLIANT]),
+        'In Progress': len([r for r in all_records if r.status == ComplianceStatus.IN_PROGRESS]),
+        'Non-Compliant': len([r for r in all_records if r.status == ComplianceStatus.NON_COMPLIANT]),
+        'Not Started': len([r for r in all_records if r.status == ComplianceStatus.NOT_STARTED]),
+        'Exempt': len([r for r in all_records if r.status == ComplianceStatus.EXEMPT])
+    }
+    plt.pie(status_counts.values(), labels=status_counts.keys(), autopct='%1.1f%%')
+    plt.title('Compliance Status Distribution')
+
+    # Plot 3: Requirements by sector
+    plt.subplot(2, 3, 3)
+    sectors = [s.value for s in ApplicationSector]
+    sector_counts = []
+    for sector in sectors:
+        count = len([r for r in manager.requirements if sector in [s.value for s in r.application_sectors]])
+        sector_counts.append(count)
+    plt.bar(sectors, sector_counts)
+    plt.title('Requirements by Application Sector')
+    plt.ylabel('Number of Requirements')
+    plt.xticks(rotation=45)
+    plt.grid(True, alpha=0.3)
+
+    # Plot 4: Audit results
+    plt.subplot(2, 3, 4)
+    audit_scores = [result['audit_score'] for result in audits.values()]
+    plt.bar(robot_names, audit_scores)
+    plt.title('Simulated Audit Scores')
+    plt.ylabel('Audit Score')
+    plt.xticks(rotation=45)
+    plt.grid(True, alpha=0.3)
+
+    # Plot 5: Regulatory bodies
+    plt.subplot(2, 3, 5)
+    all_reqs = manager.requirements
+    bodies = [body.value.split('(')[0].strip() for body in RegulatoryBody]
+    body_counts = []
+    for body in RegulatoryBody:
+        count = len([r for r in all_reqs if r.regulatory_body == body])
+        body_counts.append(count)
+    plt.bar([b.split('(')[0].strip() for b in RegulatoryBody], body_counts)
+    plt.title('Requirements by Regulatory Body')
+    plt.ylabel('Number of Requirements')
+    plt.xticks(rotation=45)
+    plt.grid(True, alpha=0.3)
+
+    # Plot 6: Compliance timeline (simulated)
+    plt.subplot(2, 3, 6)
+    days = range(0, 365, 30)  # Every 30 days
+    # Simulate improvement over time
+    simulated_compliance = [random.uniform(30, 60)]  # Start with 30-60%
+    for _ in days[1:]:
+        # Gradually improve compliance
+        next_val = min(100, simulated_compliance[-1] + random.uniform(2, 8))
+        simulated_compliance.append(next_val)
+
+    plt.plot(days, simulated_compliance, linewidth=2, marker='o')
+    plt.title('Simulated Compliance Improvement Over Time')
+    plt.xlabel('Days')
+    plt.ylabel('Compliance (%)')
+    plt.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    print(f"\nRegulatory compliance demonstration completed!")
+    print("The system helps manage the complex regulatory requirements for humanoid robots.")
+
+# Run the demonstration
+demonstrate_regulatory_compliance()
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy for numerical computations
+- Matplotlib for visualization
+- Basic understanding of legal and regulatory frameworks
+- Knowledge of compliance management systems
+
+## Step-by-Step Instructions
+
+1. **Design Regulatory Framework**: Create classes to represent regulatory bodies, requirements, and compliance statuses
+2. **Implement Requirement Management**: Build systems to track regulatory requirements by sector
+3. **Create Compliance Tracking**: Implement systems to monitor compliance status for robot models
+4. **Add Audit Simulation**: Build tools to simulate compliance audits and generate reports
+5. **Build Jurisdiction System**: Create systems to handle different regional requirements
+6. **Visualize Compliance Data**: Show compliance status and trends through charts
+7. **Generate Recommendations**: Create systems to suggest compliance improvements
+
+## Code Snippets
+
+### Compliance Status Management
+
+```python
+@dataclass
+class ComplianceRecord:
+    """Record of compliance status for a robot model"""
+    robot_id: str
+    requirement_id: str
+    status: ComplianceStatus
+    last_assessment: datetime
+    next_review: datetime
+    evidence: str
+    assessor: str
+    notes: str = ""
+
+class RegulatoryComplianceManager:
+    """Manages regulatory compliance for humanoid robots"""
+
+    def update_compliance_status(self, robot_id: str, requirement_id: str,
+                                status: ComplianceStatus, evidence: str,
+                                assessor: str = "Manual") -> bool:
+        """Update compliance status for a specific robot and requirement"""
+        record = next((r for r in self.compliance_records
+                      if r.robot_id == robot_id and r.requirement_id == requirement_id), None)
+
+        if not record:
+            return False
+
+        record.status = status
+        record.last_assessment = self.current_date
+        record.next_review = self.current_date + timedelta(days=180)
+        record.evidence = evidence
+        record.assessor = assessor
+
+        return True
+
+    def get_robot_compliance_summary(self, robot_id: str) -> Dict:
+        """Get compliance summary for a specific robot"""
+        robot = next((r for r in self.robot_models if r.id == robot_id), None)
+        if not robot:
+            return {}
+
+        robot_records = [r for r in self.compliance_records if r.robot_id == robot_id]
+
+        total_requirements = len(robot_records)
+        compliant_requirements = len([r for r in robot_records if r.status == ComplianceStatus.COMPLIANT])
+        non_compliant_requirements = len([r for r in robot_records if r.status == ComplianceStatus.NON_COMPLIANT])
+        in_progress_requirements = len([r for r in robot_records if r.status == ComplianceStatus.IN_PROGRESS])
+
+        compliance_percentage = (compliant_requirements / total_requirements * 100) if total_requirements > 0 else 0
+
+        return {
+            "robot_id": robot_id,
+            "robot_name": robot.name,
+            "application_sector": robot.application_sector.value,
+            "total_requirements": total_requirements,
+            "compliant": compliant_requirements,
+            "non_compliant": non_compliant_requirements,
+            "in_progress": in_progress_requirements,
+            "compliance_percentage": compliance_percentage,
+            "compliance_records": [
+                {
+                    "requirement_id": r.requirement_id,
+                    "status": r.status.value,
+                    "last_assessment": r.last_assessment.isoformat(),
+                    "next_review": r.next_review.isoformat()
+                }
+                for r in robot_records
+            ]
+        }
+```
+
+### Regulatory Requirement Management
+
+```python
+@dataclass
+class RegulatoryRequirement:
+    """A specific regulatory requirement"""
+    id: str
+    name: str
+    regulatory_body: RegulatoryBody
+    application_sectors: List[ApplicationSector]
+    mandatory: bool
+    deadline: Optional[datetime]
+    description: str
+    test_procedures: List[str]
+    documentation_requirements: List[str]
+
+def _initialize_requirements(self) -> List[RegulatoryRequirement]:
+    """Initialize regulatory requirements"""
+    requirements = [
+        RegulatoryRequirement(
+            id="ISO13482-2014",
+            name="Service robots - Safety requirements for personal care robots",
+            regulatory_body=RegulatoryBody.ISO,
+            application_sectors=[ApplicationSector.HEALTHCARE, ApplicationSector.SERVICE],
+            mandatory=True,
+            deadline=None,
+            description="Safety requirements for service robots that provide personal care",
+            test_procedures=["Collision detection tests", "Emergency stop functionality", "Electrical safety tests"],
+            documentation_requirements=["Risk assessment", "Safety manual", "User training materials"]
+        ),
+        RegulatoryRequirement(
+            id="ISO12100-2010",
+            name="Safety of machinery - General principles for design",
+            regulatory_body=RegulatoryBody.ISO,
+            application_sectors=[ApplicationSector.MANUFACTURING, ApplicationSector.RESEARCH],
+            mandatory=True,
+            deadline=None,
+            description="Fundamental principles for risk assessment and risk reduction",
+            test_procedures=["Risk assessment", "Safety system validation", "Emergency procedures"],
+            documentation_requirements=["Risk analysis", "Safety validation report", "Operating instructions"]
+        ),
+        # Additional requirements would follow the same pattern
+    ]
+    return requirements
+```
+
+## Review Questions
+
+1. What are the main regulatory bodies overseeing humanoid robotics?
+2. How do safety standards differ across application sectors?
+3. What is the role of liability frameworks in robotics regulation?
+4. How do privacy regulations impact humanoid robot design?
+5. What are the key components of a compliance management system?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**What is a primary purpose of regulatory frameworks for humanoid robots?**
+
+A) To make robots more expensive
+B) To ensure robot safety and establish accountability in human environments
+C) To limit robot capabilities
+D) To increase development time
+
+<details>
+<summary>Answer</summary>
+B) To ensure robot safety and establish accountability in human environments - Regulations ensure that robots operate safely around humans and establish frameworks for accountability.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**What does GDPR regulate in the context of humanoid robots?**
+
+A) Robot safety only
+B) Data protection and privacy requirements for systems processing personal data
+C) Robot manufacturing standards
+D) Robot pricing regulations
+
+<details>
+<summary>Answer</summary>
+B) Data protection and privacy requirements for systems processing personal data - GDPR governs how robots collect, process, and store personal data.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the compliance management system to include a risk assessment module that evaluates the potential impact of non-compliance for different requirements. Implement a system that can prioritize compliance activities based on risk level and potential consequences. Consider how different types of violations might have different impacts on robot deployment and operation.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Understand the regulatory landscape for humanoid robots
+- Identify applicable standards and requirements for different applications
+- Implement compliance management systems for robotic projects
+- Evaluate the legal implications of robot deployment
+- Assess the impact of regulations on robotics development

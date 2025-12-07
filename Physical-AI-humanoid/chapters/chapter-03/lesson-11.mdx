@@ -1,0 +1,315 @@
+---
+title: "Auditory Perception and Sound Processing"
+description: "Exploring hearing systems and audio processing for humanoid robots"
+tags: [auditory-perception, sound-processing, speech-recognition, localization, audio]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Auditory Perception and Sound Processing
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement sound localization algorithms for humanoid robots
+- Process audio signals for speech recognition and environmental awareness
+- Understand the role of auditory perception in human-robot interaction
+- Design audio processing pipelines for robotic applications
+
+## Key Concepts
+
+- **Sound Source Localization**: Determining the direction and distance of sound sources
+- **Speech Recognition**: Converting spoken language to text for robot understanding
+- **Audio Feature Extraction**: Identifying relevant audio characteristics for processing
+- **Noise Reduction**: Filtering environmental noise to improve signal quality
+- **Speaker Identification**: Recognizing different voices in multi-person environments
+
+## Theory Summary
+
+Auditory perception systems enable humanoid robots to perceive and interpret sound in their environment, which is essential for natural human-robot interaction. Sound processing allows robots to understand spoken commands, detect environmental sounds, and localize sound sources. This capability is particularly important for humanoid robots that interact with humans, as speech is a primary communication modality.
+
+Audio processing in humanoid robots involves multiple stages: sound capture using microphone arrays, signal processing to extract relevant features, and interpretation algorithms to understand the meaning of sounds. Sound localization is achieved through interaural time differences and intensity differences between microphones positioned like human ears.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="sound-localization" label="Sound Localization">
+Implement a basic sound localization algorithm using microphone array data.
+</TabItem>
+<TabItem value="speech-recognition" label="Speech Recognition">
+Create a speech recognition system for robot command interpretation.
+</TabItem>
+<TabItem value="audio-analysis" label="Audio Analysis">
+Analyze audio signals to identify different types of environmental sounds.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with librosa, scipy, and numpy for audio processing
+- Microphone array or simulated audio data
+- Speech recognition libraries (SpeechRecognition, Vosk, or similar)
+- Audio analysis tools
+
+## Step-by-Step Instructions
+
+1. Set up audio capture and microphone array configuration
+2. Implement audio preprocessing and noise reduction
+3. Develop sound localization algorithms
+4. Create speech recognition pipeline
+5. Test with various audio environments and conditions
+6. Optimize for real-time processing requirements
+
+## Code Snippets
+
+```python
+import numpy as np
+import scipy.signal as signal
+from scipy.io import wavfile
+import librosa
+from typing import Tuple, List, Dict
+import pyaudio
+
+class MicrophoneArray:
+    def __init__(self, num_mics: int = 2, mic_distance: float = 0.2):
+        self.num_mics = num_mics
+        self.mic_distance = mic_distance  # Distance between microphones in meters
+        self.sample_rate = 44100
+        self.buffer_size = 1024
+
+    def compute_interaural_time_difference(self, left_signal: np.ndarray,
+                                         right_signal: np.ndarray) -> float:
+        """Compute time difference between microphone signals"""
+        # Cross-correlation to find time delay
+        correlation = signal.correlate(left_signal, right_signal, mode='full')
+        lags = signal.correlation_lags(left_signal.size, right_signal.size, mode='full')
+
+        # Find the lag with maximum correlation
+        max_lag_idx = np.argmax(np.abs(correlation))
+        max_lag = lags[max_lag_idx]
+
+        # Convert samples to time
+        time_delay = max_lag / self.sample_rate
+        return time_delay
+
+    def estimate_sound_direction(self, left_signal: np.ndarray,
+                               right_signal: np.ndarray) -> float:
+        """Estimate sound direction in degrees from center"""
+        time_delay = self.compute_interaural_time_difference(left_signal, right_signal)
+
+        # Speed of sound in air (m/s)
+        speed_of_sound = 343.0
+
+        # Calculate angle using geometric relationship
+        # This is a simplified model assuming far-field source
+        max_time_diff = self.mic_distance / speed_of_sound
+        angle_rad = np.arcsin(time_delay / max_time_diff)
+        angle_deg = np.degrees(angle_rad)
+
+        # Clamp to valid range
+        angle_deg = np.clip(angle_deg, -90, 90)
+
+        return angle_deg
+
+class AudioProcessor:
+    def __init__(self):
+        self.sample_rate = 16000  # Standard for speech processing
+        self.frame_length = 2048
+        self.hop_length = 512
+
+    def extract_spectral_features(self, audio_signal: np.ndarray) -> Dict:
+        """Extract spectral features from audio signal"""
+        # STFT for spectral analysis
+        stft = librosa.stft(audio_signal, n_fft=self.frame_length, hop_length=self.hop_length)
+        magnitude = np.abs(stft)
+
+        # Spectral features
+        spectral_centroids = librosa.feature.spectral_centroid(S=magnitude)[0]
+        spectral_rolloff = librosa.feature.spectral_rolloff(S=magnitude)[0]
+        spectral_bandwidth = librosa.feature.spectral_bandwidth(S=magnitude)[0]
+
+        # MFCCs (Mel-frequency cepstral coefficients)
+        mfccs = librosa.feature.mfcc(y=audio_signal, sr=self.sample_rate, n_mfcc=13)
+
+        features = {
+            'spectral_centroids': spectral_centroids,
+            'spectral_rolloff': spectral_rolloff,
+            'spectral_bandwidth': spectral_bandwidth,
+            'mfccs': mfccs
+        }
+
+        return features
+
+    def detect_silence(self, audio_signal: np.ndarray, threshold: float = 0.01) -> np.ndarray:
+        """Detect silence regions in audio signal"""
+        # Calculate RMS energy
+        frame_length = 1024
+        hop_length = 512
+
+        frames = librosa.util.frame(audio_signal, frame_length=frame_length, hop_length=hop_length)
+        rms_energy = np.sqrt(np.mean(frames**2, axis=0))
+
+        # Identify silent frames
+        silent_frames = rms_energy < threshold
+        return silent_frames
+
+    def noise_reduction(self, audio_signal: np.ndarray) -> np.ndarray:
+        """Simple spectral subtraction noise reduction"""
+        # Estimate noise from beginning of signal (assumed to be silence)
+        noise_samples = int(0.5 * self.sample_rate)  # First 0.5 seconds
+        noise_profile = np.mean(np.abs(librosa.stft(audio_signal[:noise_samples])))
+
+        # Apply spectral subtraction
+        stft = librosa.stft(audio_signal)
+        magnitude = np.abs(stft)
+        phase = np.angle(stft)
+
+        # Subtract noise profile
+        enhanced_magnitude = np.maximum(magnitude - noise_profile, 0)
+
+        # Reconstruct signal
+        enhanced_stft = enhanced_magnitude * np.exp(1j * phase)
+        enhanced_signal = librosa.istft(enhanced_stft)
+
+        return enhanced_signal
+
+class SpeechRecognitionSystem:
+    def __init__(self):
+        self.audio_processor = AudioProcessor()
+        self.command_keywords = [
+            'move', 'stop', 'help', 'hello', 'forward', 'backward',
+            'left', 'right', 'up', 'down', 'dance', 'speak', 'listen'
+        ]
+
+    def preprocess_audio(self, audio_signal: np.ndarray) -> np.ndarray:
+        """Preprocess audio for speech recognition"""
+        # Normalize audio
+        normalized = audio_signal / np.max(np.abs(audio_signal))
+
+        # Apply noise reduction
+        denoised = self.audio_processor.noise_reduction(normalized)
+
+        # Apply pre-emphasis filter
+        pre_emphasized = signal.lfilter([1, -0.97], [1], denoised)
+
+        return pre_emphasized
+
+    def extract_speech_features(self, audio_signal: np.ndarray) -> np.ndarray:
+        """Extract features for speech recognition"""
+        # Use MFCCs as features
+        features = self.audio_processor.extract_spectral_features(audio_signal)
+        return features['mfccs']
+
+    def recognize_speech(self, audio_signal: np.ndarray) -> Dict:
+        """Recognize speech in audio signal"""
+        # Preprocess audio
+        processed_audio = self.preprocess_audio(audio_signal)
+
+        # Extract features
+        features = self.extract_speech_features(processed_audio)
+
+        # Simple keyword spotting (in a real system, use proper ASR)
+        # This is a simplified approach for demonstration
+        recognized_text = "unknown"
+        confidence = 0.0
+        detected_keywords = []
+
+        # Simulate keyword detection based on features
+        # In practice, this would use a trained model
+        for keyword in self.command_keywords:
+            # This is a placeholder - in reality you'd use a proper ASR model
+            if len(keyword) > 0:  # Placeholder condition
+                # Calculate similarity with stored keyword templates
+                # For now, just return a mock result
+                detected_keywords.append({
+                    'keyword': keyword,
+                    'confidence': np.random.uniform(0.1, 0.9)
+                })
+
+        result = {
+            'text': recognized_text,
+            'confidence': confidence,
+            'keywords': detected_keywords,
+            'features': features
+        }
+
+        return result
+
+class SoundEventDetector:
+    def __init__(self):
+        self.known_sounds = {
+            'clap': {'frequency_range': (1000, 3000), 'duration_range': (0.05, 0.2)},
+            'door_slam': {'frequency_range': (50, 500), 'duration_range': (0.1, 0.5)},
+            'glass_break': {'frequency_range': (2000, 8000), 'duration_range': (0.01, 0.1)},
+            'footstep': {'frequency_range': (100, 1000), 'duration_range': (0.1, 0.3)}
+        }
+
+    def classify_sound_event(self, audio_signal: np.ndarray) -> Dict:
+        """Classify environmental sound events"""
+        # Extract features
+        processor = AudioProcessor()
+        features = processor.extract_spectral_features(audio_signal)
+
+        # Analyze spectral content
+        avg_centroid = np.mean(features['spectral_centroids'])
+        avg_bandwidth = np.mean(features['spectral_bandwidth'])
+
+        # Classify based on spectral characteristics
+        best_match = None
+        best_score = 0
+
+        for sound_name, sound_params in self.known_sounds.items():
+            freq_low, freq_high = sound_params['frequency_range']
+
+            # Simple scoring based on frequency range match
+            if freq_low <= avg_centroid <= freq_high:
+                score = 1.0 - abs(avg_centroid - (freq_low + freq_high) / 2) / ((freq_high - freq_low) / 2)
+                if score > best_score:
+                    best_score = score
+                    best_match = sound_name
+
+        return {
+            'detected_event': best_match,
+            'confidence': best_score,
+            'spectral_characteristics': {
+                'centroid': avg_centroid,
+                'bandwidth': avg_bandwidth
+            }
+        }
+
+# Example usage
+mic_array = MicrophoneArray(num_mics=2, mic_distance=0.2)
+audio_processor = AudioProcessor()
+speech_system = SpeechRecognitionSystem()
+sound_detector = SoundEventDetector()
+```
+
+## Review Questions
+
+1. How does sound source localization work in humanoid robots?
+2. What are the main challenges in speech recognition for robotics?
+3. Why is auditory perception important for human-robot interaction?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="localization-algorithm" label="Localization Algorithm">
+Implement a more sophisticated sound localization algorithm using GCC-PHAT.
+</TabItem>
+<TabItem value="speech-pipeline" label="Speech Pipeline">
+Create a complete speech recognition pipeline for robot commands.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement an auditory perception system for a humanoid robot that can localize sound sources, recognize speech commands, and detect environmental events like door slams or glass breaking.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the principles of auditory perception in robotics
+- Be able to implement basic audio processing algorithms
+- Recognize the importance of hearing for humanoid robots
+- Appreciate the challenges in real-world audio processing

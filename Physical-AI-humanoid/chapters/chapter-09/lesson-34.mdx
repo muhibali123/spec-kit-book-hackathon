@@ -1,0 +1,470 @@
+---
+title: "Adaptive Control and Robustness"
+description: "Explore how humanoid robots adapt their control strategies to changing conditions and maintain robust performance."
+tags: ["adaptive control", "robustness", "control systems", "humanoid robotics", "parameter estimation"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Adaptive Control and Robustness
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Explain the principles of adaptive control in humanoid robotics
+- Implement basic adaptive control algorithms for parameter estimation
+- Understand how robust control techniques maintain performance under uncertainty
+- Analyze the challenges of adapting to changing environmental conditions
+- Evaluate different approaches to achieving robustness in control systems
+
+## Key Concepts
+
+- **Adaptive Control**: Control systems that adjust their parameters based on observed system behavior
+- **Parameter Estimation**: Techniques for identifying unknown or changing system parameters
+- **Robust Control**: Control methods that maintain performance despite model uncertainties
+- **Model Reference Adaptive Control (MRAC)**: Adaptive control that matches a reference model
+- **Self-Tuning Regulators**: Controllers that continuously update their parameters
+- **Robust Stability**: Stability that is maintained despite model uncertainties
+- **Gain Scheduling**: Adjusting controller gains based on operating conditions
+- **System Identification**: Process of determining mathematical models from observed data
+
+## Theory Summary
+
+Adaptive control is a critical capability for humanoid robots that must operate in uncertain and changing environments. Unlike fixed-parameter controllers, adaptive control systems continuously update their parameters based on observed system behavior, allowing them to maintain performance as conditions change or as the robot's own parameters evolve over time.
+
+The fundamental challenge in adaptive control is distinguishing between changes in the system's behavior that require parameter adaptation and disturbances or noise that should be rejected. This requires careful design of parameter estimation algorithms and adaptation mechanisms that converge to correct values while maintaining system stability.
+
+Model Reference Adaptive Control (MRAC) is a common approach where the controller adapts its parameters to make the system's behavior match a desired reference model. The adaptation mechanism adjusts controller parameters based on the error between the actual system output and the reference model output.
+
+Self-tuning regulators represent another approach where the controller explicitly estimates the system's parameters and then computes control actions based on these estimates. This typically involves two stages: system identification and control design, performed recursively as new data becomes available.
+
+Robust control focuses on maintaining performance despite uncertainties in the system model. These uncertainties might arise from modeling errors, unmodeled dynamics, or changing environmental conditions. Robust controllers are designed to maintain stability and performance even when the true system differs from the assumed model.
+
+Gain scheduling is a practical approach where controller gains are adjusted based on measurable operating conditions. For humanoid robots, this might involve adjusting balance controller gains based on the robot's velocity or the terrain type it's walking on.
+
+The certainty equivalence principle underlies many adaptive control approaches, where the controller uses the current parameter estimates as if they were the true values. While this simplifies the control design, it can lead to instability if the parameter estimates are poor.
+
+Persistent excitation is a critical requirement for parameter convergence in adaptive systems. The system inputs must be sufficiently rich to allow for accurate parameter estimation. In humanoid robotics, this means that the robot must perform motions that excite all relevant dynamic modes.
+
+## Hands-on Activity
+
+### Activity: Implementing an Adaptive Controller for Parameter Estimation
+
+In this activity, you'll create an adaptive controller that can estimate unknown system parameters and adjust its control strategy accordingly.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Tuple, List
+import random
+
+class AdaptiveController:
+    """Adaptive controller using parameter estimation for unknown system parameters"""
+
+    def __init__(self, n_states: int, n_inputs: int, n_outputs: int,
+                 gamma: float = 0.1, alpha: float = 0.01):
+        """
+        Initialize adaptive controller
+        :param n_states: Number of system states
+        :param n_inputs: Number of control inputs
+        :param n_outputs: Number of system outputs
+        :param gamma: Learning rate for parameter adaptation
+        :param alpha: Forgetting factor (0 < alpha <= 1)
+        """
+        self.n_states = n_states
+        self.n_inputs = n_inputs
+        self.n_outputs = n_outputs
+        self.gamma = gamma  # Learning rate
+        self.alpha = alpha  # Forgetting factor
+
+        # Parameter estimates (initially zeros)
+        self.theta = np.zeros(n_states * n_inputs + n_outputs * n_inputs)  # Combined parameter vector
+
+        # Covariance matrix for recursive least squares
+        self.P = np.eye(len(self.theta)) * 1000  # Large initial uncertainty
+
+        # Reference model parameters
+        self.A_ref = np.array([[0.8, 0.1], [-0.1, 0.9]])  # Stable reference model
+        self.B_ref = np.array([[1.0], [0.5]])
+
+        # Controller parameters
+        self.K = np.zeros((n_inputs, n_outputs))  # Initial control gain
+
+    def regressor_vector(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+        """
+        Create regressor vector for parameter estimation
+        :param x: Current state
+        :param u: Current control input
+        :return: Regressor vector
+        """
+        # For a simple linear model: x_next = A*x + B*u
+        # The regressor would be phi = [x1, x2, ..., u1, u2, ...]
+        regressor = np.concatenate([x.flatten(), u.flatten()])
+        return regressor
+
+    def update_parameters(self, x: np.ndarray, u: np.ndarray, x_next: np.ndarray) -> None:
+        """
+        Update parameter estimates using recursive least squares
+        :param x: Current state
+        :param u: Current control input
+        :param x_next: Next state (measured)
+        """
+        # Create regressor vector
+        phi = self.regressor_vector(x, u)
+
+        # Prediction error
+        x_pred = self.predict_next_state(x, u)
+        error = x_next - x_pred
+
+        # Recursive least squares update
+        P_phi = self.P @ phi
+        denominator = self.alpha + phi.T @ P_phi
+
+        # Update parameter estimates
+        self.theta += (P_phi * error) / denominator
+
+        # Update covariance matrix
+        self.P = (self.P - np.outer(P_phi, P_phi) / denominator) / self.alpha
+
+    def predict_next_state(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+        """
+        Predict next state using current parameter estimates
+        :param x: Current state
+        :param u: Current control input
+        :return: Predicted next state
+        """
+        # Extract A and B matrices from parameter vector
+        A_est = self.theta[:self.n_states * self.n_states].reshape((self.n_states, self.n_states))
+        B_est = self.theta[self.n_states * self.n_states:].reshape((self.n_states, self.n_inputs))
+
+        # Predict next state: x_next = A*x + B*u
+        x_next = A_est @ x + B_est @ u
+        return x_next
+
+    def control(self, x: np.ndarray, x_ref: np.ndarray) -> np.ndarray:
+        """
+        Compute control action using adaptive control law
+        :param x: Current state
+        :param x_ref: Reference state
+        :return: Control action
+        """
+        # Compute control error
+        error = x_ref - x
+
+        # Update controller gain based on estimated parameters
+        # For simplicity, use a basic state feedback law
+        # In practice, this would involve more sophisticated adaptive control laws
+        u = self.K @ error + np.random.normal(0, 0.01, size=self.n_inputs)  # Add small exploration
+
+        return u
+
+class RobustController:
+    """Robust controller that maintains performance under uncertainties"""
+
+    def __init__(self, nominal_A: np.ndarray, nominal_B: np.ndarray,
+                 uncertainty_bound: float = 0.1):
+        """
+        Initialize robust controller
+        :param nominal_A: Nominal system matrix A
+        :param nominal_B: Nominal system matrix B
+        :param uncertainty_bound: Bound on system uncertainties
+        """
+        self.nominal_A = nominal_A
+        self.nominal_B = nominal_B
+        self.uncertainty_bound = uncertainty_bound
+
+        # Design robust controller using LQR on nominal system
+        # For simplicity, using fixed Q and R matrices
+        self.Q = np.eye(nominal_A.shape[0]) * 10
+        self.R = np.eye(nominal_B.shape[1]) * 1
+
+        # Solve Riccati equation for LQR gain (simplified implementation)
+        # In practice, would use scipy.linalg.solve_continuous_are or discrete equivalent
+        self.K = self.design_lqr_gain(nominal_A, nominal_B, self.Q, self.R)
+
+    def design_lqr_gain(self, A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray) -> np.ndarray:
+        """Design LQR gain matrix (simplified - in practice use proper Riccati solver)"""
+        # This is a simplified version; in practice, solve the algebraic Riccati equation
+        # For this example, we'll use a fixed gain based on the system properties
+        try:
+            # Attempt to compute a stabilizing gain
+            # This is a simplified approach - real LQR would solve the Riccati equation
+            P = np.eye(A.shape[0])  # Placeholder solution
+            K = np.linalg.inv(R) @ B.T @ P
+            return K
+        except:
+            # If computation fails, return a simple stabilizing gain
+            return np.ones((B.shape[1], A.shape[0])) * 0.1
+
+    def control(self, x: np.ndarray, x_ref: np.ndarray) -> np.ndarray:
+        """Compute robust control action"""
+        # Add robustness term to handle uncertainties
+        error = x_ref - x
+        u_nominal = -self.K @ error  # Nominal control
+
+        # Add robustness term to handle uncertainties
+        robust_term = self.uncertainty_bound * np.tanh(5 * error)  # Smooth saturation
+        u = u_nominal + robust_term
+
+        return u
+
+class AdaptiveRobustSystem:
+    """System that combines adaptive and robust control"""
+
+    def __init__(self):
+        self.adaptive_ctrl = AdaptiveController(n_states=2, n_inputs=1, n_outputs=1)
+        self.robust_ctrl = RobustController(
+            nominal_A=np.array([[0.9, 0.1], [-0.1, 0.8]]),
+            nominal_B=np.array([[0.5], [1.0]]),
+            uncertainty_bound=0.1
+        )
+
+        # True system parameters (unknown to controller)
+        self.true_A = np.array([[0.85, 0.12], [-0.08, 0.75]])  # Slightly different from nominal
+        self.true_B = np.array([[0.6], [0.9]])  # Slightly different from nominal
+
+    def true_dynamics(self, x: np.ndarray, u: np.ndarray, disturbance: float = 0.0) -> np.ndarray:
+        """True system dynamics (unknown to controller)"""
+        x_next = self.true_A @ x + self.true_B @ u
+        # Add some process noise
+        x_next += np.random.normal(0, 0.01, size=x_next.shape)
+        x_next += np.array([disturbance, 0])  # Add disturbance
+        return x_next
+
+    def run_adaptive_control(self, initial_state: np.ndarray,
+                           reference_trajectory: List[np.ndarray],
+                           steps: int = 100) -> Tuple[List, List, List]:
+        """Run adaptive control with parameter estimation"""
+        states = [initial_state.copy()]
+        controls = []
+        errors = []
+
+        x = initial_state.copy()
+
+        for t in range(steps):
+            # Get reference for this time step
+            x_ref = reference_trajectory[min(t, len(reference_trajectory)-1)]
+
+            # Compute control using adaptive controller
+            u = self.adaptive_ctrl.control(x, x_ref)
+
+            # Apply control to true system
+            x_next = self.true_dynamics(x, u)
+
+            # Update parameter estimates
+            self.adaptive_ctrl.update_parameters(x, u, x_next)
+
+            # Store data
+            states.append(x_next.copy())
+            controls.append(u.copy())
+            errors.append(np.linalg.norm(x_ref - x_next))
+
+            # Update state
+            x = x_next.copy()
+
+        return states, controls, errors
+
+def demonstrate_adaptive_control():
+    """Demonstrate adaptive and robust control concepts"""
+    print("Adaptive and Robust Control Demonstration")
+    print("=" * 45)
+
+    # Initialize system
+    system = AdaptiveRobustSystem()
+
+    # Set up simulation
+    initial_state = np.array([1.0, 0.5])
+    reference_trajectory = [np.array([0.0, 0.0])] * 150  # Try to reach origin
+
+    print("Running adaptive control simulation...")
+    print("Time\tState[0]\tState[1]\tControl\tError")
+    print("-" * 50)
+
+    # Run adaptive control
+    states, controls, errors = system.run_adaptive_control(
+        initial_state, reference_trajectory, steps=150
+    )
+
+    # Print progress
+    for i in range(0, len(states)-1, 25):  # Print every 25 steps
+        x = states[i]
+        u = controls[i] if i < len(controls) else [0]
+        err = errors[i] if i < len(errors) else 0
+        print(f"{i:3d}\t{x[0]:8.3f}\t{x[1]:8.3f}\t{u[0]:7.3f}\t{err:7.3f}")
+
+    # Plot results
+    states = np.array(states)
+    controls = np.array(controls)
+    errors = np.array(errors)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
+
+    # Plot state evolution
+    ax1.plot(states[:, 0], label='State 1', linewidth=2)
+    ax1.plot(states[:, 1], label='State 2', linewidth=2)
+    ax1.axhline(y=0, color='k', linestyle='--', alpha=0.5, label='Reference')
+    ax1.set_ylabel('State Value')
+    ax1.set_title('State Evolution with Adaptive Control')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+
+    # Plot control effort
+    ax2.plot(controls[:, 0], label='Control Input', linewidth=2)
+    ax2.set_ylabel('Control Value')
+    ax2.set_title('Control Effort Over Time')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+
+    # Plot tracking error
+    ax3.plot(errors, label='Tracking Error', linewidth=2)
+    ax3.set_ylabel('Error')
+    ax3.set_xlabel('Time Step')
+    ax3.set_title('Tracking Error Over Time')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # Final statistics
+    final_error = errors[-1] if len(errors) > 0 else float('inf')
+    avg_error = np.mean(errors) if len(errors) > 0 else float('inf')
+    max_control = np.max(np.abs(controls)) if len(controls) > 0 else 0
+
+    print(f"\nFinal tracking error: {final_error:.4f}")
+    print(f"Average tracking error: {avg_error:.4f}")
+    print(f"Maximum control effort: {max_control:.4f}")
+    print("Adaptive control demonstration completed!")
+
+    return states, controls, errors
+
+# Run the demonstration
+states, controls, errors = demonstrate_adaptive_control()
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy for numerical computations
+- Matplotlib for visualization
+- Basic understanding of control theory and system identification
+- Knowledge of linear algebra and recursive estimation
+
+## Step-by-Step Instructions
+
+1. **Initialize Adaptive Controller**: Create a controller that maintains parameter estimates and covariance information
+2. **Implement Parameter Estimation**: Create methods for updating parameter estimates using recursive least squares
+3. **Design Regressor Vector**: Build the regressor vector that captures the relationship between inputs, states, and parameters
+4. **Implement Control Law**: Create the adaptive control law that uses current parameter estimates
+5. **Add Robustness Features**: Implement robust control techniques to handle uncertainties
+6. **Test with Uncertain System**: Apply the controller to a system with unknown parameters
+7. **Visualize Adaptation**: Show how parameter estimates converge over time
+
+## Code Snippets
+
+### Parameter Estimation Update
+
+```python
+def update_parameters(self, x: np.ndarray, u: np.ndarray, x_next: np.ndarray) -> None:
+    """
+    Update parameter estimates using recursive least squares
+    :param x: Current state
+    :param u: Current control input
+    :param x_next: Next state (measured)
+    """
+    # Create regressor vector
+    phi = self.regressor_vector(x, u)
+
+    # Prediction error
+    x_pred = self.predict_next_state(x, u)
+    error = x_next - x_pred
+
+    # Recursive least squares update
+    P_phi = self.P @ phi
+    denominator = self.alpha + phi.T @ P_phi
+
+    # Update parameter estimates
+    self.theta += (P_phi * error) / denominator
+
+    # Update covariance matrix
+    self.P = (self.P - np.outer(P_phi, P_phi) / denominator) / self.alpha
+```
+
+### Regressor Vector Creation
+
+```python
+def regressor_vector(self, x: np.ndarray, u: np.ndarray) -> np.ndarray:
+    """
+    Create regressor vector for parameter estimation
+    :param x: Current state
+    :param u: Current control input
+    :return: Regressor vector
+    """
+    # For a simple linear model: x_next = A*x + B*u
+    # The regressor would be phi = [x1, x2, ..., u1, u2, ...]
+    regressor = np.concatenate([x.flatten(), u.flatten()])
+    return regressor
+```
+
+## Review Questions
+
+1. What is the difference between adaptive control and robust control?
+2. How does persistent excitation affect parameter convergence in adaptive systems?
+3. What are the main challenges in designing stable adaptive control systems?
+4. How does Model Reference Adaptive Control (MRAC) work?
+5. What role does the certainty equivalence principle play in adaptive control?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**What is the main challenge in adaptive control systems?**
+
+A) Too much computational complexity
+B) Distinguishing between system changes and disturbances
+C) Requiring too much training data
+D) Working only with linear systems
+
+<details>
+<summary>Answer</summary>
+B) Distinguishing between system changes and disturbances - Adaptive systems must determine whether changes in behavior require parameter adaptation or should be treated as noise/disturbances.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**What is persistent excitation in adaptive control?**
+
+A) Continuous control action
+B) Rich input signals that allow parameter identification
+C) High-frequency control updates
+D) Constant system monitoring
+
+<details>
+<summary>Answer</summary>
+B) Rich input signals that allow parameter identification - Persistent excitation ensures the system inputs are sufficiently rich to identify all parameters accurately.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the adaptive controller to handle a more complex humanoid system with multiple degrees of freedom. Implement a controller that can adapt to changes in the robot's mass distribution (e.g., when carrying objects) and maintain stable control. Consider how you would design the regressor vector to capture the dynamics of a multi-link system.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Implement adaptive control algorithms for parameter estimation
+- Design robust control systems that maintain performance under uncertainty
+- Understand the trade-offs between adaptation speed and stability
+- Apply adaptive control techniques to humanoid robotics challenges
+- Evaluate the performance of adaptive and robust control systems

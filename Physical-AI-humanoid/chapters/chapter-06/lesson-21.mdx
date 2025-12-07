@@ -1,0 +1,415 @@
+---
+title: "Machine Learning Fundamentals for Physical AI"
+description: "Core machine learning concepts and algorithms applied to physical AI systems"
+tags: [machine-learning, physical-ai, supervised-learning, reinforcement-learning, robotics]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Machine Learning Fundamentals for Physical AI
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Understand the fundamental machine learning approaches for physical AI
+- Implement supervised learning algorithms for robot perception tasks
+- Apply reinforcement learning techniques for robot control
+- Recognize the differences between traditional ML and physical AI applications
+
+## Key Concepts
+
+- **Supervised Learning**: Learning from labeled examples to make predictions
+- **Reinforcement Learning**: Learning through interaction with environment and rewards
+- **Imitation Learning**: Learning by observing and mimicking expert behavior
+- **Transfer Learning**: Applying knowledge from one domain to another
+- **Online Learning**: Adapting models in real-time as new data becomes available
+
+## Theory Summary
+
+Machine learning in physical AI systems differs significantly from traditional applications due to the embodied nature of the learning process. Physical AI systems must learn not only from data but also through physical interaction with the environment. This creates unique challenges such as safety constraints during learning, real-time performance requirements, and the need for robust learning from limited data.
+
+Supervised learning in physical AI often focuses on perception tasks like object recognition, scene understanding, and sensor data interpretation. However, the real-time constraints of physical systems require efficient algorithms that can process data quickly enough to support real-time decision making.
+
+Reinforcement learning is particularly important for physical AI as it enables robots to learn optimal behaviors through trial and error in their environment. The physical nature of the tasks means that the robot must balance exploration (learning new behaviors) with safety and efficiency.
+
+Imitation learning allows robots to learn complex behaviors by observing human demonstrations, which is particularly valuable for tasks that are difficult to specify with traditional programming approaches.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="supervised-learning" label="Supervised Learning">
+Implement a supervised learning algorithm for robot perception tasks.
+</TabItem>
+<TabItem value="reinforcement-learning" label="Reinforcement Learning">
+Create a simple RL agent that learns to control a simulated robot.
+</TabItem>
+<TabItem value="imitation-learning" label="Imitation Learning">
+Implement a system that learns from human demonstrations.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with scikit-learn, PyTorch or TensorFlow
+- Robot simulation environment (PyBullet, Gazebo)
+- Basic understanding of linear algebra and probability
+- Reinforcement learning libraries (Stable Baselines3, Ray RLlib)
+
+## Step-by-Step Instructions
+
+1. Set up machine learning environment for physical AI
+2. Implement supervised learning for perception tasks
+3. Create reinforcement learning environment
+4. Develop imitation learning system
+5. Test algorithms with physical AI scenarios
+6. Evaluate performance and safety constraints
+
+## Code Snippets
+
+```python
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+from typing import Tuple, List, Dict, Any
+import gym
+from gym import spaces
+import random
+
+class PhysicalAIPerceptionNet(nn.Module):
+    """Neural network for robot perception tasks"""
+    def __init__(self, input_dim: int, output_dim: int):
+        super(PhysicalAIPerceptionNet, self).__init__()
+
+        self.feature_extractor = nn.Sequential(
+            nn.Linear(input_dim, 256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(128, 64),
+            nn.ReLU()
+        )
+
+        self.classifier = nn.Linear(64, output_dim)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        features = self.feature_extractor(x)
+        output = self.classifier(features)
+        return output
+
+class SupervisedLearner:
+    """Supervised learning implementation for physical AI perception"""
+    def __init__(self, input_dim: int, output_dim: int, learning_rate: float = 0.001):
+        self.model = PhysicalAIPerceptionNet(input_dim, output_dim)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
+        self.criterion = nn.MSELoss()
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
+
+    def train_batch(self, inputs: torch.Tensor, targets: torch.Tensor) -> float:
+        """Train on a batch of data"""
+        self.model.train()
+        inputs, targets = inputs.to(self.device), targets.to(self.device)
+
+        self.optimizer.zero_grad()
+        outputs = self.model(inputs)
+        loss = self.criterion(outputs, targets)
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.item()
+
+    def predict(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Make predictions with the trained model"""
+        self.model.eval()
+        with torch.no_grad():
+            inputs = inputs.to(self.device)
+            outputs = self.model(inputs)
+        return outputs
+
+class SimpleRobotEnv(gym.Env):
+    """Simple robot environment for reinforcement learning"""
+    def __init__(self):
+        super(SimpleRobotEnv, self).__init__()
+
+        # Continuous action space: [velocity_x, velocity_y, angular_velocity]
+        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
+
+        # Observation space: [x_pos, y_pos, angle, goal_x, goal_y, obstacle_x, obstacle_y]
+        self.observation_space = spaces.Box(low=-10.0, high=10.0, shape=(7,), dtype=np.float32)
+
+        # Environment parameters
+        self.robot_pos = np.array([0.0, 0.0])
+        self.robot_angle = 0.0
+        self.goal_pos = np.array([5.0, 5.0])
+        self.obstacle_pos = np.array([2.5, 2.5])
+        self.max_steps = 100
+        self.current_step = 0
+
+    def reset(self):
+        """Reset the environment"""
+        self.robot_pos = np.array([0.0, 0.0])
+        self.robot_angle = 0.0
+        self.current_step = 0
+        return self._get_observation()
+
+    def _get_observation(self) -> np.ndarray:
+        """Get current observation"""
+        return np.concatenate([
+            self.robot_pos,
+            [self.robot_angle],
+            self.goal_pos,
+            self.obstacle_pos
+        ])
+
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Dict]:
+        """Execute one step in the environment"""
+        # Update robot position based on action
+        velocity_x, velocity_y, angular_vel = action
+        dt = 0.1  # Time step
+
+        # Update position (simplified kinematics)
+        self.robot_pos[0] += velocity_x * dt
+        self.robot_pos[1] += velocity_y * dt
+        self.robot_angle += angular_vel * dt
+
+        # Calculate reward
+        distance_to_goal = np.linalg.norm(self.robot_pos - self.goal_pos)
+        distance_to_obstacle = np.linalg.norm(self.robot_pos - self.obstacle_pos)
+
+        # Reward based on proximity to goal, with penalty for being near obstacle
+        reward = -distance_to_goal
+        if distance_to_obstacle < 0.5:  # Too close to obstacle
+            reward -= 10.0
+
+        # Check if goal reached
+        done = distance_to_goal < 0.3 or self.current_step >= self.max_steps
+        self.current_step += 1
+
+        return self._get_observation(), reward, done, {}
+
+    def render(self, mode='human'):
+        """Render the environment (simplified)"""
+        print(f"Robot: ({self.robot_pos[0]:.2f}, {self.robot_pos[1]:.2f}), "
+              f"Goal: ({self.goal_pos[0]}, {self.goal_pos[1]}), "
+              f"Distance: {np.linalg.norm(self.robot_pos - self.goal_pos):.2f}")
+
+class QNetwork(nn.Module):
+    """Q-network for Deep Q-Learning"""
+    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 64):
+        super(QNetwork, self).__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
+        )
+
+    def forward(self, state: torch.Tensor) -> torch.Tensor:
+        return self.network(state)
+
+class DQNAgent:
+    """Deep Q-Learning agent for physical AI control"""
+    def __init__(self, state_dim: int, action_dim: int, learning_rate: float = 1e-3,
+                 gamma: float = 0.99, epsilon: float = 1.0, epsilon_decay: float = 0.995,
+                 epsilon_min: float = 0.01):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.epsilon_min = epsilon_min
+
+        # Neural networks
+        self.q_network = QNetwork(state_dim, action_dim)
+        self.target_network = QNetwork(state_dim, action_dim)
+        self.optimizer = optim.Adam(self.q_network.parameters(), lr=learning_rate)
+
+        # Experience replay buffer
+        self.memory = []
+        self.max_memory_size = 10000
+        self.batch_size = 32
+
+        # Update target network
+        self.update_target_network()
+
+    def update_target_network(self):
+        """Update target network with current network weights"""
+        self.target_network.load_state_dict(self.q_network.state_dict())
+
+    def remember(self, state: np.ndarray, action: int, reward: float,
+                 next_state: np.ndarray, done: bool):
+        """Store experience in replay buffer"""
+        self.memory.append((state, action, reward, next_state, done))
+        if len(self.memory) > self.max_memory_size:
+            self.memory.pop(0)
+
+    def act(self, state: np.ndarray) -> int:
+        """Choose action using epsilon-greedy policy"""
+        if np.random.random() <= self.epsilon:
+            return random.randrange(self.action_dim)
+
+        state_tensor = torch.FloatTensor(state).unsqueeze(0)
+        q_values = self.q_network(state_tensor)
+        return np.argmax(q_values.cpu().data.numpy())
+
+    def replay(self):
+        """Train on batch of experiences"""
+        if len(self.memory) < self.batch_size:
+            return
+
+        batch = random.sample(self.memory, self.batch_size)
+        states = torch.FloatTensor([e[0] for e in batch])
+        actions = torch.LongTensor([e[1] for e in batch])
+        rewards = torch.FloatTensor([e[2] for e in batch])
+        next_states = torch.FloatTensor([e[3] for e in batch])
+        dones = torch.BoolTensor([e[4] for e in batch])
+
+        current_q_values = self.q_network(states).gather(1, actions.unsqueeze(1))
+        next_q_values = self.target_network(next_states).max(1)[0].detach()
+        target_q_values = rewards + (self.gamma * next_q_values * ~dones)
+
+        loss = nn.MSELoss()(current_q_values.squeeze(), target_q_values)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        # Decay epsilon
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+
+class ImitationLearner:
+    """Imitation learning implementation"""
+    def __init__(self, state_dim: int, action_dim: int, learning_rate: float = 0.001):
+        self.model = nn.Sequential(
+            nn.Linear(state_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, action_dim)
+        )
+        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
+        self.criterion = nn.MSELoss()
+
+    def train(self, demonstrations: List[Tuple[np.ndarray, np.ndarray]], epochs: int = 100):
+        """Train on expert demonstrations"""
+        states, actions = zip(*demonstrations)
+        states = torch.FloatTensor(np.array(states))
+        actions = torch.FloatTensor(np.array(actions))
+
+        for epoch in range(epochs):
+            self.optimizer.zero_grad()
+            predicted_actions = self.model(states)
+            loss = self.criterion(predicted_actions, actions)
+            loss.backward()
+            self.optimizer.step()
+
+            if epoch % 20 == 0:
+                print(f"Epoch {epoch}, Loss: {loss.item():.4f}")
+
+    def predict(self, state: np.ndarray) -> np.ndarray:
+        """Predict action for given state"""
+        state_tensor = torch.FloatTensor(state).unsqueeze(0)
+        with torch.no_grad():
+            action = self.model(state_tensor).squeeze(0).numpy()
+        return action
+
+# Example usage
+def example_usage():
+    # Example: Supervised learning for perception
+    print("=== Supervised Learning Example ===")
+    supervised_learner = SupervisedLearner(input_dim=10, output_dim=4)
+
+    # Create dummy data for perception task
+    batch_size = 32
+    inputs = torch.randn(batch_size, 10)
+    targets = torch.randn(batch_size, 4)
+
+    loss = supervised_learner.train_batch(inputs, targets)
+    print(f"Supervised learning batch loss: {loss:.4f}")
+
+    # Example: Reinforcement learning
+    print("\n=== Reinforcement Learning Example ===")
+    env = SimpleRobotEnv()
+    agent = DQNAgent(state_dim=7, action_dim=5)  # 5 discrete actions
+
+    # Train for a few episodes
+    for episode in range(10):
+        state = env.reset()
+        total_reward = 0
+
+        for step in range(50):
+            # Convert continuous action space to discrete for DQN
+            action = agent.act(state)
+            # Convert discrete action to continuous
+            continuous_action = np.array([action/2.0, action/3.0, action/4.0])
+
+            next_state, reward, done, _ = env.step(continuous_action)
+            agent.remember(state, action, reward, next_state, done)
+
+            state = next_state
+            total_reward += reward
+
+            if done:
+                break
+
+        # Train on experiences
+        agent.replay()
+
+        if episode % 5 == 0:
+            print(f"Episode {episode}, Total Reward: {total_reward:.2f}")
+
+    # Example: Imitation learning
+    print("\n=== Imitation Learning Example ===")
+    imitation_learner = ImitationLearner(state_dim=7, action_dim=3)
+
+    # Create dummy demonstrations (state, action pairs)
+    demonstrations = []
+    for _ in range(100):
+        state = np.random.randn(7)
+        action = np.random.randn(3)  # Continuous action
+        demonstrations.append((state, action))
+
+    imitation_learner.train(demonstrations, epochs=50)
+
+# Uncomment to run example
+# example_usage()
+```
+
+## Review Questions
+
+1. What are the key differences between traditional ML and ML for physical AI?
+2. How does reinforcement learning differ from supervised learning in robotics?
+3. What are the challenges of learning in real-time physical systems?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="algorithm-comparison" label="Algorithm Comparison">
+Compare the performance of different ML algorithms for a physical AI task.
+</TabItem>
+<TabItem value="safety-considerations" label="Safety Considerations">
+Design safety mechanisms for learning algorithms in physical systems.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Implement a complete machine learning system for a physical AI application such as object recognition or robot control. Test the system with real or simulated data and evaluate its performance and safety.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand fundamental ML approaches for physical AI
+- Be able to implement basic learning algorithms
+- Recognize the challenges of learning in physical systems
+- Appreciate the importance of safety in physical AI learning

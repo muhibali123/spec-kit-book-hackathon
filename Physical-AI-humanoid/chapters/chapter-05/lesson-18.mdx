@@ -1,0 +1,523 @@
+---
+title: "Social Robotics and Emotional Intelligence"
+description: "Understanding social behaviors and emotional recognition in human-robot interaction"
+tags: [social-robotics, emotional-intelligence, affective-computing, social-cognition, hri]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Social Robotics and Emotional Intelligence
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement emotion recognition systems for human-robot interaction
+- Design socially appropriate robot behaviors and responses
+- Understand the principles of affective computing in robotics
+- Create robots that can express emotions appropriately
+
+## Key Concepts
+
+- **Affective Computing**: Computing that relates to, arises from, or influences emotions
+- **Emotion Recognition**: Detecting human emotions from facial expressions, voice, and behavior
+- **Emotional Expression**: How robots can convey emotions through facial expressions, gestures, and voice
+- **Social Cognition**: Understanding social situations and appropriate responses
+- **Theory of Mind**: Understanding that others have beliefs, desires, and intentions
+
+## Theory Summary
+
+Social robotics focuses on creating robots that can interact with humans in a socially acceptable and emotionally intelligent manner. This involves not only understanding human emotions but also expressing appropriate emotional responses that make interactions feel natural and engaging. Emotional intelligence in robots encompasses both emotion recognition (perceiving human emotions) and emotion expression (conveying appropriate responses).
+
+Emotion recognition systems analyze multiple channels of information including facial expressions, vocal tone, body language, and physiological signals. These systems use machine learning models trained on large datasets of emotional expressions to classify human emotional states. The challenge lies in the cultural, individual, and contextual variations in how emotions are expressed.
+
+Emotional expression in robots involves generating appropriate responses that match the social context. This includes facial expressions, vocal intonation, body posture, and behavioral patterns. The goal is to create robots that feel approachable, trustworthy, and capable of meaningful social interaction.
+
+Social cognition in robots encompasses understanding social norms, recognizing social situations, and responding appropriately. This includes concepts like personal space, turn-taking in conversation, and understanding social hierarchies and relationships.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="emotion-recognition" label="Emotion Recognition">
+Implement a system to recognize human emotions from facial expressions and voice.
+</TabItem>
+<TabItem value="emotional-expression" label="Emotional Expression">
+Create robot behaviors that express appropriate emotions.
+</TabItem>
+<TabItem value="social-behavior" label="Social Behavior">
+Design socially appropriate responses for different interaction scenarios.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with emotion recognition libraries (OpenCV, MediaPipe, librosa)
+- Facial expression recognition models
+- Voice analysis tools
+- Robot simulation environment with expressive capabilities
+
+## Step-by-Step Instructions
+
+1. Set up emotion recognition system using facial expression analysis
+2. Implement voice-based emotion detection
+3. Create emotional expression system for robot
+4. Develop social behavior patterns
+5. Test with various emotional scenarios
+6. Evaluate the naturalness of emotional interactions
+
+## Code Snippets
+
+```python
+import numpy as np
+import cv2
+from typing import Dict, List, Tuple
+import librosa
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+import pickle
+
+class FacialExpressionRecognizer:
+    def __init__(self):
+        # Load pre-trained facial expression model (in practice, use a model like FER2013)
+        # For this example, we'll use OpenCV's face detection and simulate expression recognition
+        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+        # Emotion classes
+        self.emotions = ['neutral', 'happy', 'sad', 'surprise', 'fear', 'disgust', 'anger']
+
+        # Initialize with a simple model (in practice, load a trained CNN)
+        # This is a placeholder for demonstration
+        self.scaler = StandardScaler()
+        self.emotion_classifier = RandomForestClassifier(n_estimators=100)
+
+    def detect_faces(self, frame: np.ndarray) -> List[Tuple[int, int, int, int]]:
+        """Detect faces in the frame"""
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
+        return faces
+
+    def extract_expression_features(self, face_roi: np.ndarray) -> np.ndarray:
+        """Extract features from facial region for emotion recognition"""
+        # Resize face region to standard size
+        face_resized = cv2.resize(face_roi, (48, 48))
+
+        # Convert to grayscale and flatten
+        face_gray = cv2.cvtColor(face_resized, cv2.COLOR_BGR2GRAY)
+        features = face_gray.flatten()
+
+        # Normalize features
+        features = features.astype(np.float32) / 255.0
+
+        return features
+
+    def recognize_emotion(self, face_roi: np.ndarray) -> Tuple[str, float]:
+        """Recognize emotion from facial expression"""
+        # In a real implementation, this would use a trained model
+        # For this example, we'll simulate emotion recognition based on facial features
+
+        features = self.extract_expression_features(face_roi)
+
+        # Simulate emotion classification (in practice, use actual model prediction)
+        # Calculate some simple features to simulate classification
+        face_gray = cv2.cvtColor(face_roi, cv2.COLOR_BGR2GRAY)
+
+        # Analyze facial features to estimate emotion
+        # This is a simplified approach - real systems use deep learning
+        height, width = face_gray.shape
+        eye_region = face_gray[int(height*0.3):int(height*0.5), :]
+        mouth_region = face_gray[int(height*0.6):int(height*0.8), :]
+
+        # Simple heuristics for emotion detection
+        eye_brightness = np.mean(eye_region)
+        mouth_brightness = np.mean(mouth_region)
+        face_variance = np.var(face_gray)
+
+        # Determine emotion based on features
+        if mouth_brightness > 150 and eye_brightness > 120:  # Bright mouth and eyes (smiling)
+            emotion = 'happy'
+            confidence = 0.8
+        elif eye_brightness < 100 and mouth_brightness < 100:  # Dark features (sad/angry)
+            if face_variance > 2000:  # High variance (tensed face)
+                emotion = 'anger'
+                confidence = 0.7
+            else:
+                emotion = 'sad'
+                confidence = 0.75
+        elif mouth_brightness > 200 and eye_brightness < 80:  # Open mouth, wide eyes
+            emotion = 'surprise'
+            confidence = 0.85
+        else:
+            emotion = 'neutral'
+            confidence = 0.6
+
+        return emotion, confidence
+
+class VoiceEmotionAnalyzer:
+    def __init__(self):
+        self.sample_rate = 22050
+        self.features = []
+
+    def extract_voice_features(self, audio_data: np.ndarray) -> Dict:
+        """Extract emotional features from voice"""
+        features = {}
+
+        # Extract MFCCs (Mel-frequency cepstral coefficients)
+        mfccs = librosa.feature.mfcc(y=audio_data, sr=self.sample_rate, n_mfcc=13)
+        features['mfcc_mean'] = np.mean(mfccs, axis=1)
+        features['mfcc_std'] = np.std(mfccs, axis=1)
+
+        # Extract spectral features
+        spectral_centroids = librosa.feature.spectral_centroid(y=audio_data, sr=self.sample_rate)[0]
+        features['spectral_centroid_mean'] = np.mean(spectral_centroids)
+        features['spectral_centroid_std'] = np.std(spectral_centroids)
+
+        # Extract zero crossing rate (related to voice tension)
+        zcr = librosa.feature.zero_crossing_rate(audio_data)[0]
+        features['zcr_mean'] = np.mean(zcr)
+        features['zcr_std'] = np.std(zcr)
+
+        # Extract fundamental frequency (pitch)
+        f0 = librosa.yin(audio_data, fmin=50, fmax=400)
+        features['pitch_mean'] = np.mean(f0)
+        features['pitch_std'] = np.std(f0)
+
+        # Extract intensity (volume)
+        intensity = librosa.feature.rms(y=audio_data)[0]
+        features['intensity_mean'] = np.mean(intensity)
+        features['intensity_std'] = np.std(intensity)
+
+        return features
+
+    def analyze_emotion_from_voice(self, audio_data: np.ndarray) -> Tuple[str, float]:
+        """Analyze emotion from voice characteristics"""
+        # Extract features
+        voice_features = self.extract_voice_features(audio_data)
+
+        # Simple rule-based emotion classification based on voice features
+        # This is a simplified approach - real systems use trained models
+        pitch_mean = voice_features['pitch_mean']
+        pitch_std = voice_features['pitch_std']
+        intensity_mean = voice_features['intensity_mean']
+        zcr_mean = voice_features['zcr_mean']
+
+        # Emotion classification based on voice characteristics
+        if pitch_mean > 250 and intensity_mean > 0.2:  # High pitch, loud
+            emotion = 'surprise'
+            confidence = 0.75
+        elif pitch_mean < 150 and pitch_std < 20:  # Low, steady pitch
+            emotion = 'sad'
+            confidence = 0.7
+        elif pitch_std > 50 and intensity_mean > 0.15:  # Variable pitch, loud
+            emotion = 'anger'
+            confidence = 0.8
+        elif pitch_mean > 200 and zcr_mean > 0.05:  # Medium-high pitch, high zero crossing
+            emotion = 'happy'
+            confidence = 0.75
+        else:
+            emotion = 'neutral'
+            confidence = 0.6
+
+        return emotion, confidence
+
+class EmotionalExpressionSystem:
+    def __init__(self):
+        self.current_emotion = 'neutral'
+        self.emotion_intensity = 0.5
+        self.social_context = 'neutral'
+
+    def generate_emotional_response(self, detected_emotion: str, confidence: float,
+                                  social_context: str = 'neutral') -> Dict:
+        """Generate appropriate emotional response based on detected emotion"""
+        response = {
+            'facial_expression': 'neutral',
+            'vocal_tone': 'neutral',
+            'body_language': 'neutral',
+            'intensity': 0.5
+        }
+
+        # Adjust response based on detected human emotion and context
+        self.social_context = social_context
+
+        if detected_emotion == 'happy':
+            response['facial_expression'] = 'smile'
+            response['vocal_tone'] = 'warm'
+            response['body_language'] = 'open_posture'
+            response['intensity'] = min(confidence * 1.2, 1.0)
+        elif detected_emotion == 'sad':
+            response['facial_expression'] = 'concerned'
+            response['vocal_tone'] = 'soothing'
+            response['body_language'] = 'supportive_gesture'
+            response['intensity'] = min(confidence, 0.8)
+        elif detected_emotion == 'angry':
+            response['facial_expression'] = 'calm'
+            response['vocal_tone'] = 'calm'
+            response['body_language'] = 'non-threatening_posture'
+            response['intensity'] = min(confidence * 0.7, 0.6)  # Lower intensity to de-escalate
+        elif detected_emotion == 'surprise':
+            response['facial_expression'] = 'attentive'
+            response['vocal_tone'] = 'curious'
+            response['body_language'] = 'attentive_posture'
+            response['intensity'] = min(confidence * 0.9, 0.8)
+        else:  # neutral
+            response['facial_expression'] = 'friendly_neutral'
+            response['vocal_tone'] = 'normal'
+            response['body_language'] = 'open_posture'
+            response['intensity'] = 0.5
+
+        # Adjust based on social context
+        if social_context == 'formal':
+            reduce_intensity = 0.7
+            response['intensity'] *= reduce_intensity
+        elif social_context == 'intimate' or social_context == 'close_relationship':
+            increase_intensity = 1.1
+            response['intensity'] = min(response['intensity'] * increase_intensity, 1.0)
+
+        return response
+
+class SocialBehaviorEngine:
+    def __init__(self):
+        self.personality_traits = {
+            'extroversion': 0.5,
+            'agreeableness': 0.8,
+            'conscientiousness': 0.7,
+            'emotional_stability': 0.6,
+            'openness': 0.5
+        }
+        self.social_rules = self._initialize_social_rules()
+
+    def _initialize_social_rules(self) -> Dict:
+        """Initialize social behavior rules"""
+        return {
+            'personal_space': {'intimate': 0.5, 'personal': 1.0, 'social': 2.0, 'public': 4.0},
+            'greeting_norms': {
+                'acquaintance': 'wave',
+                'friend': 'wave_with_smile',
+                'formal': 'nod',
+                'intimate': 'approach_close'
+            },
+            'turn_taking': {
+                'pause_duration': 1.5,
+                'interrupt_threshold': 3.0
+            },
+            'attention_management': {
+                'max_attention_span': 30.0,  # seconds
+                'engagement_cues': ['eye_contact', 'nodding', 'verbal_acknowledgment']
+            }
+        }
+
+    def determine_appropriate_behavior(self, human_state: Dict, context: Dict) -> Dict:
+        """Determine appropriate social behavior based on human state and context"""
+        behavior = {
+            'action': 'idle',
+            'greeting_type': None,
+            'distance_preference': 'social',
+            'engagement_level': 'medium',
+            'social_cues': []
+        }
+
+        # Determine greeting based on relationship
+        relationship = context.get('relationship', 'acquaintance')
+        behavior['greeting_type'] = self.social_rules['greeting_norms'].get(relationship, 'wave')
+
+        # Determine appropriate distance based on relationship and context
+        if relationship == 'intimate':
+            behavior['distance_preference'] = 'intimate'
+        elif relationship == 'friend':
+            behavior['distance_preference'] = 'personal'
+        elif context.get('formality', 'casual') == 'formal':
+            behavior['distance_preference'] = 'social'
+        else:
+            behavior['distance_preference'] = 'social'
+
+        # Adjust engagement based on detected emotions
+        detected_emotion = human_state.get('emotion', 'neutral')
+        if detected_emotion in ['happy', 'excited']:
+            behavior['engagement_level'] = 'high'
+        elif detected_emotion in ['sad', 'tired']:
+            behavior['engagement_level'] = 'supportive'
+        elif detected_emotion == 'angry':
+            behavior['engagement_level'] = 'cautious'
+        else:
+            behavior['engagement_level'] = 'medium'
+
+        # Add appropriate social cues
+        if behavior['engagement_level'] in ['high', 'supportive']:
+            behavior['social_cues'] = ['maintain_eye_contact', 'responsive_nodding']
+        if context.get('formality', 'casual') == 'formal':
+            behavior['social_cues'].append('respectful_posture')
+
+        return behavior
+
+class SocialRobot:
+    def __init__(self):
+        self.facial_recognizer = FacialExpressionRecognizer()
+        self.voice_analyzer = VoiceEmotionAnalyzer()
+        self.emotional_expressor = EmotionalExpressionSystem()
+        self.social_engine = SocialBehaviorEngine()
+
+        self.current_human_emotion = 'neutral'
+        self.current_confidence = 0.0
+        self.interaction_history = []
+
+    def perceive_human_emotion(self, frame: np.ndarray, audio_data: np.ndarray = None) -> Dict:
+        """Perceive human emotion from multiple modalities"""
+        emotion_perception = {
+            'facial_emotion': None,
+            'voice_emotion': None,
+            'combined_emotion': 'neutral',
+            'confidence': 0.0
+        }
+
+        # Analyze facial expression
+        faces = self.facial_recognizer.detect_faces(frame)
+        if len(faces) > 0:
+            # Use the first detected face
+            x, y, w, h = faces[0]
+            face_roi = frame[y:y+h, x:x+w]
+            facial_emotion, facial_conf = self.facial_recognizer.recognize_emotion(face_roi)
+            emotion_perception['facial_emotion'] = facial_emotion
+            emotion_perception['facial_confidence'] = facial_conf
+
+        # Analyze voice emotion if available
+        if audio_data is not None:
+            voice_emotion, voice_conf = self.voice_analyzer.analyze_emotion_from_voice(audio_data)
+            emotion_perception['voice_emotion'] = voice_emotion
+            emotion_perception['voice_confidence'] = voice_conf
+
+        # Combine modalities (simplified approach)
+        if emotion_perception['facial_emotion'] and emotion_perception['voice_emotion']:
+            # If both modalities agree, higher confidence
+            if emotion_perception['facial_emotion'] == emotion_perception['voice_emotion']:
+                emotion_perception['combined_emotion'] = emotion_perception['facial_emotion']
+                emotion_perception['confidence'] = (emotion_perception['facial_conf'] + emotion_perception['voice_conf']) / 2 * 1.2
+            else:
+                # If they disagree, use facial emotion (often more reliable for basic emotions)
+                emotion_perception['combined_emotion'] = emotion_perception['facial_emotion']
+                emotion_perception['confidence'] = (emotion_perception['facial_conf'] + emotion_perception['voice_conf']) / 2
+        elif emotion_perception['facial_emotion']:
+            emotion_perception['combined_emotion'] = emotion_perception['facial_emotion']
+            emotion_perception['confidence'] = emotion_perception['facial_confidence']
+        elif emotion_perception['voice_emotion']:
+            emotion_perception['combined_emotion'] = emotion_perception['voice_emotion']
+            emotion_perception['confidence'] = emotion_perception['voice_confidence']
+
+        # Ensure confidence is in [0, 1]
+        emotion_perception['confidence'] = min(max(emotion_perception['confidence'], 0.0), 1.0)
+
+        # Update internal state
+        self.current_human_emotion = emotion_perception['combined_emotion']
+        self.current_confidence = emotion_perception['confidence']
+
+        return emotion_perception
+
+    def respond_to_human(self, human_state: Dict, context: Dict = None) -> Dict:
+        """Generate appropriate social response to human"""
+        if context is None:
+            context = {'relationship': 'acquaintance', 'formality': 'casual'}
+
+        # Generate emotional response
+        emotional_response = self.emotional_expressor.generate_emotional_response(
+            self.current_human_emotion, self.current_confidence, context.get('formality', 'casual')
+        )
+
+        # Determine appropriate social behavior
+        social_behavior = self.social_engine.determine_appropriate_behavior(human_state, context)
+
+        # Combine responses
+        response = {
+            'emotional_response': emotional_response,
+            'social_behavior': social_behavior,
+            'action_plan': self._create_action_plan(emotional_response, social_behavior)
+        }
+
+        # Add to interaction history
+        self.interaction_history.append({
+            'timestamp': time.time(),
+            'human_emotion': self.current_human_emotion,
+            'response': response
+        })
+
+        return response
+
+    def _create_action_plan(self, emotional_response: Dict, social_behavior: Dict) -> List[Dict]:
+        """Create an action plan based on emotional and social responses"""
+        actions = []
+
+        # Add facial expression action
+        if emotional_response['facial_expression'] != 'neutral':
+            actions.append({
+                'type': 'facial_expression',
+                'expression': emotional_response['facial_expression'],
+                'intensity': emotional_response['intensity']
+            })
+
+        # Add vocal response if needed
+        if emotional_response['vocal_tone'] != 'neutral':
+            actions.append({
+                'type': 'vocal_response',
+                'tone': emotional_response['vocal_tone'],
+                'content': self._generate_response_text()
+            })
+
+        # Add body language action
+        if social_behavior['engagement_level'] in ['high', 'supportive']:
+            actions.append({
+                'type': 'body_language',
+                'gesture': emotional_response['body_language'],
+                'intensity': emotional_response['intensity']
+            })
+
+        return actions
+
+    def _generate_response_text(self) -> str:
+        """Generate appropriate response text based on detected emotion"""
+        if self.current_human_emotion == 'happy':
+            return "That's wonderful! I'm glad you're happy."
+        elif self.current_human_emotion == 'sad':
+            return "I'm sorry you're feeling down. How can I help?"
+        elif self.current_human_emotion == 'angry':
+            return "I understand you're upset. Let me see how I can assist."
+        elif self.current_human_emotion == 'surprised':
+            return "Oh, that's surprising! Tell me more about it."
+        else:
+            return "Hello! How are you doing today?"
+
+# Example usage
+import time
+
+social_robot = SocialRobot()
+
+# Simulate interaction
+# In a real system, this would run in a loop with continuous input
+# human_emotion_state = social_robot.perceive_human_emotion(frame, audio_data)
+# response = social_robot.respond_to_human(human_emotion_state, {'relationship': 'friend'})
+```
+
+## Review Questions
+
+1. What are the main components of emotional intelligence in social robotics?
+2. How do robots recognize human emotions from multiple modalities?
+3. Why is context important for appropriate emotional responses?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="emotion-classification" label="Emotion Classification">
+Implement a more sophisticated emotion classification system using machine learning.
+</TabItem>
+<TabItem value="social-response" label="Social Response">
+Design appropriate social responses for different cultural contexts.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Create a complete social robotics system that can recognize human emotions and respond appropriately with emotional expressions and social behaviors. Test the system with various emotional scenarios and evaluate its social acceptability.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the principles of social robotics and emotional intelligence
+- Be able to implement emotion recognition systems
+- Recognize the importance of context in social interactions
+- Appreciate the complexity of creating socially intelligent robots

@@ -1,0 +1,394 @@
+---
+title: "Sensor Fusion and Multi-Modal Perception"
+description: "Integrating multiple sensory modalities for comprehensive environmental understanding"
+tags: [sensor-fusion, multi-modal, perception, integration, bayesian, kalman-filter]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Sensor Fusion and Multi-Modal Perception
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement sensor fusion algorithms to combine data from multiple sensors
+- Understand the principles of multi-modal perception in humanoid robots
+- Apply Bayesian inference and Kalman filtering for sensor fusion
+- Design robust perception systems that handle sensor failures gracefully
+
+## Key Concepts
+
+- **Sensor Fusion**: Combining data from multiple sensors to improve perception accuracy
+- **Bayesian Inference**: Probabilistic approach to combining uncertain sensor measurements
+- **Kalman Filtering**: Optimal estimation technique for fusing temporal sensor data
+- **Multi-Modal Perception**: Integrating different sensory modalities (vision, touch, audition)
+- **Data Association**: Matching sensor measurements to real-world objects
+
+## Theory Summary
+
+Sensor fusion is critical for humanoid robots to achieve robust and accurate perception of their environment. By combining information from multiple sensors, robots can overcome the limitations of individual sensors and create a more complete and reliable understanding of their surroundings. Each sensor modality provides different types of information with varying reliability under different conditions.
+
+Multi-modal perception systems integrate visual, auditory, tactile, and other sensory information to create a unified representation of the environment. This integration requires careful consideration of sensor uncertainties, temporal alignment, and the appropriate mathematical frameworks for combining different types of data.
+
+Bayesian inference provides a principled approach to sensor fusion, allowing robots to update their beliefs about the environment based on new sensor measurements while accounting for uncertainty. Kalman filters and their variants offer optimal solutions for fusing temporal sensor data when the underlying system follows linear dynamics with Gaussian noise.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="kalman-filter" label="Kalman Filter">
+Implement a Kalman filter to fuse position estimates from different sensors.
+</TabItem>
+<TabItem value="bayesian-fusion" label="Bayesian Fusion">
+Apply Bayesian inference to combine uncertain sensor measurements.
+</TabItem>
+<TabItem value="multi-modal" label="Multi-Modal">
+Create a system that integrates visual and auditory perception data.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with NumPy, SciPy, and Matplotlib
+- Sensor simulation or real sensor data
+- Understanding of probability theory and statistics
+- Basic knowledge of linear algebra
+
+## Step-by-Step Instructions
+
+1. Set up multiple sensor simulation environments
+2. Implement basic sensor fusion algorithms (weighted averaging)
+3. Develop Kalman filter for temporal fusion
+4. Create Bayesian fusion system
+5. Test with sensor failures and noise conditions
+6. Evaluate fusion performance against individual sensors
+
+## Code Snippets
+
+```python
+import numpy as np
+from typing import List, Dict, Tuple
+import matplotlib.pyplot as plt
+
+class KalmanFilter:
+    def __init__(self, state_dim: int, measurement_dim: int):
+        self.state_dim = state_dim
+        self.measurement_dim = measurement_dim
+
+        # State transition model
+        self.F = np.eye(state_dim)
+        # Control model (not used in basic implementation)
+        self.B = np.zeros((state_dim, 1)) if state_dim > 0 else np.array([])
+        # Measurement model
+        self.H = np.zeros((measurement_dim, state_dim))
+        # Process noise covariance
+        self.Q = np.eye(state_dim) * 0.1
+        # Measurement noise covariance
+        self.R = np.eye(measurement_dim) * 1.0
+        # Error covariance
+        self.P = np.eye(state_dim)
+
+        # Initial state
+        self.x = np.zeros(state_dim)
+
+    def predict(self, control_input=None):
+        """Prediction step of Kalman filter"""
+        if control_input is not None:
+            self.x = self.F @ self.x + self.B @ control_input
+            self.P = self.F @ self.P @ self.F.T + self.Q
+        else:
+            self.x = self.F @ self.x
+            self.P = self.F @ self.P @ self.F.T + self.Q
+
+    def update(self, measurement):
+        """Update step of Kalman filter"""
+        # Innovation
+        y = measurement - self.H @ self.x
+        # Innovation covariance
+        S = self.H @ self.P @ self.H.T + self.R
+        # Kalman gain
+        K = self.P @ self.H.T @ np.linalg.inv(S)
+        # Update state estimate
+        self.x = self.x + K @ y
+        # Update error covariance
+        I = np.eye(len(self.x))
+        self.P = (I - K @ self.H) @ self.P
+
+class ParticleFilter:
+    def __init__(self, num_particles: int, state_dim: int):
+        self.num_particles = num_particles
+        self.state_dim = state_dim
+        self.particles = np.random.randn(num_particles, state_dim)
+        self.weights = np.ones(num_particles) / num_particles
+
+    def predict(self, process_noise_std: float):
+        """Predict step for particle filter"""
+        noise = np.random.normal(0, process_noise_std, self.particles.shape)
+        self.particles += noise
+
+    def update(self, measurement, measurement_function, measurement_noise_std: float):
+        """Update step for particle filter"""
+        # Calculate likelihood of each particle given measurement
+        for i in range(self.num_particles):
+            predicted_measurement = measurement_function(self.particles[i])
+            likelihood = self._gaussian_likelihood(
+                measurement, predicted_measurement, measurement_noise_std
+            )
+            self.weights[i] *= likelihood
+
+        # Normalize weights
+        self.weights += 1e-300  # Avoid numerical issues
+        self.weights /= np.sum(self.weights)
+
+    def _gaussian_likelihood(self, measurement, predicted, std):
+        """Calculate Gaussian likelihood"""
+        diff = measurement - predicted
+        likelihood = np.exp(-0.5 * (diff / std)**2)
+        return likelihood
+
+    def resample(self):
+        """Resample particles based on weights"""
+        indices = np.random.choice(
+            self.num_particles,
+            size=self.num_particles,
+            p=self.weights
+        )
+        self.particles = self.particles[indices]
+        self.weights.fill(1.0 / self.num_particles)
+
+    def estimate(self) -> np.ndarray:
+        """Get state estimate from particles"""
+        return np.average(self.particles, axis=0, weights=self.weights)
+
+class SensorFusionSystem:
+    def __init__(self):
+        self.sensors = {}
+        self.fusion_weights = {}
+        self.kalman_filter = None
+        self.particle_filter = None
+
+    def add_sensor(self, name: str, reliability: float, measurement_type: str):
+        """Add a sensor to the fusion system"""
+        self.sensors[name] = {
+            'reliability': reliability,
+            'type': measurement_type,
+            'last_measurement': None,
+            'uncertainty': 1.0 / reliability
+        }
+        self.fusion_weights[name] = reliability
+
+    def simple_fusion(self, measurements: Dict[str, np.ndarray]) -> np.ndarray:
+        """Simple weighted average fusion"""
+        if not measurements:
+            return np.array([])
+
+        # Calculate weighted average
+        total_weight = 0
+        weighted_sum = np.zeros_like(list(measurements.values())[0])
+
+        for sensor_name, measurement in measurements.items():
+            weight = self.fusion_weights.get(sensor_name, 1.0)
+            weighted_sum += weight * measurement
+            total_weight += weight
+
+        if total_weight > 0:
+            fused_result = weighted_sum / total_weight
+        else:
+            fused_result = list(measurements.values())[0]
+
+        return fused_result
+
+    def bayesian_fusion(self, measurements: Dict[str, Tuple[np.ndarray, np.ndarray]]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Bayesian fusion of measurements with uncertainty
+        measurements: dict of (mean, covariance) tuples
+        """
+        if not measurements:
+            return np.array([]), np.array([])
+
+        # Initialize with first measurement
+        first_sensor = list(measurements.keys())[0]
+        fused_mean = measurements[first_sensor][0].copy()
+        fused_cov = measurements[first_sensor][1].copy()
+
+        # Fuse with remaining measurements
+        for sensor_name in list(measurements.keys())[1:]:
+            mean_i, cov_i = measurements[sensor_name]
+
+            # Calculate information matrices
+            info_prior = np.linalg.inv(fused_cov)
+            info_measurement = np.linalg.inv(cov_i)
+
+            # Combined information matrix
+            combined_info = info_prior + info_measurement
+
+            # Combined mean (Bayesian update)
+            fused_mean = np.linalg.inv(combined_info) @ (info_prior @ fused_mean + info_measurement @ mean_i)
+            fused_cov = np.linalg.inv(combined_info)
+
+        return fused_mean, fused_cov
+
+    def adaptive_fusion(self, measurements: Dict[str, np.ndarray],
+                       performance_history: Dict[str, List[float]]) -> np.ndarray:
+        """Adaptive fusion that updates weights based on past performance"""
+        # Calculate performance-based weights
+        updated_weights = {}
+        for sensor_name in measurements.keys():
+            if sensor_name in performance_history and performance_history[sensor_name]:
+                # Weight based on inverse of error (higher performance = higher weight)
+                avg_performance = np.mean(performance_history[sensor_name])
+                updated_weights[sensor_name] = max(avg_performance, 0.1)  # Minimum weight
+            else:
+                updated_weights[sensor_name] = self.fusion_weights.get(sensor_name, 1.0)
+
+        # Normalize weights
+        total_weight = sum(updated_weights.values())
+        if total_weight > 0:
+            for sensor_name in updated_weights:
+                updated_weights[sensor_name] /= total_weight
+
+        # Calculate weighted average with updated weights
+        weighted_sum = np.zeros_like(list(measurements.values())[0])
+        for sensor_name, measurement in measurements.items():
+            weight = updated_weights.get(sensor_name, 1.0)
+            weighted_sum += weight * measurement
+
+        return weighted_sum
+
+class MultiModalPerception:
+    def __init__(self):
+        self.vision_system = None
+        self.auditory_system = None
+        self.tactile_system = None
+        self.fusion_system = SensorFusionSystem()
+
+        # Initialize sensor fusion for position estimation
+        self.position_kf = KalmanFilter(state_dim=6, measurement_dim=3)  # [x, y, z, vx, vy, vz]
+        self.position_kf.F = np.array([
+            [1, 0, 0, 1, 0, 0],  # x = x + vx*dt
+            [0, 1, 0, 0, 1, 0],  # y = y + vy*dt
+            [0, 0, 1, 0, 0, 1],  # z = z + vz*dt
+            [0, 0, 0, 1, 0, 0],  # vx = vx
+            [0, 0, 0, 0, 1, 0],  # vy = vy
+            [0, 0, 0, 0, 0, 1]   # vz = vz
+        ])
+        self.position_kf.H = np.array([
+            [1, 0, 0, 0, 0, 0],  # Measure x
+            [0, 1, 0, 0, 0, 0],  # Measure y
+            [0, 0, 1, 0, 0, 0]   # Measure z
+        ])
+
+    def integrate_perception(self, vision_data: Dict,
+                           auditory_data: Dict,
+                           tactile_data: Dict) -> Dict:
+        """Integrate data from multiple perception modalities"""
+        integrated_result = {
+            'objects': [],
+            'sound_sources': [],
+            'contact_points': [],
+            'fused_estimate': {}
+        }
+
+        # Process vision data
+        if vision_data:
+            integrated_result['objects'] = self._process_vision_data(vision_data)
+
+        # Process auditory data
+        if auditory_data:
+            integrated_result['sound_sources'] = self._process_auditory_data(auditory_data)
+
+        # Process tactile data
+        if tactile_data:
+            integrated_result['contact_points'] = self._process_tactile_data(tactile_data)
+
+        # Perform sensor fusion if multiple modalities provide position estimates
+        position_measurements = {}
+        if 'position_estimate' in vision_data:
+            position_measurements['vision'] = vision_data['position_estimate']
+        if 'sound_position' in auditory_data:
+            position_measurements['auditory'] = auditory_data['sound_position']
+        if 'object_position' in tactile_data:
+            position_measurements['tactile'] = tactile_data['object_position']
+
+        if len(position_measurements) > 1:
+            fused_position = self.fusion_system.simple_fusion(position_measurements)
+            integrated_result['fused_estimate']['position'] = fused_position
+
+        return integrated_result
+
+    def _process_vision_data(self, vision_data: Dict) -> List[Dict]:
+        """Process vision system outputs"""
+        objects = []
+        if 'detected_objects' in vision_data:
+            for obj in vision_data['detected_objects']:
+                objects.append({
+                    'type': obj.get('type', 'unknown'),
+                    'position': obj.get('position', [0, 0, 0]),
+                    'confidence': obj.get('confidence', 0.0),
+                    'modality': 'vision'
+                })
+        return objects
+
+    def _process_auditory_data(self, auditory_data: Dict) -> List[Dict]:
+        """Process auditory system outputs"""
+        sound_sources = []
+        if 'sound_events' in auditory_data:
+            for event in auditory_data['sound_events']:
+                sound_sources.append({
+                    'type': event.get('type', 'unknown'),
+                    'direction': event.get('direction', [0, 0, 0]),
+                    'confidence': event.get('confidence', 0.0),
+                    'modality': 'auditory'
+                })
+        return sound_sources
+
+    def _process_tactile_data(self, tactile_data: Dict) -> List[Dict]:
+        """Process tactile system outputs"""
+        contact_points = []
+        if 'contacts' in tactile_data:
+            for contact in tactile_data['contacts']:
+                contact_points.append({
+                    'position': contact.get('position', [0, 0, 0]),
+                    'force': contact.get('force', 0.0),
+                    'modality': 'tactile'
+                })
+        return contact_points
+
+# Example usage
+fusion_system = SensorFusionSystem()
+multi_perception = MultiModalPerception()
+
+# Add example sensors
+fusion_system.add_sensor('camera', reliability=0.8, measurement_type='position')
+fusion_system.add_sensor('lidar', reliability=0.9, measurement_type='position')
+fusion_system.add_sensor('microphone_array', reliability=0.6, measurement_type='direction')
+```
+
+## Review Questions
+
+1. What are the advantages of sensor fusion over using individual sensors?
+2. How does Bayesian inference improve multi-modal perception?
+3. What are the main challenges in implementing real-time sensor fusion?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="kalman-implementation" label="Kalman Implementation">
+Implement an extended Kalman filter for non-linear sensor fusion.
+</TabItem>
+<TabItem value="performance-evaluation" label="Performance Evaluation">
+Compare the performance of different fusion algorithms under various noise conditions.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a complete sensor fusion system that integrates visual, auditory, and tactile data for a humanoid robot. Test the system's robustness when individual sensors fail or provide noisy data.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the principles of sensor fusion and multi-modal perception
+- Be able to implement various fusion algorithms (Kalman, particle, Bayesian)
+- Recognize the importance of robust perception for humanoid robots
+- Appreciate the challenges in real-time multi-sensor integration

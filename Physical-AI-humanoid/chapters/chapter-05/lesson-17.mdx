@@ -1,0 +1,361 @@
+---
+title: "Communication Modalities in Human-Robot Interaction"
+description: "Exploring different communication channels and modalities for effective human-robot interaction"
+tags: [human-robot-interaction, communication, multimodal, speech, gesture, hri]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Communication Modalities in Human-Robot Interaction
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Identify and implement different communication modalities for HRI
+- Design multimodal interaction systems that combine multiple communication channels
+- Understand the role of non-verbal communication in human-robot interaction
+- Evaluate the effectiveness of different communication approaches
+
+## Key Concepts
+
+- **Multimodal Communication**: Using multiple communication channels simultaneously (speech, gesture, gaze, etc.)
+- **Non-verbal Communication**: Body language, facial expressions, and spatial positioning in HRI
+- **Speech Recognition**: Processing and understanding human speech for robot interaction
+- **Gesture Recognition**: Interpreting human gestures for communication and instruction
+- **Turn-taking**: Managing conversational flow between humans and robots
+
+## Theory Summary
+
+Effective human-robot interaction requires multiple communication modalities that mirror natural human communication patterns. Unlike traditional interfaces that rely primarily on text or simple commands, humanoid robots must engage in rich, multimodal interactions that include speech, gesture, gaze, and proxemics (spatial relationships). This complexity allows for more natural and intuitive interaction, similar to human-to-human communication.
+
+Multimodal communication systems must integrate information from various sources to create a coherent understanding of human intent. For example, a human pointing to an object while saying "get that" combines visual (pointing gesture) and auditory (spoken instruction) information. The robot must fuse these modalities to understand the complete instruction.
+
+Non-verbal communication is particularly important for humanoid robots as their anthropomorphic form naturally invites human-like interaction patterns. Humans expect robots to respond appropriately to gaze, facial expressions, and body language, making these modalities essential for creating engaging and believable interactions.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="multimodal-integration" label="Multimodal Integration">
+Implement a system that combines speech and gesture recognition for robot commands.
+</TabItem>
+<TabItem value="non-verbal-cues" label="Non-verbal Cues">
+Create a robot behavior that responds to human gaze and proximity.
+</TabItem>
+<TabItem value="communication-evaluation" label="Communication Evaluation">
+Analyze the effectiveness of different communication modalities in HRI.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with speech recognition libraries (SpeechRecognition, Vosk, or similar)
+- Computer vision libraries (OpenCV, MediaPipe)
+- Natural language processing tools (NLTK, spaCy, or transformers)
+- Robot simulation environment
+
+## Step-by-Step Instructions
+
+1. Set up speech recognition system for robot interaction
+2. Implement gesture recognition using computer vision
+3. Develop gaze tracking capabilities
+4. Integrate multiple modalities into a unified system
+5. Test with various communication scenarios
+6. Evaluate the effectiveness of multimodal communication
+
+## Code Snippets
+
+```python
+import numpy as np
+import cv2
+import speech_recognition as sr
+from typing import Dict, List, Tuple, Optional
+import threading
+import queue
+import time
+
+class SpeechRecognizer:
+    def __init__(self):
+        self.recognizer = sr.Recognizer()
+        self.microphone = sr.Microphone()
+        self.command_keywords = [
+            'hello', 'hi', 'help', 'stop', 'go', 'come', 'follow', 'wait',
+            'bring', 'take', 'give', 'show', 'demonstrate', 'move', 'turn'
+        ]
+
+        # Adjust for ambient noise
+        with self.microphone as source:
+            self.recognizer.adjust_for_ambient_noise(source)
+
+    def listen_once(self) -> Optional[str]:
+        """Listen for speech and return recognized text"""
+        try:
+            with self.microphone as source:
+                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)
+
+            # Use Google Web Speech API (requires internet)
+            text = self.recognizer.recognize_google(audio)
+            return text.lower()
+
+        except sr.WaitTimeoutError:
+            return None
+        except sr.UnknownValueError:
+            return None
+        except sr.RequestError:
+            # If Google API is not available, use offline recognition
+            try:
+                text = self.recognizer.recognize_sphinx(audio)
+                return text.lower()
+            except:
+                return None
+
+    def extract_command(self, text: str) -> Dict:
+        """Extract command and parameters from recognized text"""
+        command_info = {
+            'action': None,
+            'target': None,
+            'location': None,
+            'confidence': 0.0
+        }
+
+        words = text.split()
+        for keyword in self.command_keywords:
+            if keyword in text:
+                command_info['action'] = keyword
+                break
+
+        # Extract potential targets and locations
+        # This is simplified - in practice, use NLP for better understanding
+        for word in words:
+            if word in ['object', 'item', 'box', 'table', 'room']:
+                command_info['target'] = word
+            elif word in ['here', 'there', 'left', 'right', 'forward', 'back']:
+                command_info['location'] = word
+
+        command_info['confidence'] = 0.8 if command_info['action'] else 0.0
+        return command_info
+
+class GestureRecognizer:
+    def __init__(self):
+        self.hand_cascade = cv2.CascadeClassifier()  # Would load actual hand detector
+        self.body_parts = {}  # To store detected body parts
+
+    def detect_gestures(self, frame: np.ndarray) -> Dict:
+        """Detect hand and body gestures from video frame"""
+        gesture_info = {
+            'pointing_direction': None,
+            'hand_raised': False,
+            'waving': False,
+            'arm_position': None,
+            'confidence': 0.0
+        }
+
+        # Convert to grayscale for processing
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # For this example, we'll use a simplified approach
+        # In practice, use MediaPipe or similar for robust gesture recognition
+
+        # Detect if person is pointing by analyzing hand position relative to body
+        height, width = frame.shape[:2]
+
+        # Simulated gesture detection (in practice, use pose estimation)
+        # Here we'll detect if a "pointing" gesture is likely based on arm position
+        gesture_info['confidence'] = 0.7  # Placeholder confidence
+
+        # Example: detect pointing direction based on where the person is looking
+        # This would use face pose estimation in practice
+        gesture_info['pointing_direction'] = self._estimate_pointing_direction(frame)
+
+        return gesture_info
+
+    def _estimate_pointing_direction(self, frame: np.ndarray) -> Optional[Tuple[float, float]]:
+        """Estimate pointing direction based on hand and arm position"""
+        # Simplified implementation - in practice, use pose estimation
+        # For now, return a fixed direction as an example
+        return (0.5, 0.5)  # Normalized coordinates
+
+class GazeTracker:
+    def __init__(self):
+        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        self.eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+
+    def track_gaze(self, frame: np.ndarray) -> Dict:
+        """Track human gaze direction and attention"""
+        gaze_info = {
+            'looking_at_robot': False,
+            'gaze_direction': None,
+            'attention_level': 0.0,
+            'person_detected': False
+        }
+
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
+
+        if len(faces) > 0:
+            gaze_info['person_detected'] = True
+
+            # For each face, estimate if person is looking toward the robot
+            for (x, y, w, h) in faces:
+                # Calculate if face is oriented toward the robot
+                # This is simplified - in practice, use face pose estimation
+                face_center_x = x + w // 2
+                frame_center_x = frame.shape[1] // 2
+
+                # If face is roughly centered, assume looking at robot
+                if abs(face_center_x - frame_center_x) < frame.shape[1] * 0.3:
+                    gaze_info['looking_at_robot'] = True
+                    gaze_info['attention_level'] = 0.8
+                    break
+
+        return gaze_info
+
+class MultimodalCommunicator:
+    def __init__(self):
+        self.speech_recognizer = SpeechRecognizer()
+        self.gesture_recognizer = GestureRecognizer()
+        self.gaze_tracker = GazeTracker()
+
+        # Queues for handling asynchronous input
+        self.speech_queue = queue.Queue()
+        self.vision_queue = queue.Queue()
+
+        # Start background processes
+        self.running = True
+        self.speech_thread = threading.Thread(target=self._speech_listener)
+        self.speech_thread.daemon = True
+        self.speech_thread.start()
+
+    def _speech_listener(self):
+        """Background thread for continuous speech recognition"""
+        while self.running:
+            try:
+                speech_result = self.speech_recognizer.listen_once()
+                if speech_result:
+                    self.speech_queue.put({
+                        'type': 'speech',
+                        'text': speech_result,
+                        'timestamp': time.time()
+                    })
+                time.sleep(0.1)
+            except:
+                time.sleep(0.1)
+
+    def process_communication(self, frame: np.ndarray) -> Dict:
+        """Process all communication modalities and return integrated result"""
+        communication_result = {
+            'speech': None,
+            'gesture': None,
+            'gaze': None,
+            'integrated_command': None,
+            'confidence': 0.0
+        }
+
+        # Process speech if available
+        try:
+            speech_data = self.speech_queue.get_nowait()
+            speech_command = self.speech_recognizer.extract_command(speech_data['text'])
+            communication_result['speech'] = {
+                'text': speech_data['text'],
+                'command': speech_command
+            }
+        except queue.Empty:
+            pass
+
+        # Process vision-based inputs
+        gesture_data = self.gesture_recognizer.detect_gestures(frame)
+        communication_result['gesture'] = gesture_data
+
+        gaze_data = self.gaze_tracker.track_gaze(frame)
+        communication_result['gaze'] = gaze_data
+
+        # Integrate modalities
+        integrated_result = self._integrate_modalities(
+            communication_result['speech'],
+            communication_result['gesture'],
+            communication_result['gaze']
+        )
+        communication_result['integrated_command'] = integrated_result['command']
+        communication_result['confidence'] = integrated_result['confidence']
+
+        return communication_result
+
+    def _integrate_modalities(self, speech: Dict, gesture: Dict, gaze: Dict) -> Dict:
+        """Integrate information from multiple modalities"""
+        integrated = {
+            'command': None,
+            'target': None,
+            'location': None,
+            'confidence': 0.0
+        }
+
+        # Initialize confidence based on modality availability
+        confidence = 0.0
+        available_modalities = 0
+
+        # Process speech command
+        if speech and speech['command']['action']:
+            integrated['command'] = speech['command']['action']
+            integrated['target'] = speech['command'].get('target')
+            integrated['location'] = speech['command'].get('location')
+            confidence += speech['command']['confidence'] * 0.4
+            available_modalities += 1
+
+        # Process gesture information
+        if gesture and gesture['pointing_direction']:
+            # If there's a pointing gesture, it likely indicates a target
+            if integrated['target'] is None:
+                integrated['target'] = 'pointed_object'
+            confidence += gesture['confidence'] * 0.3
+            available_modalities += 1
+
+        # Process gaze information
+        if gaze and gaze['looking_at_robot']:
+            # If person is looking at robot, increase confidence in interaction
+            confidence += 0.3
+            available_modalities += 1
+
+        # Normalize confidence based on number of available modalities
+        if available_modalities > 0:
+            integrated['confidence'] = min(confidence, 1.0)
+        else:
+            integrated['confidence'] = 0.0
+
+        return integrated
+
+# Example usage
+communicator = MultimodalCommunicator()
+
+# In a real system, this would be called in a loop with camera frames
+# frame = get_camera_frame()  # This would come from robot's camera
+# result = communicator.process_communication(frame)
+```
+
+## Review Questions
+
+1. What are the main communication modalities in human-robot interaction?
+2. Why is multimodal communication important for humanoid robots?
+3. How do non-verbal cues enhance human-robot interaction?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="modality-comparison" label="Modality Comparison">
+Compare the effectiveness of different communication modalities in various scenarios.
+</TabItem>
+<TabItem value="integration-challenge" label="Integration Challenge">
+Design a system that resolves conflicts between different modalities.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a multimodal communication system for a humanoid robot that can understand human commands through speech, gestures, and gaze. Test the system with various communication scenarios and evaluate its performance.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand different communication modalities in HRI
+- Be able to implement multimodal integration systems
+- Recognize the importance of non-verbal communication
+- Appreciate the complexity of natural human-robot interaction

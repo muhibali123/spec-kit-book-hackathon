@@ -1,0 +1,833 @@
+---
+title: "Integration and Coordination in Cognitive Systems"
+description: "Coordinating different cognitive components for unified behavior in humanoid robots"
+tags: [cognitive-integration, coordination, executive-control, cognitive-architecture, multi-module]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Integration and Coordination in Cognitive Systems
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Design integration mechanisms for cognitive architecture components
+- Implement coordination systems for unified robot behavior
+- Understand executive control in cognitive architectures
+- Apply integration patterns to coordinate perception, reasoning, and action
+
+## Key Concepts
+
+- **Executive Control**: High-level control system coordinating cognitive modules
+- **Blackboard Architecture**: Shared workspace for module communication
+- **LIDA Cognitive Architecture**: Learning Intelligent Distribution Agent model
+- **Symbolic-Subsymbolic Integration**: Combining symbolic reasoning with neural networks
+- **Behavior Coordination**: Managing competing behavioral demands
+
+## Theory Summary
+
+Integration and coordination are critical challenges in cognitive architectures for humanoid robots. These systems must seamlessly combine perception, memory, reasoning, planning, and action selection to produce coherent, intelligent behavior. The integration challenge is particularly complex because different cognitive modules often operate at different timescales, have different representations, and use different processing paradigms.
+
+Executive control systems serve as the conductor of the cognitive orchestra, managing the flow of information between modules and resolving conflicts when multiple systems generate competing demands. These systems must make real-time decisions about which modules to activate, when to switch between modes of operation, and how to prioritize competing goals or behaviors.
+
+The blackboard architecture provides a shared workspace where different specialized modules can contribute to problem-solving. Each module operates independently but can read from and write to the shared blackboard, allowing for emergent coordination. This approach is particularly effective for problems that require multiple types of expertise.
+
+Modern cognitive architectures often integrate symbolic reasoning (using explicit knowledge representations and logical inference) with subsymbolic processing (using neural networks and connectionist models). This integration allows robots to benefit from both the systematicity and interpretability of symbolic systems and the learning and pattern recognition capabilities of neural networks.
+
+Coordination mechanisms must also handle the temporal aspects of cognitive processing, ensuring that information flows appropriately between modules that operate at different speeds. Some modules, like low-level perception, may operate at high frequencies (100+ Hz), while others, like high-level planning, may operate at much lower frequencies (0.1-1 Hz).
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="integration-framework" label="Integration Framework">
+Implement a framework for integrating cognitive modules.
+</TabItem>
+<TabItem value="executive-control" label="Executive Control">
+Create an executive control system for module coordination.
+</TabItem>
+<TabItem value="blackboard-system" label="Blackboard System">
+Design a blackboard architecture for cognitive integration.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with object-oriented programming
+- Event-driven programming libraries
+- Basic understanding of cognitive architectures
+- Thread-safe data structures
+
+## Step-by-Step Instructions
+
+1. Set up cognitive integration framework
+2. Implement executive control system
+3. Create blackboard architecture
+4. Develop module communication protocols
+5. Test with integrated cognitive tasks
+6. Evaluate coordination effectiveness
+
+## Code Snippets
+
+```python
+import abc
+import threading
+import queue
+import time
+from typing import Dict, List, Any, Optional, Callable, Tuple
+from dataclasses import dataclass
+from enum import Enum
+from collections import defaultdict
+import uuid
+
+class CognitiveModule(abc.ABC):
+    """Abstract base class for cognitive modules"""
+    def __init__(self, name: str, priority: int = 0):
+        self.name = name
+        self.priority = priority
+        self.active = True
+        self.last_execution_time = 0
+        self.input_queue = queue.Queue()
+        self.output_callbacks: List[Callable] = []
+
+    @abc.abstractmethod
+    def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Process inputs and return outputs"""
+        pass
+
+    def add_output_callback(self, callback: Callable):
+        """Add a callback for output notifications"""
+        self.output_callbacks.append(callback)
+
+    def notify_outputs(self, outputs: Dict[str, Any]):
+        """Notify registered callbacks of outputs"""
+        for callback in self.output_callbacks:
+            try:
+                callback(self.name, outputs)
+            except Exception as e:
+                print(f"Error in callback for {self.name}: {e}")
+
+    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the module with given inputs"""
+        if not self.active:
+            return {}
+
+        start_time = time.time()
+        outputs = self.process(inputs)
+        self.last_execution_time = time.time() - start_time
+
+        # Notify callbacks of outputs
+        if outputs:
+            self.notify_outputs(outputs)
+
+        return outputs
+
+class PerceptionModule(CognitiveModule):
+    """Module for processing sensory input"""
+    def __init__(self):
+        super().__init__("perception", priority=10)
+
+    def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Process sensory data and extract features"""
+        outputs = {}
+
+        # Process visual input
+        if 'visual' in inputs:
+            visual_data = inputs['visual']
+            # Extract basic visual features
+            outputs['visual_features'] = {
+                'objects_detected': visual_data.get('objects', []),
+                'colors': visual_data.get('colors', []),
+                'motion': visual_data.get('motion', 0.0)
+            }
+
+        # Process auditory input
+        if 'auditory' in inputs:
+            audio_data = inputs['auditory']
+            outputs['auditory_features'] = {
+                'volume': audio_data.get('volume', 0.0),
+                'frequency': audio_data.get('frequency', 0.0),
+                'direction': audio_data.get('direction', (0, 0))
+            }
+
+        # Process tactile input
+        if 'tactile' in inputs:
+            tactile_data = inputs['tactile']
+            outputs['tactile_features'] = {
+                'pressure': tactile_data.get('pressure', 0.0),
+                'temperature': tactile_data.get('temperature', 0.0),
+                'vibration': tactile_data.get('vibration', 0.0)
+            }
+
+        return outputs
+
+class MemoryModule(CognitiveModule):
+    """Module for memory operations"""
+    def __init__(self):
+        super().__init__("memory", priority=8)
+        self.episodic_memory = {}
+        self.semantic_memory = {}
+        self.working_memory = {}
+
+    def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle memory operations"""
+        outputs = {}
+
+        # Handle memory store requests
+        if 'store_request' in inputs:
+            request = inputs['store_request']
+            memory_type = request.get('type', 'episodic')
+            content = request.get('content', {})
+
+            if memory_type == 'episodic':
+                key = f"ep_{len(self.episodic_memory)}_{time.time()}"
+                self.episodic_memory[key] = {
+                    'content': content,
+                    'timestamp': time.time()
+                }
+                outputs['store_result'] = {'status': 'success', 'key': key}
+            elif memory_type == 'semantic':
+                key = request.get('key', f"sem_{len(self.semantic_memory)}")
+                self.semantic_memory[key] = content
+                outputs['store_result'] = {'status': 'success', 'key': key}
+
+        # Handle memory retrieval requests
+        if 'retrieve_request' in inputs:
+            request = inputs['retrieve_request']
+            memory_type = request.get('type', 'episodic')
+            query = request.get('query', {})
+
+            if memory_type == 'episodic':
+                results = []
+                for key, item in self.episodic_memory.items():
+                    if self._match_query(item['content'], query):
+                        results.append(item)
+                outputs['retrieval_results'] = results
+            elif memory_type == 'semantic':
+                key = query.get('key')
+                if key and key in self.semantic_memory:
+                    outputs['retrieval_results'] = [self.semantic_memory[key]]
+
+        # Handle working memory operations
+        if 'working_memory_op' in inputs:
+            op = inputs['working_memory_op']
+            if op.get('operation') == 'update':
+                self.working_memory.update(op.get('data', {}))
+            elif op.get('operation') == 'query':
+                query_key = op.get('key')
+                if query_key:
+                    outputs['working_memory_content'] = self.working_memory.get(query_key)
+
+        return outputs
+
+    def _match_query(self, content: Dict[str, Any], query: Dict[str, Any]) -> bool:
+        """Check if content matches query"""
+        for key, value in query.items():
+            if key not in content:
+                return False
+            if content[key] != value:
+                return False
+        return True
+
+class ReasoningModule(CognitiveModule):
+    """Module for logical reasoning and inference"""
+    def __init__(self):
+        super().__init__("reasoning", priority=7)
+        self.knowledge_base = {}
+        self.inference_rules = []
+
+    def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform reasoning operations"""
+        outputs = {}
+
+        # Handle reasoning requests
+        if 'reasoning_request' in inputs:
+            request = inputs['reasoning_request']
+            request_type = request.get('type')
+
+            if request_type == 'deductive':
+                premises = request.get('premises', [])
+                conclusion = self._deductive_reason(premises)
+                outputs['reasoning_result'] = conclusion
+            elif request_type == 'inductive':
+                observations = request.get('observations', [])
+                hypothesis = self._inductive_reason(observations)
+                outputs['reasoning_result'] = hypothesis
+            elif request_type == 'abductive':
+                observations = request.get('observations', [])
+                best_explanation = self._abductive_reason(observations)
+                outputs['reasoning_result'] = best_explanation
+
+        # Handle knowledge updates
+        if 'knowledge_update' in inputs:
+            update = inputs['knowledge_update']
+            self.knowledge_base.update(update)
+
+        return outputs
+
+    def _deductive_reason(self, premises: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Perform deductive reasoning"""
+        # Simple example: if A then B, A is true, therefore B is true
+        for premise in premises:
+            if premise.get('type') == 'if_then' and premise.get('antecedent') == True:
+                return {'conclusion': premise.get('consequent'), 'valid': True}
+        return {'conclusion': 'no valid conclusion', 'valid': False}
+
+    def _inductive_reason(self, observations: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Perform inductive reasoning"""
+        # Simple pattern recognition
+        if len(observations) >= 2:
+            # Look for common patterns
+            common_properties = {}
+            first_obs = observations[0]
+            for key, value in first_obs.items():
+                if all(obs.get(key) == value for obs in observations):
+                    common_properties[key] = value
+
+            if common_properties:
+                return {
+                    'hypothesis': f'Objects with {list(common_properties.keys())} have property X',
+                    'confidence': 0.8
+                }
+
+        return {'hypothesis': 'no pattern detected', 'confidence': 0.0}
+
+    def _abductive_reason(self, observations: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Perform abductive reasoning (inference to the best explanation)"""
+        # Simple explanation generation
+        if observations:
+            obs = observations[0]
+            explanation = f"Observation {obs} could be explained by context Y"
+            return {'explanation': explanation, 'confidence': 0.6}
+
+        return {'explanation': 'no explanation', 'confidence': 0.0}
+
+class PlanningModule(CognitiveModule):
+    """Module for action planning and goal achievement"""
+    def __init__(self):
+        super().__init__("planning", priority=6)
+        self.current_goals = []
+        self.action_plans = {}
+
+    def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle planning operations"""
+        outputs = {}
+
+        # Handle goal setting
+        if 'set_goal' in inputs:
+            goal = inputs['set_goal']
+            self.current_goals.append(goal)
+            plan = self._create_plan(goal)
+            plan_id = str(uuid.uuid4())
+            self.action_plans[plan_id] = plan
+            outputs['plan_id'] = plan_id
+            outputs['plan'] = plan
+
+        # Handle plan execution status
+        if 'plan_status' in inputs:
+            status = inputs['plan_status']
+            plan_id = status.get('plan_id')
+            if plan_id in self.action_plans:
+                self._update_plan_status(plan_id, status)
+
+        return outputs
+
+    def _create_plan(self, goal: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Create a plan to achieve a goal"""
+        # Simple planning algorithm
+        plan = []
+
+        if goal.get('type') == 'navigate':
+            plan.append({'action': 'move_to', 'target': goal.get('target')})
+            plan.append({'action': 'orient_to', 'target': goal.get('orientation')})
+        elif goal.get('type') == 'manipulate':
+            plan.append({'action': 'approach_object', 'object': goal.get('object')})
+            plan.append({'action': 'grasp', 'object': goal.get('object')})
+            plan.append({'action': 'move_to', 'target': goal.get('destination')})
+            plan.append({'action': 'release', 'object': goal.get('object')})
+
+        return plan
+
+    def _update_plan_status(self, plan_id: str, status: Dict[str, Any]):
+        """Update the status of a plan"""
+        if plan_id in self.action_plans:
+            # Update plan based on execution status
+            pass
+
+class ActionSelectionModule(CognitiveModule):
+    """Module for selecting and executing actions"""
+    def __init__(self):
+        super().__init__("action_selection", priority=9)
+        self.action_queue = queue.Queue()
+        self.executed_actions = []
+
+    def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle action selection and execution"""
+        outputs = {}
+
+        # Handle action requests
+        if 'action_request' in inputs:
+            action = inputs['action_request']
+            self.action_queue.put(action)
+            outputs['action_status'] = 'queued'
+
+        # Handle plan execution
+        if 'plan_execution' in inputs:
+            plan = inputs['plan_execution']
+            for action in plan:
+                self.action_queue.put(action)
+
+        # Execute next action if available
+        if not self.action_queue.empty():
+            try:
+                action = self.action_queue.get_nowait()
+                execution_result = self._execute_action(action)
+                outputs['action_result'] = execution_result
+                self.executed_actions.append({
+                    'action': action,
+                    'result': execution_result,
+                    'timestamp': time.time()
+                })
+            except queue.Empty:
+                pass
+
+        return outputs
+
+    def _execute_action(self, action: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a specific action"""
+        action_type = action.get('action', 'unknown')
+
+        # Simulate action execution
+        if action_type in ['move_to', 'approach_object']:
+            return {'status': 'success', 'position': action.get('target', (0, 0))}
+        elif action_type in ['grasp', 'release']:
+            return {'status': 'success', 'object': action.get('object', 'unknown')}
+        elif action_type == 'orient_to':
+            return {'status': 'success', 'orientation': action.get('target', 0)}
+        else:
+            return {'status': 'unknown_action'}
+
+class Blackboard:
+    """Shared workspace for cognitive modules"""
+    def __init__(self):
+        self.data_spaces: Dict[str, Any] = {}
+        self.module_access_log: Dict[str, List[str]] = defaultdict(list)
+        self.data_lock = threading.Lock()
+        self.subscribers: Dict[str, List[Callable]] = defaultdict(list)
+
+    def write(self, space: str, key: str, value: Any):
+        """Write data to a specific space on the blackboard"""
+        with self.data_lock:
+            if space not in self.data_spaces:
+                self.data_spaces[space] = {}
+            self.data_spaces[space][key] = value
+
+            # Notify subscribers
+            for callback in self.subscribers.get(f"{space}.{key}", []):
+                try:
+                    callback(key, value)
+                except Exception as e:
+                    print(f"Error in blackboard subscriber: {e}")
+
+    def read(self, space: str, key: str, default: Any = None) -> Any:
+        """Read data from a specific space on the blackboard"""
+        with self.data_lock:
+            if space in self.data_spaces and key in self.data_spaces[space]:
+                return self.data_spaces[space][key]
+            return default
+
+    def subscribe(self, space: str, key: str, callback: Callable):
+        """Subscribe to changes in a specific blackboard location"""
+        self.subscribers[f"{space}.{key}"].append(callback)
+
+    def get_space(self, space: str) -> Dict[str, Any]:
+        """Get all data from a specific space"""
+        with self.data_lock:
+            return self.data_spaces.get(space, {}).copy()
+
+    def update_module_access(self, module_name: str, space: str, operation: str):
+        """Log module access to blackboard spaces"""
+        self.module_access_log[module_name].append(f"{operation} to {space}")
+
+class ExecutiveController:
+    """Executive control system for coordinating cognitive modules"""
+    def __init__(self):
+        self.modules: Dict[str, CognitiveModule] = {}
+        self.module_priorities: Dict[str, int] = {}
+        self.active_modules: List[str] = []
+        self.goals: List[Dict[str, Any]] = []
+        self.interrupt_threshold = 0.8
+        self.execution_cycle = 0.1  # 100ms between cycles
+
+        # Module activation policies
+        self.activation_policies = {
+            'perception': self._should_activate_perception,
+            'memory': self._should_activate_memory,
+            'reasoning': self._should_activate_reasoning,
+            'planning': self._should_activate_planning,
+            'action_selection': self._should_activate_action_selection
+        }
+
+    def register_module(self, module: CognitiveModule):
+        """Register a cognitive module with the executive controller"""
+        self.modules[module.name] = module
+        self.module_priorities[module.name] = module.priority
+        self.active_modules.append(module.name)
+
+    def add_goal(self, goal: Dict[str, Any]):
+        """Add a goal for the system to achieve"""
+        self.goals.append(goal)
+
+    def run_cycle(self, external_inputs: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Run one cycle of executive control"""
+        if external_inputs is None:
+            external_inputs = {}
+
+        cycle_outputs = {}
+
+        # Determine which modules should be active this cycle
+        active_modules = self._determine_active_modules()
+
+        # Execute modules in priority order
+        for module_name in sorted(active_modules, key=lambda x: self.module_priorities.get(x, 0), reverse=True):
+            if module_name in self.modules:
+                module = self.modules[module_name]
+
+                # Prepare inputs for the module
+                module_inputs = self._prepare_module_inputs(module_name, external_inputs, cycle_outputs)
+
+                # Execute the module
+                try:
+                    module_outputs = module.execute(module_inputs)
+                    cycle_outputs[module_name] = module_outputs
+
+                    # Check for high-priority interrupts
+                    if self._should_interrupt(module_name, module_outputs):
+                        break
+
+                except Exception as e:
+                    print(f"Error executing module {module_name}: {e}")
+
+        return cycle_outputs
+
+    def _determine_active_modules(self) -> List[str]:
+        """Determine which modules should be active based on goals and priorities"""
+        # For now, return all active modules
+        # In a more sophisticated system, this would consider current goals,
+        # resource constraints, and module dependencies
+        return self.active_modules
+
+    def _prepare_module_inputs(self, module_name: str, external_inputs: Dict[str, Any],
+                              cycle_outputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Prepare inputs for a specific module"""
+        inputs = {}
+
+        # Add external inputs if relevant to this module
+        if module_name == 'perception':
+            # Perception gets direct sensory input
+            inputs.update({k: v for k, v in external_inputs.items() if k in ['visual', 'auditory', 'tactile']})
+        elif module_name == 'memory':
+            # Memory might get queries from other modules
+            for other_module, outputs in cycle_outputs.items():
+                if 'memory_request' in outputs:
+                    inputs.update(outputs)
+        elif module_name == 'reasoning':
+            # Reasoning gets information from perception and memory
+            for other_module, outputs in cycle_outputs.items():
+                if 'features' in str(outputs) or 'knowledge' in str(outputs):
+                    inputs.update(outputs)
+            # Add external reasoning requests
+            if 'reasoning_request' in external_inputs:
+                inputs['reasoning_request'] = external_inputs['reasoning_request']
+        elif module_name == 'planning':
+            # Planning gets goals and current state
+            inputs['goals'] = self.goals
+            for other_module, outputs in cycle_outputs.items():
+                if 'state' in str(outputs) or 'situation' in str(outputs):
+                    inputs.update(outputs)
+        elif module_name == 'action_selection':
+            # Action selection gets plans and current state
+            for other_module, outputs in cycle_outputs.items():
+                if 'plan' in str(outputs) or 'action' in str(outputs):
+                    inputs.update(outputs)
+
+        return inputs
+
+    def _should_interrupt(self, module_name: str, outputs: Dict[str, Any]) -> bool:
+        """Check if execution should be interrupted based on outputs"""
+        # Check for high-priority interrupts (e.g., safety concerns)
+        if 'interrupt' in outputs and outputs['interrupt'].get('priority', 0) > self.interrupt_threshold:
+            return True
+        return False
+
+    def _should_activate_perception(self, inputs: Dict[str, Any]) -> bool:
+        """Policy for when to activate perception module"""
+        # Activate if there are new sensory inputs
+        return any(k in inputs for k in ['visual', 'auditory', 'tactile'])
+
+    def _should_activate_memory(self, inputs: Dict[str, Any]) -> bool:
+        """Policy for when to activate memory module"""
+        # Activate if there are memory requests
+        return 'memory_request' in inputs
+
+    def _should_activate_reasoning(self, inputs: Dict[str, Any]) -> bool:
+        """Policy for when to activate reasoning module"""
+        # Activate if there are reasoning requests or new information
+        return 'reasoning_request' in inputs or 'new_information' in inputs
+
+    def _should_activate_planning(self, inputs: Dict[str, Any]) -> bool:
+        """Policy for when to activate planning module"""
+        # Activate if there are goals or if current plan failed
+        return len(self.goals) > 0 or inputs.get('plan_failed', False)
+
+    def _should_activate_action_selection(self, inputs: Dict[str, Any]) -> bool:
+        """Policy for when to activate action selection module"""
+        # Activate if there are plans to execute or actions to select
+        return 'plan' in inputs or 'action_selection_request' in inputs
+
+class CognitiveIntegrationFramework:
+    """Main framework for integrating cognitive modules"""
+    def __init__(self):
+        self.blackboard = Blackboard()
+        self.executive_controller = ExecutiveController()
+        self.modules: Dict[str, CognitiveModule] = {}
+
+        # Initialize and register modules
+        self._initialize_modules()
+
+    def _initialize_modules(self):
+        """Initialize and register cognitive modules"""
+        modules = [
+            PerceptionModule(),
+            MemoryModule(),
+            ReasoningModule(),
+            PlanningModule(),
+            ActionSelectionModule()
+        ]
+
+        for module in modules:
+            self.modules[module.name] = module
+            self.executive_controller.register_module(module)
+
+            # Subscribe modules to relevant blackboard updates
+            if module.name == 'perception':
+                self.blackboard.subscribe('sensory', 'input',
+                                        lambda k, v: self._handle_sensory_update(k, v))
+            elif module.name == 'memory':
+                self.blackboard.subscribe('tasks', 'goal',
+                                        lambda k, v: self._handle_goal_update(k, v))
+
+    def process_input(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process input through the integrated cognitive system"""
+        # Add input to blackboard
+        for key, value in input_data.items():
+            self.blackboard.write('sensory', key, value)
+
+        # Run executive control cycle
+        outputs = self.executive_controller.run_cycle(input_data)
+
+        # Update blackboard with results
+        for module_name, module_output in outputs.items():
+            self.blackboard.write('results', module_name, module_output)
+
+        return outputs
+
+    def set_goal(self, goal: Dict[str, Any]):
+        """Set a goal for the cognitive system"""
+        self.executive_controller.add_goal(goal)
+        self.blackboard.write('tasks', 'current_goal', goal)
+
+    def get_system_state(self) -> Dict[str, Any]:
+        """Get the current state of the cognitive system"""
+        return {
+            'active_modules': list(self.executive_controller.active_modules),
+            'current_goals': self.executive_controller.goals,
+            'blackboard_spaces': list(self.blackboard.data_spaces.keys()),
+            'module_outputs': {name: module.last_execution_time
+                             for name, module in self.modules.items()}
+        }
+
+    def _handle_sensory_update(self, key: str, value: Any):
+        """Handle updates to sensory information on blackboard"""
+        # Could trigger perception processing
+        pass
+
+    def _handle_goal_update(self, key: str, value: Any):
+        """Handle updates to goals on blackboard"""
+        # Could trigger planning processes
+        pass
+
+class LIDAInspiredArchitecture:
+    """LIDA (Learning Intelligent Distribution Agent) inspired cognitive architecture"""
+    def __init__(self):
+        self.cognitive_integration = CognitiveIntegrationFramework()
+        self.attention_scheduler = AttentionScheduler()
+        self.codelets = []  # Small, specialized processes
+        self.buffers = {}  # Working memory buffers
+
+    def add_codelet(self, codelet: Callable):
+        """Add a specialized codelet to the system"""
+        self.codelets.append(codelet)
+
+    def run_cognitive_cycle(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Run one complete cognitive cycle"""
+        # Process input through integration framework
+        integration_results = self.cognitive_integration.process_input(input_data)
+
+        # Run active codelets
+        codelet_results = {}
+        for codelet in self.codelets:
+            try:
+                result = codelet()
+                if result:
+                    codelet_results[codelet.__name__] = result
+            except Exception as e:
+                print(f"Error running codelet: {e}")
+
+        # Update buffers with results
+        self._update_buffers(integration_results, codelet_results)
+
+        # Schedule attention based on results
+        attention_focus = self.attention_scheduler.schedule_attention(
+            integration_results, codelet_results
+        )
+
+        return {
+            'integration_results': integration_results,
+            'codelet_results': codelet_results,
+            'attention_focus': attention_focus,
+            'system_state': self.cognitive_integration.get_system_state()
+        }
+
+    def _update_buffers(self, integration_results: Dict[str, Any],
+                       codelet_results: Dict[str, Any]):
+        """Update working memory buffers with new information"""
+        # Update buffers based on results
+        for module_name, results in integration_results.items():
+            if module_name not in self.buffers:
+                self.buffers[module_name] = []
+            self.buffers[module_name].append(results)
+
+        for codelet_name, results in codelet_results.items():
+            if codelet_name not in self.buffers:
+                self.buffers[codelet_name] = []
+            self.buffers[codelet_name].append(results)
+
+class AttentionScheduler:
+    """Schedules attention focus based on cognitive system state"""
+    def __init__(self):
+        self.attention_weights = {}
+        self.focus_history = []
+
+    def schedule_attention(self, integration_results: Dict[str, Any],
+                          codelet_results: Dict[str, Any]) -> Dict[str, Any]:
+        """Schedule the next focus of attention"""
+        # Calculate attention weights based on results
+        weights = {}
+
+        # Higher weight for modules with significant results
+        for module_name, results in integration_results.items():
+            if results:  # Non-empty results
+                weights[module_name] = min(len(str(results)) / 100.0, 1.0)  # Simple heuristic
+
+        # Higher weight for active codelets
+        for codelet_name in codelet_results:
+            weights[codelet_name] = 0.8  # High weight for active codelets
+
+        # Select focus based on weights
+        if weights:
+            focus_module = max(weights, key=weights.get)
+            focus = {
+                'module': focus_module,
+                'weight': weights[focus_module],
+                'timestamp': time.time()
+            }
+            self.focus_history.append(focus)
+            return focus
+
+        return {'module': 'idle', 'weight': 0.0, 'timestamp': time.time()}
+
+# Example usage
+def example_usage():
+    print("=== Cognitive Integration Example ===")
+
+    # Create cognitive integration framework
+    cognitive_system = CognitiveIntegrationFramework()
+
+    # Add a goal
+    cognitive_system.set_goal({
+        'type': 'navigate',
+        'target': (5.0, 5.0),
+        'description': 'Go to the kitchen'
+    })
+
+    # Simulate sensory input
+    sensory_input = {
+        'visual': {
+            'objects': ['table', 'chair', 'human'],
+            'colors': ['blue', 'red', 'green'],
+            'motion': 0.2
+        },
+        'auditory': {
+            'volume': 0.5,
+            'frequency': 440.0,
+            'direction': (1.0, 0.5)
+        },
+        'tactile': {
+            'pressure': 2.3,
+            'temperature': 22.5,
+            'vibration': 0.1
+        }
+    }
+
+    # Process the input
+    results = cognitive_system.process_input(sensory_input)
+
+    print(f"Integration results: {list(results.keys())}")
+    print(f"System state: {cognitive_system.get_system_state()}")
+
+    # Create LIDA-inspired architecture
+    lida_system = LIDAInspiredArchitecture()
+
+    # Add a simple codelet
+    def example_codelet():
+        return {"status": "active", "data": "sample processing result"}
+
+    lida_system.add_codelet(example_codelet)
+
+    # Run cognitive cycle
+    lida_results = lida_system.run_cognitive_cycle(sensory_input)
+    print(f"LIDA results: {lida_results}")
+
+# Uncomment to run example
+# example_usage()
+```
+
+## Review Questions
+
+1. What are the main challenges in integrating cognitive architecture components?
+2. How does executive control coordinate different cognitive modules?
+3. What is the role of blackboard architecture in cognitive integration?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="integration-patterns" label="Integration Patterns">
+Compare different integration patterns for cognitive architectures.
+</TabItem>
+<TabItem value="coordination-efficiency" label="Coordination Efficiency">
+Measure the efficiency of different coordination mechanisms.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a complete cognitive integration system for a humanoid robot that coordinates perception, memory, reasoning, planning, and action. Test the system with complex tasks and evaluate its coordination effectiveness.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand different approaches to cognitive integration
+- Be able to implement coordination mechanisms for cognitive modules
+- Recognize the importance of executive control in cognitive architectures
+- Appreciate the challenges of integrating diverse cognitive components

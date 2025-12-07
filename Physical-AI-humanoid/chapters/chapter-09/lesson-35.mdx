@@ -1,0 +1,643 @@
+---
+title: "Multi-Modal Control Integration"
+description: "Learn how humanoid robots coordinate different control systems to achieve complex behaviors through integrated multi-modal control."
+tags: ["multi-modal control", "control integration", "humanoid robotics", "coordination", "control systems"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Multi-Modal Control Integration
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Explain the concept of multi-modal control in humanoid robotics
+- Design integration architectures for coordinating multiple control systems
+- Implement priority-based control blending techniques
+- Analyze the challenges of integrating different control modalities
+- Evaluate approaches to conflict resolution in multi-modal control systems
+
+## Key Concepts
+
+- **Multi-Modal Control**: Coordination of multiple control systems with different objectives
+- **Control Architecture**: Framework for organizing and integrating control systems
+- **Priority-Based Blending**: Technique for combining control actions based on priority
+- **Task Hierarchy**: Organization of control tasks from high-level to low-level
+- **Control Arbitration**: Decision-making process for selecting control actions
+- **Modal Switching**: Transitioning between different control modes
+- **Conflict Resolution**: Handling competing control objectives
+- **Centralized vs. Distributed Control**: Different approaches to control integration
+
+## Theory Summary
+
+Multi-modal control integration is essential for humanoid robots that must coordinate multiple control systems to achieve complex behaviors. A humanoid robot might simultaneously need to maintain balance, track a trajectory, avoid obstacles, and execute manipulation tasks, each requiring different control strategies that must be harmoniously integrated.
+
+The challenge in multi-modal control lies in coordinating control systems that may have conflicting objectives or operate at different time scales. For example, a balance controller might command the robot to shift its weight, while a manipulation controller might need to maintain a specific end-effector position. The integration system must resolve these conflicts while ensuring overall system stability and safety.
+
+Priority-based control blending is a common approach where control actions are combined according to their priority level. Higher-priority tasks (like maintaining balance) take precedence over lower-priority tasks (like precise end-effector positioning) when conflicts arise. This can be implemented through techniques like the null-space projection method, where lower-priority tasks are executed in the null space of higher-priority tasks.
+
+Task hierarchy organizes control tasks from high-level behavioral goals to low-level motor commands. High-level controllers determine the overall behavior (e.g., walk to a location), mid-level controllers handle the execution (e.g., generate footstep plans), and low-level controllers manage the details (e.g., joint-level control).
+
+Control arbitration involves decision-making processes that determine which control system should be active or how control authority should be distributed. This might involve switching between different control modes based on the current situation or dynamically adjusting the influence of different controllers.
+
+Modal switching refers to the transition between different control modes, such as switching from standing to walking or from free motion to constrained manipulation. These transitions must be smooth to maintain stability and performance.
+
+Conflict resolution techniques address situations where multiple control systems have competing objectives. This might involve optimization-based approaches that find compromise solutions or hierarchical methods that respect priority constraints.
+
+Centralized control architectures use a single integration module to coordinate all control systems, providing a unified view but potentially creating computational bottlenecks. Distributed architectures allow control systems to coordinate more directly, potentially improving efficiency but requiring more complex coordination protocols.
+
+## Hands-on Activity
+
+### Activity: Implementing a Multi-Modal Control Integration System
+
+In this activity, you'll create a multi-modal control system that integrates balance control, trajectory tracking, and obstacle avoidance for a humanoid robot.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple, Optional
+import random
+
+class BalanceController:
+    """Balance controller for humanoid robot"""
+
+    def __init__(self, kp=100.0, kd=20.0):
+        self.kp = kp  # Proportional gain
+        self.kd = kd  # Derivative gain
+        self.target_com = np.array([0.0, 0.0])  # Target center of mass position
+
+    def compute_control(self, com_pos: np.ndarray, com_vel: np.ndarray) -> np.ndarray:
+        """Compute balance control forces"""
+        pos_error = self.target_com - com_pos
+        vel_error = -com_vel  # Negative because we want to reduce velocity
+
+        force = self.kp * pos_error + self.kd * vel_error
+        return force
+
+class TrajectoryTracker:
+    """Trajectory tracking controller"""
+
+    def __init__(self, kp=50.0, kv=10.0):
+        self.kp = kp  # Position gain
+        self.kv = kv  # Velocity gain
+        self.current_target_idx = 0
+
+    def compute_control(self, current_pos: np.ndarray, current_vel: np.ndarray,
+                       trajectory: List[np.ndarray]) -> np.ndarray:
+        """Compute trajectory following control"""
+        if not trajectory:
+            return np.array([0.0, 0.0])
+
+        # Get current target
+        target_pos = trajectory[self.current_target_idx]
+
+        # Check if we've reached the current target (within tolerance)
+        pos_error = np.linalg.norm(current_pos - target_pos)
+        if pos_error < 0.1 and self.current_target_idx < len(trajectory) - 1:
+            self.current_target_idx += 1
+            target_pos = trajectory[self.current_target_idx]
+
+        pos_error_vec = target_pos - current_pos
+        vel_error = -current_vel  # We want to reduce current velocity
+
+        force = self.kp * pos_error_vec + self.kv * vel_error
+        return force
+
+class ObstacleAvoider:
+    """Obstacle avoidance controller"""
+
+    def __init__(self, repulsion_gain=50.0, safety_distance=0.5):
+        self.repulsion_gain = repulsion_gain
+        self.safety_distance = safety_distance
+
+    def compute_control(self, robot_pos: np.ndarray, obstacles: List[np.ndarray]) -> np.ndarray:
+        """Compute obstacle avoidance forces"""
+        total_force = np.array([0.0, 0.0])
+
+        for obs_pos in obstacles:
+            vec_to_robot = robot_pos - obs_pos
+            distance = np.linalg.norm(vec_to_robot)
+
+            if distance < self.safety_distance:
+                # Normalize and apply repulsive force
+                if distance > 0.01:  # Avoid division by zero
+                    direction = vec_to_robot / distance
+                    strength = self.repulsion_gain * (1/distance - 1/self.safety_distance)
+                    total_force += strength * direction
+                else:
+                    # If very close, apply maximum repulsion
+                    total_force += self.repulsion_gain * np.random.uniform(-1, 1, 2)
+
+        return total_force
+
+class MultiModalController:
+    """Integrates multiple control modalities with priority-based blending"""
+
+    def __init__(self):
+        self.balance_ctrl = BalanceController()
+        self.traj_tracker = TrajectoryTracker()
+        self.obst_avoider = ObstacleAvoider()
+
+        # Control priorities (higher number = higher priority)
+        self.priorities = {
+            'balance': 3,
+            'obstacle_avoidance': 2,
+            'trajectory_tracking': 1
+        }
+
+        # Control authority limits
+        self.max_force = 500.0
+
+    def integrate_controls(self, robot_state: Dict,
+                          trajectory: List[np.ndarray],
+                          obstacles: List[np.ndarray]) -> np.ndarray:
+        """Integrate multiple control modalities with priority-based blending"""
+
+        # Compute individual control actions
+        balance_force = self.balance_ctrl.compute_control(
+            robot_state['com_pos'],
+            robot_state['com_vel']
+        )
+
+        traj_force = self.traj_tracker.compute_control(
+            robot_state['com_pos'],
+            robot_state['com_vel'],
+            trajectory
+        )
+
+        avoid_force = self.obst_avoider.compute_control(
+            robot_state['com_pos'],
+            obstacles
+        )
+
+        # Create control dictionary
+        controls = {
+            'balance': balance_force,
+            'trajectory_tracking': traj_force,
+            'obstacle_avoidance': avoid_force
+        }
+
+        # Apply priority-based integration
+        # For this example, we'll use a weighted approach where higher priority
+        # controls have more influence, but all are considered
+        total_force = np.zeros(2)
+
+        # Normalize priorities
+        total_priority = sum(self.priorities.values())
+        weights = {k: v/total_priority for k, v in self.priorities.items()}
+
+        # Blend controls based on priorities
+        for ctrl_name, force in controls.items():
+            weight = weights[ctrl_name]
+            total_force += weight * force
+
+        # Apply conflict resolution: if obstacle avoidance is very strong,
+        # it can override other priorities to ensure safety
+        avoid_magnitude = np.linalg.norm(avoid_force)
+        if avoid_magnitude > 100:  # High obstacle avoidance need
+            # Increase obstacle avoidance priority
+            total_force = 0.7 * avoid_force + 0.3 * (
+                weights['balance'] * balance_force +
+                weights['trajectory_tracking'] * traj_force
+            )
+
+        # Limit total force magnitude
+        force_magnitude = np.linalg.norm(total_force)
+        if force_magnitude > self.max_force:
+            total_force = (total_force / force_magnitude) * self.max_force
+
+        return total_force
+
+    def integrate_with_null_space(self, robot_state: Dict,
+                                 trajectory: List[np.ndarray],
+                                 obstacles: List[np.ndarray]) -> np.ndarray:
+        """Alternative integration using null-space projection method"""
+
+        # Compute highest priority control (balance)
+        balance_force = self.balance_ctrl.compute_control(
+            robot_state['com_pos'],
+            robot_state['com_vel']
+        )
+
+        # Normalize balance control direction
+        balance_norm = np.linalg.norm(balance_force)
+        if balance_norm > 0.01:
+            balance_dir = balance_force / balance_norm
+        else:
+            balance_dir = np.array([0.0, 0.0])
+
+        # Compute lower priority controls
+        traj_force = self.traj_tracker.compute_control(
+            robot_state['com_pos'],
+            robot_state['com_vel'],
+            trajectory
+        )
+
+        avoid_force = self.obst_avoider.compute_control(
+            robot_state['com_pos'],
+            obstacles
+        )
+
+        # Project lower priority controls into null space of higher priority
+        # (orthogonal to balance direction)
+        if np.linalg.norm(balance_dir) > 0.01:
+            # Remove component of traj_force in balance direction
+            traj_parallel = np.dot(traj_force, balance_dir) * balance_dir
+            traj_null = traj_force - traj_parallel
+
+            # Remove component of avoid_force in balance direction
+            avoid_parallel = np.dot(avoid_force, balance_dir) * balance_dir
+            avoid_null = avoid_force - avoid_parallel
+
+            # Combine: full balance + null space components of others
+            total_force = balance_force + 0.5 * traj_null + 0.5 * avoid_null
+        else:
+            # If no balance need, combine all controls
+            total_force = balance_force + 0.5 * traj_force + 0.5 * avoid_force
+
+        # Limit total force
+        force_magnitude = np.linalg.norm(total_force)
+        if force_magnitude > self.max_force:
+            total_force = (total_force / force_magnitude) * self.max_force
+
+        return total_force
+
+class HumanoidSimulation:
+    """Simulates humanoid robot with multi-modal control"""
+
+    def __init__(self):
+        self.controller = MultiModalController()
+        self.mass = 75.0  # Robot mass in kg
+        self.dt = 0.01    # Time step
+
+        # Robot state
+        self.com_pos = np.array([0.0, 0.0])
+        self.com_vel = np.array([0.0, 0.0])
+        self.com_acc = np.array([0.0, 0.0])
+
+    def step(self, trajectory: List[np.ndarray],
+             obstacles: List[np.ndarray]) -> Dict:
+        """Execute one control step"""
+
+        # Get robot state
+        robot_state = {
+            'com_pos': self.com_pos.copy(),
+            'com_vel': self.com_vel.copy()
+        }
+
+        # Compute control forces using multi-modal integration
+        control_force = self.controller.integrate_with_null_space(
+            robot_state, trajectory, obstacles
+        )
+
+        # Apply control force to robot dynamics
+        self.com_acc = control_force / self.mass
+
+        # Update velocity and position
+        self.com_vel += self.com_acc * self.dt
+        self.com_pos += self.com_vel * self.dt
+
+        # Add some process noise to make simulation more realistic
+        self.com_pos += np.random.normal(0, 0.001, size=2)
+        self.com_vel += np.random.normal(0, 0.0005, size=2)
+
+        return {
+            'position': self.com_pos.copy(),
+            'velocity': self.com_vel.copy(),
+            'acceleration': self.com_acc.copy(),
+            'control_force': control_force.copy()
+        }
+
+def simulate_multi_modal_control():
+    """Simulate multi-modal control integration"""
+    print("Multi-Modal Control Integration Simulation")
+    print("=" * 45)
+
+    # Initialize simulation
+    sim = HumanoidSimulation()
+
+    # Define trajectory (square path)
+    trajectory = []
+    for i in range(400):  # 4 seconds of simulation
+        t = i * 0.01  # Time in seconds
+
+        # Create a square trajectory
+        if t < 1.0:
+            target = np.array([t, 0.0])
+        elif t < 2.0:
+            target = np.array([1.0, t - 1.0])
+        elif t < 3.0:
+            target = np.array([1.0 - (t - 2.0), 1.0])
+        else:
+            target = np.array([0.0, 1.0 - (t - 3.0)])
+
+        trajectory.append(target)
+
+    # Define obstacles
+    obstacles = [
+        np.array([0.5, 0.3]),  # Obstacle near the path
+        np.array([0.7, 0.7])   # Another obstacle
+    ]
+
+    # Simulation parameters
+    steps = 400
+    positions = []
+    velocities = []
+    forces = []
+
+    print("Time\tCOM_X\tCOM_Y\tForce_X\tForce_Y")
+    print("-" * 45)
+
+    for i in range(steps):
+        t = i * 0.01
+
+        # Get current trajectory segment
+        current_trajectory = trajectory[i:] if i < len(trajectory) else [trajectory[-1]]
+
+        # Execute control step
+        state = sim.step(current_trajectory, obstacles)
+
+        # Store data
+        positions.append(state['position'].copy())
+        velocities.append(state['velocity'].copy())
+        forces.append(state['control_force'].copy())
+
+        # Print status every 50 steps
+        if i % 100 == 0:
+            pos = state['position']
+            force = state['control_force']
+            print(f"{t:.2f}\t{pos[0]:.3f}\t{pos[1]:.3f}\t{force[0]:.3f}\t{force[1]:.3f}")
+
+    # Convert to numpy arrays for plotting
+    positions = np.array(positions)
+    velocities = np.array(velocities)
+    forces = np.array(forces)
+
+    # Create visualization
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+
+    # Plot 1: Robot trajectory with obstacles and desired path
+    ax1.plot(positions[:, 0], positions[:, 1], 'b-', linewidth=2, label='Actual Path')
+    ax1.plot([t[0] for t in trajectory], [t[1] for t in trajectory], 'r--', alpha=0.7, label='Desired Path')
+
+    # Plot obstacles
+    for obs in obstacles:
+        circle = plt.Circle(obs, 0.1, color='red', alpha=0.3, label='Obstacle' if obs[0] == obstacles[0][0] else "")
+        ax1.add_patch(circle)
+
+    ax1.set_xlabel('X Position (m)')
+    ax1.set_ylabel('Y Position (m)')
+    ax1.set_title('Robot Trajectory with Obstacle Avoidance')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    ax1.axis('equal')
+
+    # Plot 2: Control forces over time
+    ax2.plot(forces[:, 0], label='Force X', linewidth=2)
+    ax2.plot(forces[:, 1], label='Force Y', linewidth=2)
+    ax2.set_xlabel('Time Step')
+    ax2.set_ylabel('Force (N)')
+    ax2.set_title('Control Forces Applied')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+
+    # Plot 3: Position errors
+    desired_x = [t[0] for t in trajectory[:len(positions)]]
+    desired_y = [t[1] for t in trajectory[:len(positions)]]
+    pos_errors = np.sqrt((positions[:, 0] - desired_x)**2 + (positions[:, 1] - desired_y)**2)
+
+    ax3.plot(pos_errors, linewidth=2, color='purple')
+    ax3.set_xlabel('Time Step')
+    ax3.set_ylabel('Position Error (m)')
+    ax3.set_title('Tracking Error Over Time')
+    ax3.grid(True, alpha=0.3)
+
+    # Plot 4: Velocity profile
+    speeds = np.sqrt(velocities[:, 0]**2 + velocities[:, 1]**2)
+    ax4.plot(speeds, linewidth=2, color='green')
+    ax4.set_xlabel('Time Step')
+    ax4.set_ylabel('Speed (m/s)')
+    ax4.set_title('Robot Speed Profile')
+    ax4.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+    # Print final statistics
+    final_error = pos_errors[-1] if len(pos_errors) > 0 else 0
+    avg_error = np.mean(pos_errors) if len(pos_errors) > 0 else 0
+    max_force = np.max(np.linalg.norm(forces, axis=1)) if len(forces) > 0 else 0
+
+    print(f"\nFinal tracking error: {final_error:.4f}m")
+    print(f"Average tracking error: {avg_error:.4f}m")
+    print(f"Maximum control force: {max_force:.4f}N")
+    print("Multi-modal control simulation completed!")
+
+    return positions, forces
+
+# Run the simulation
+positions, forces = simulate_multi_modal_control()
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy for numerical computations
+- Matplotlib for visualization
+- Basic understanding of control systems and robotics
+- Knowledge of vector mathematics and linear algebra
+
+## Step-by-Step Instructions
+
+1. **Design Individual Controllers**: Create separate controllers for balance, trajectory tracking, and obstacle avoidance
+2. **Implement Priority System**: Establish a priority-based system to determine how controllers interact
+3. **Create Integration Framework**: Build a system that combines multiple control modalities
+4. **Implement Conflict Resolution**: Add methods to handle competing control objectives
+5. **Test with Multi-Task Scenario**: Apply the integrated system to a scenario requiring multiple behaviors
+6. **Visualize Control Interactions**: Show how different controllers contribute to the final control action
+7. **Evaluate Performance**: Assess the effectiveness of the multi-modal integration
+
+## Code Snippets
+
+### Priority-Based Control Integration
+
+```python
+def integrate_controls(self, robot_state: Dict,
+                      trajectory: List[np.ndarray],
+                      obstacles: List[np.ndarray]) -> np.ndarray:
+    """Integrate multiple control modalities with priority-based blending"""
+
+    # Compute individual control actions
+    balance_force = self.balance_ctrl.compute_control(
+        robot_state['com_pos'],
+        robot_state['com_vel']
+    )
+
+    traj_force = self.traj_tracker.compute_control(
+        robot_state['com_pos'],
+        robot_state['com_vel'],
+        trajectory
+    )
+
+    avoid_force = self.obst_avoider.compute_control(
+        robot_state['com_pos'],
+        obstacles
+    )
+
+    # Create control dictionary
+    controls = {
+        'balance': balance_force,
+        'trajectory_tracking': traj_force,
+        'obstacle_avoidance': avoid_force
+    }
+
+    # Apply priority-based integration
+    total_force = np.zeros(2)
+
+    # Normalize priorities
+    total_priority = sum(self.priorities.values())
+    weights = {k: v/total_priority for k, v in self.priorities.items()}
+
+    # Blend controls based on priorities
+    for ctrl_name, force in controls.items():
+        weight = weights[ctrl_name]
+        total_force += weight * force
+
+    # Apply conflict resolution: if obstacle avoidance is very strong,
+    # it can override other priorities to ensure safety
+    avoid_magnitude = np.linalg.norm(avoid_force)
+    if avoid_magnitude > 100:  # High obstacle avoidance need
+        # Increase obstacle avoidance priority
+        total_force = 0.7 * avoid_force + 0.3 * (
+            weights['balance'] * balance_force +
+            weights['trajectory_tracking'] * traj_force
+        )
+
+    # Limit total force magnitude
+    force_magnitude = np.linalg.norm(total_force)
+    if force_magnitude > self.max_force:
+        total_force = (total_force / force_magnitude) * self.max_force
+
+    return total_force
+```
+
+### Null-Space Projection Method
+
+```python
+def integrate_with_null_space(self, robot_state: Dict,
+                             trajectory: List[np.ndarray],
+                             obstacles: List[np.ndarray]) -> np.ndarray:
+    """Alternative integration using null-space projection method"""
+
+    # Compute highest priority control (balance)
+    balance_force = self.balance_ctrl.compute_control(
+        robot_state['com_pos'],
+        robot_state['com_vel']
+    )
+
+    # Normalize balance control direction
+    balance_norm = np.linalg.norm(balance_force)
+    if balance_norm > 0.01:
+        balance_dir = balance_force / balance_norm
+    else:
+        balance_dir = np.array([0.0, 0.0])
+
+    # Compute lower priority controls
+    traj_force = self.traj_tracker.compute_control(
+        robot_state['com_pos'],
+        robot_state['com_vel'],
+        trajectory
+    )
+
+    avoid_force = self.obst_avoider.compute_control(
+        robot_state['com_pos'],
+        obstacles
+    )
+
+    # Project lower priority controls into null space of higher priority
+    # (orthogonal to balance direction)
+    if np.linalg.norm(balance_dir) > 0.01:
+        # Remove component of traj_force in balance direction
+        traj_parallel = np.dot(traj_force, balance_dir) * balance_dir
+        traj_null = traj_force - traj_parallel
+
+        # Remove component of avoid_force in balance direction
+        avoid_parallel = np.dot(avoid_force, balance_dir) * balance_dir
+        avoid_null = avoid_force - avoid_parallel
+
+        # Combine: full balance + null space components of others
+        total_force = balance_force + 0.5 * traj_null + 0.5 * avoid_null
+    else:
+        # If no balance need, combine all controls
+        total_force = balance_force + 0.5 * traj_force + 0.5 * avoid_force
+
+    # Limit total force
+    force_magnitude = np.linalg.norm(total_force)
+    if force_magnitude > self.max_force:
+        total_force = (total_force / force_magnitude) * self.max_force
+
+    return total_force
+```
+
+## Review Questions
+
+1. What are the main challenges in integrating multiple control systems in humanoid robots?
+2. How does priority-based control blending work in multi-modal systems?
+3. What is the null-space projection method and when is it useful?
+4. How can conflict resolution be implemented in multi-modal control systems?
+5. What are the trade-offs between centralized and distributed control architectures?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**What is the main purpose of multi-modal control integration in humanoid robotics?**
+
+A) To reduce computational complexity
+B) To coordinate multiple control systems with different objectives
+C) To simplify individual controllers
+D) To eliminate the need for feedback
+
+<details>
+<summary>Answer</summary>
+B) To coordinate multiple control systems with different objectives - Multi-modal control integration allows different controllers to work together harmoniously.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**What is the null-space projection method used for?**
+
+A) Reducing control computation time
+B) Projecting lower-priority tasks into spaces orthogonal to higher-priority tasks
+C) Increasing control accuracy
+D) Simplifying system modeling
+
+<details>
+<summary>Answer</summary>
+B) Projecting lower-priority tasks into spaces orthogonal to higher-priority tasks - This allows lower-priority tasks to be executed without interfering with higher-priority tasks.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the multi-modal control system to include a manipulation controller that needs to coordinate with the balance and locomotion controllers. Implement a scenario where the robot needs to maintain balance while walking and simultaneously control its arm to reach for an object. Consider how you would modify the priority system to handle this additional modality.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Design integration architectures for multi-modal control systems
+- Implement priority-based blending techniques for control coordination
+- Apply null-space projection and other conflict resolution methods
+- Evaluate the performance of integrated control systems
+- Understand the challenges and solutions in multi-modal control

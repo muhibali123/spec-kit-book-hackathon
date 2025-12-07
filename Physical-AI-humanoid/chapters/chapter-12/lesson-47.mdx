@@ -1,0 +1,850 @@
+---
+title: "Performance Evaluation and Optimization"
+description: "Evaluate the performance of the humanoid robot system and optimize its operation for efficiency and effectiveness."
+tags: ["performance evaluation", "optimization", "robotics efficiency", "system tuning", "benchmarking"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Performance Evaluation and Optimization
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Design and execute performance evaluation procedures for robotic systems
+- Analyze performance metrics and identify optimization opportunities
+- Implement optimization techniques for various robot subsystems
+- Benchmark robot performance against established standards
+- Create performance dashboards and monitoring systems
+
+## Key Concepts
+
+- **Performance Metrics**: Quantitative measures of robot capabilities and efficiency
+- **Benchmarking**: Comparing robot performance against standards or competitors
+- **Optimization Techniques**: Methods to improve robot performance
+- **System Profiling**: Analyzing resource usage and bottlenecks
+- **Energy Efficiency**: Minimizing power consumption while maintaining performance
+- **Real-time Performance**: Meeting timing constraints consistently
+- **Adaptive Optimization**: Adjusting parameters based on operating conditions
+- **Performance Monitoring**: Continuous tracking of system performance
+
+## Theory Summary
+
+Performance evaluation and optimization represent the critical phase where a robot's theoretical capabilities are measured against real-world requirements and systematically improved. This process involves establishing quantitative metrics, conducting systematic measurements, and applying optimization techniques to enhance various aspects of robot performance.
+
+Performance metrics provide objective measures of robot capabilities across multiple dimensions including mobility, dexterity, cognitive ability, efficiency, and safety. These metrics must be carefully chosen to reflect the robot's intended applications and user requirements. Common metrics include walking speed, manipulation accuracy, task completion time, energy consumption, and safety response time.
+
+Benchmarking involves comparing robot performance against established standards, competitor systems, or human performance levels. This provides context for evaluating whether the robot meets its design goals and competitive requirements. Benchmarking protocols must be standardized and repeatable to ensure fair comparisons.
+
+Optimization techniques vary widely depending on the aspect of performance being improved. For mechanical systems, optimization might involve adjusting control parameters, modifying trajectories, or tuning actuator settings. For computational systems, optimization could include algorithm improvements, code optimization, or resource allocation adjustments.
+
+System profiling identifies bottlenecks and resource constraints that limit performance. This involves monitoring CPU usage, memory consumption, communication bandwidth, and other resource utilization metrics to understand where improvements can be made.
+
+Energy efficiency optimization is particularly important for mobile robots with limited power sources. Techniques include trajectory optimization to minimize energy consumption, efficient actuator control, and power management strategies that reduce consumption during low-activity periods.
+
+Real-time performance optimization ensures that critical tasks meet their timing constraints consistently. This involves priority-based scheduling, deadline-aware algorithms, and resource reservation techniques to guarantee timely responses for safety-critical functions.
+
+Adaptive optimization allows robots to adjust their behavior based on changing conditions. This might involve modifying gait patterns based on terrain, adjusting control parameters based on load conditions, or changing computational resource allocation based on task demands.
+
+Performance monitoring systems provide continuous feedback on robot performance, enabling both real-time adjustments and long-term analysis. These systems track key metrics and can trigger alerts when performance degrades or safety limits are approached.
+
+## Hands-on Activity
+
+### Activity: Performance Evaluation and Optimization System
+
+In this activity, you'll implement a system to evaluate and optimize the performance of a humanoid robot.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple, Optional, Any, Callable
+import random
+import time
+import threading
+import queue
+from dataclasses import dataclass
+from enum import Enum
+from datetime import datetime, timedelta
+import statistics
+import json
+
+class PerformanceMetric(Enum):
+    """Types of performance metrics"""
+    MOBILITY = "mobility"
+    DEXTERITY = "dexterity"
+    COGNITION = "cognition"
+    EFFICIENCY = "efficiency"
+    SAFETY = "safety"
+    STABILITY = "stability"
+
+class OptimizationTarget(Enum):
+    """Targets for optimization"""
+    SPEED = "speed"
+    ACCURACY = "accuracy"
+    ENERGY = "energy"
+    STABILITY = "stability"
+    RESPONSIVENESS = "responsiveness"
+    ROBUSTNESS = "robustness"
+
+@dataclass
+class PerformanceSample:
+    """A single performance measurement sample"""
+    timestamp: datetime
+    metric: PerformanceMetric
+    value: float
+    unit: str
+    context: str  # Operating condition or task
+    robot_state: Dict[str, float]  # Robot state at time of measurement
+
+@dataclass
+class OptimizationParameter:
+    """Parameter that can be optimized"""
+    name: str
+    current_value: float
+    min_value: float
+    max_value: float
+    step_size: float
+    description: str
+
+class PerformanceMonitor:
+    """Monitors and records robot performance metrics"""
+
+    def __init__(self):
+        self.samples: List[PerformanceSample] = []
+        self.current_metrics = {}
+        self.baseline_performance = {}
+        self.metric_history = {}
+        self.monitoring_active = False
+        self.monitoring_thread = None
+
+    def start_monitoring(self):
+        """Start continuous performance monitoring"""
+        self.monitoring_active = True
+        self.monitoring_thread = threading.Thread(target=self._monitoring_loop)
+        self.monitoring_thread.start()
+
+    def stop_monitoring(self):
+        """Stop performance monitoring"""
+        self.monitoring_active = False
+        if self.monitoring_thread:
+            self.monitoring_thread.join()
+
+    def _monitoring_loop(self):
+        """Continuous monitoring loop"""
+        while self.monitoring_active:
+            # Simulate collecting various metrics
+            self._collect_metrics()
+            time.sleep(0.1)  # 10Hz monitoring
+
+    def _collect_metrics(self):
+        """Collect performance metrics from the robot"""
+        # Simulate various metrics
+        timestamp = datetime.now()
+
+        # Mobility metrics
+        mobility_value = random.uniform(0.5, 1.5)  # m/s walking speed
+        self.samples.append(PerformanceSample(
+            timestamp=timestamp,
+            metric=PerformanceMetric.MOBILITY,
+            value=mobility_value,
+            unit="m/s",
+            context="walking_forward",
+            robot_state={"battery_level": random.uniform(80, 100)}
+        ))
+
+        # Stability metrics
+        stability_value = random.uniform(0.85, 0.98)  # Stability score (0-1)
+        self.samples.append(PerformanceSample(
+            timestamp=timestamp,
+            metric=PerformanceMetric.STABILITY,
+            value=stability_value,
+            unit="score",
+            context="standing_balance",
+            robot_state={"imu_roll": random.uniform(-0.05, 0.05)}
+        ))
+
+        # Efficiency metrics
+        efficiency_value = random.uniform(85, 95)  # Efficiency percentage
+        self.samples.append(PerformanceSample(
+            timestamp=timestamp,
+            metric=PerformanceMetric.EFFICIENCY,
+            value=efficiency_value,
+            unit="%",
+            context="idle_power",
+            robot_state={"power_consumption": random.uniform(50, 80)}
+        ))
+
+        # Update current metrics
+        self.current_metrics = {
+            "mobility": mobility_value,
+            "stability": stability_value,
+            "efficiency": efficiency_value
+        }
+
+    def get_metric_history(self, metric: PerformanceMetric,
+                          hours_back: int = 1) -> List[PerformanceSample]:
+        """Get historical data for a specific metric"""
+        cutoff_time = datetime.now() - timedelta(hours=hours_back)
+        return [s for s in self.samples
+                if s.metric == metric and s.timestamp > cutoff_time]
+
+    def calculate_average_performance(self, metric: PerformanceMetric,
+                                   hours_back: int = 1) -> float:
+        """Calculate average performance for a metric over time"""
+        history = self.get_metric_history(metric, hours_back)
+        if not history:
+            return 0.0
+        return sum(s.value for s in history) / len(history)
+
+    def detect_performance_degradation(self, metric: PerformanceMetric,
+                                    threshold: float = 0.1) -> bool:
+        """Detect if performance is degrading"""
+        recent_avg = self.calculate_average_performance(metric, 0.5)  # Last 30 mins
+        baseline_avg = self.calculate_average_performance(metric, 24)  # Last 24 hours
+
+        if baseline_avg == 0:
+            return False
+
+        change_ratio = abs(recent_avg - baseline_avg) / baseline_avg
+        return change_ratio > threshold
+
+class RobotOptimizer:
+    """Optimizes robot performance based on collected data"""
+
+    def __init__(self, monitor: PerformanceMonitor):
+        self.monitor = monitor
+        self.optimization_parameters: List[OptimizationParameter] = [
+            OptimizationParameter("kp_balance", 80.0, 10.0, 200.0, 1.0, "Balance controller proportional gain"),
+            OptimizationParameter("kd_balance", 15.0, 1.0, 50.0, 0.5, "Balance controller derivative gain"),
+            OptimizationParameter("step_height", 0.05, 0.02, 0.1, 0.005, "Walking step height"),
+            OptimizationParameter("walk_speed", 0.8, 0.1, 2.0, 0.05, "Target walking speed"),
+            OptimizationParameter("torque_limit", 80.0, 50.0, 120.0, 2.0, "Actuator torque limit")
+        ]
+        self.optimization_history = []
+        self.active_optimizations = []
+
+    def evaluate_current_performance(self) -> Dict[str, float]:
+        """Evaluate current overall performance"""
+        metrics = {
+            "mobility": self.monitor.calculate_average_performance(PerformanceMetric.MOBILITY),
+            "stability": self.monitor.calculate_average_performance(PerformanceMetric.STABILITY),
+            "efficiency": self.monitor.calculate_average_performance(PerformanceMetric.EFFICIENCY)
+        }
+
+        # Calculate composite score
+        weights = {"mobility": 0.3, "stability": 0.4, "efficiency": 0.3}
+        composite_score = sum(metrics[metric] * weight
+                            for metric, weight in weights.items())
+
+        metrics["composite_score"] = composite_score
+        return metrics
+
+    def identify_optimization_opportunities(self) -> List[Tuple[OptimizationTarget, float]]:
+        """Identify areas for optimization based on performance data"""
+        current_perf = self.evaluate_current_performance()
+        opportunities = []
+
+        # Check if mobility needs improvement
+        if current_perf["mobility"] < 1.0:  # Below target of 1.0 m/s
+            improvement_potential = (1.0 - current_perf["mobility"]) / 1.0
+            opportunities.append((OptimizationTarget.SPEED, improvement_potential))
+
+        # Check if stability needs improvement
+        if current_perf["stability"] < 0.9:  # Below target of 0.9
+            improvement_potential = (0.9 - current_perf["stability"]) / 0.9
+            opportunities.append((OptimizationTarget.STABILITY, improvement_potential))
+
+        # Check if efficiency needs improvement
+        if current_perf["efficiency"] < 90:  # Below target of 90%
+            improvement_potential = (90 - current_perf["efficiency"]) / 90
+            opportunities.append((OptimizationTarget.ENERGY, improvement_potential))
+
+        return opportunities
+
+    def optimize_parameter(self, param_name: str, target: OptimizationTarget,
+                          test_duration: float = 5.0) -> Dict[str, Any]:
+        """Optimize a specific parameter for a target"""
+        # Find the parameter
+        param = next((p for p in self.optimization_parameters if p.name == param_name), None)
+        if not param:
+            return {"success": False, "message": f"Parameter {param_name} not found"}
+
+        # Current performance baseline
+        baseline_perf = self.evaluate_current_performance()
+
+        # Test different parameter values
+        test_values = np.arange(param.min_value, param.max_value, param.step_size)
+        best_value = param.current_value
+        best_performance = baseline_perf["composite_score"]
+        performance_data = []
+
+        for value in test_values:
+            # Simulate setting the parameter and measuring performance
+            temp_value = value
+            # Calculate potential performance improvement (simulated)
+            if target == OptimizationTarget.STABILITY:
+                # For stability, higher kp might improve balance
+                simulated_performance = baseline_perf["stability"] + (temp_value - param.current_value) * 0.001
+                simulated_performance = max(0.1, min(0.99, simulated_performance))  # Clamp
+            elif target == OptimizationTarget.SPEED:
+                # For speed, higher walk_speed parameter
+                simulated_performance = baseline_perf["mobility"] + (temp_value - param.current_value) * 0.01
+                simulated_performance = max(0.1, min(2.0, simulated_performance))
+            else:
+                # For other targets, use a general model
+                deviation = abs(temp_value - (param.min_value + param.max_value) / 2)
+                center_performance = baseline_perf["composite_score"]
+                simulated_performance = center_performance - (deviation * 0.0001)
+
+            performance_data.append((value, simulated_performance))
+
+            if simulated_performance > best_performance:
+                best_performance = simulated_performance
+                best_value = value
+
+        # Update the parameter if improvement found
+        improvement = best_performance - baseline_perf["composite_score"]
+        if improvement > 0.01:  # Only update if significant improvement
+            old_value = param.current_value
+            param.current_value = best_value
+            result = {
+                "success": True,
+                "parameter": param_name,
+                "old_value": old_value,
+                "new_value": best_value,
+                "improvement": improvement,
+                "performance_data": performance_data
+            }
+        else:
+            result = {
+                "success": False,
+                "parameter": param_name,
+                "message": "No significant improvement found",
+                "current_value": param.current_value
+            }
+
+        return result
+
+    def run_comprehensive_optimization(self) -> Dict[str, Any]:
+        """Run comprehensive optimization across all targets"""
+        start_time = time.time()
+
+        # Identify optimization opportunities
+        opportunities = self.identify_optimization_opportunities()
+
+        optimization_results = []
+        for target, potential in opportunities:
+            if potential > 0.05:  # Only optimize if potential is significant
+                # Select appropriate parameter for this target
+                if target == OptimizationTarget.STABILITY:
+                    param_to_optimize = "kp_balance"
+                elif target == OptimizationTarget.SPEED:
+                    param_to_optimize = "walk_speed"
+                elif target == OptimizationTarget.ENERGY:
+                    param_to_optimize = "torque_limit"
+                else:
+                    param_to_optimize = "kp_balance"  # Default
+
+                result = self.optimize_parameter(param_to_optimize, target)
+                optimization_results.append(result)
+
+        end_time = time.time()
+
+        return {
+            "optimization_run_time": end_time - start_time,
+            "opportunities_identified": len(opportunities),
+            "optimizations_performed": len(optimization_results),
+            "results": optimization_results,
+            "final_performance": self.evaluate_current_performance()
+        }
+
+class PerformanceDashboard:
+    """Dashboard for visualizing robot performance"""
+
+    def __init__(self, monitor: PerformanceMonitor, optimizer: RobotOptimizer):
+        self.monitor = monitor
+        self.optimizer = optimizer
+        self.update_frequency = 1.0  # seconds
+
+    def generate_performance_report(self) -> Dict[str, Any]:
+        """Generate a comprehensive performance report"""
+        current_perf = self.optimizer.evaluate_current_performance()
+        opportunities = self.optimizer.identify_optimization_opportunities()
+
+        # Get recent performance history
+        mobility_history = self.monitor.get_metric_history(PerformanceMetric.MOBILITY, 1)
+        stability_history = self.monitor.get_metric_history(PerformanceMetric.STABILITY, 1)
+        efficiency_history = self.monitor.get_metric_history(PerformanceMetric.EFFICIENCY, 1)
+
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "current_performance": current_perf,
+            "optimization_opportunities": [
+                {"target": opp[0].value, "potential": opp[1]}
+                for opp in opportunities
+            ],
+            "metric_trends": {
+                "mobility": [s.value for s in mobility_history[-20:]],  # Last 20 samples
+                "stability": [s.value for s in stability_history[-20:]],
+                "efficiency": [s.value for s in efficiency_history[-20:]]
+            },
+            "recommendations": self._generate_recommendations(current_perf, opportunities)
+        }
+
+    def _generate_recommendations(self, current_perf: Dict, opportunities: List) -> List[str]:
+        """Generate performance recommendations"""
+        recommendations = []
+
+        if current_perf["mobility"] < 0.8:
+            recommendations.append("Consider optimizing walking gait parameters to improve mobility")
+
+        if current_perf["stability"] < 0.85:
+            recommendations.append("Balance control parameters may need adjustment for better stability")
+
+        if current_perf["efficiency"] < 85:
+            recommendations.append("Power consumption optimization recommended")
+
+        if opportunities:
+            recommendations.append(f"Top optimization opportunity: {opportunities[0][0].value}")
+
+        return recommendations
+
+    def visualize_performance(self):
+        """Create visualizations of robot performance"""
+        # Get recent data
+        mobility_history = self.monitor.get_metric_history(PerformanceMetric.MOBILITY, 1)
+        stability_history = self.monitor.get_metric_history(PerformanceMetric.STABILITY, 1)
+        efficiency_history = self.monitor.get_metric_history(PerformanceMetric.EFFICIENCY, 1)
+
+        # Create visualizations
+        fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+
+        # Plot 1: Mobility over time
+        if mobility_history:
+            times = [s.timestamp for s in mobility_history]
+            values = [s.value for s in mobility_history]
+            axes[0, 0].plot(times, values, 'b-', linewidth=2)
+            axes[0, 0].set_title('Mobility Performance Over Time')
+            axes[0, 0].set_ylabel('Speed (m/s)')
+            axes[0, 0].grid(True, alpha=0.3)
+
+        # Plot 2: Stability over time
+        if stability_history:
+            times = [s.timestamp for s in stability_history]
+            values = [s.value for s in stability_history]
+            axes[0, 1].plot(times, values, 'g-', linewidth=2)
+            axes[0, 1].set_title('Stability Performance Over Time')
+            axes[0, 1].set_ylabel('Stability Score')
+            axes[0, 1].grid(True, alpha=0.3)
+
+        # Plot 3: Efficiency over time
+        if efficiency_history:
+            times = [s.timestamp for s in efficiency_history]
+            values = [s.value for s in efficiency_history]
+            axes[0, 2].plot(times, values, 'r-', linewidth=2)
+            axes[0, 2].set_title('Efficiency Performance Over Time')
+            axes[0, 2].set_ylabel('Efficiency (%)')
+            axes[0, 2].grid(True, alpha=0.3)
+
+        # Plot 4: Performance comparison
+        current_perf = self.optimizer.evaluate_current_performance()
+        perf_metrics = ['mobility', 'stability', 'efficiency']
+        perf_values = [current_perf.get(m, 0) for m in perf_metrics]
+        bars = axes[1, 0].bar(perf_metrics, perf_values)
+        axes[1, 0].set_title('Current Performance Metrics')
+        axes[1, 0].set_ylabel('Score')
+        # Add value labels on bars
+        for bar, value in zip(bars, perf_values):
+            axes[1, 0].text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                           f'{value:.2f}', ha='center', va='bottom')
+
+        # Plot 5: Optimization opportunities
+        opportunities = self.optimizer.identify_optimization_opportunities()
+        if opportunities:
+            targets = [opp[0].value for opp in opportunities]
+            potentials = [opp[1] for opp in opportunities]
+            axes[1, 1].bar(targets, potentials)
+            axes[1, 1].set_title('Optimization Opportunities')
+            axes[1, 1].set_ylabel('Improvement Potential')
+            axes[1, 1].tick_params(axis='x', rotation=45)
+
+        # Plot 6: Performance distribution
+        if mobility_history and stability_history and efficiency_history:
+            all_values = ([s.value for s in mobility_history] +
+                         [s.value for s in stability_history] +
+                         [s.value for s in efficiency_history])
+            axes[1, 2].hist(all_values, bins=20, alpha=0.7)
+            axes[1, 2].set_title('Performance Distribution')
+            axes[1, 2].set_xlabel('Performance Value')
+            axes[1, 2].set_ylabel('Frequency')
+
+        plt.tight_layout()
+        plt.show()
+
+def run_performance_evaluation():
+    """Run comprehensive performance evaluation and optimization"""
+    print("Humanoid Robot Performance Evaluation and Optimization")
+    print("=" * 54)
+
+    # Create performance monitor
+    monitor = PerformanceMonitor()
+    monitor.start_monitoring()
+
+    # Let it collect some data
+    print("Collecting performance data for 5 seconds...")
+    time.sleep(5)
+
+    # Create optimizer
+    optimizer = RobotOptimizer(monitor)
+
+    # Evaluate current performance
+    print("\nEvaluating current performance...")
+    current_perf = optimizer.evaluate_current_performance()
+    for metric, value in current_perf.items():
+        print(f"  {metric}: {value:.3f}")
+
+    # Identify optimization opportunities
+    print("\nIdentifying optimization opportunities...")
+    opportunities = optimizer.identify_optimization_opportunities()
+    for target, potential in opportunities:
+        print(f"  {target.value}: {potential:.3f} improvement potential")
+
+    # Run specific optimizations
+    print("\nRunning optimizations...")
+    if opportunities:
+        for target, potential in opportunities[:2]:  # Optimize top 2 opportunities
+            if potential > 0.05:  # Only if significant potential
+                if target == OptimizationTarget.STABILITY:
+                    param_to_optimize = "kp_balance"
+                elif target == OptimizationTarget.SPEED:
+                    param_to_optimize = "walk_speed"
+                else:
+                    param_to_optimize = "torque_limit"
+
+                result = optimizer.optimize_parameter(param_to_optimize, target)
+                if result["success"]:
+                    print(f"  Optimized {result['parameter']}: {result['old_value']:.2f} → {result['new_value']:.2f}")
+                    print(f"  Improvement: {result['improvement']:.4f}")
+                else:
+                    print(f"  No significant improvement for {param_to_optimize}")
+    else:
+        print("  No significant optimization opportunities found")
+
+    # Run comprehensive optimization
+    print("\nRunning comprehensive optimization...")
+    comprehensive_result = optimizer.run_comprehensive_optimization()
+    print(f"  Optimization completed in {comprehensive_result['optimization_run_time']:.2f}s")
+    print(f"  Opportunities identified: {comprehensive_result['opportunities_identified']}")
+    print(f"  Optimizations performed: {comprehensive_result['optimizations_performed']}")
+
+    # Generate performance report
+    print("\nGenerating performance report...")
+    dashboard = PerformanceDashboard(monitor, optimizer)
+    report = dashboard.generate_performance_report()
+
+    print(f"Performance Report:")
+    print(f"  Timestamp: {report['timestamp']}")
+    print(f"  Current composite score: {report['current_performance']['composite_score']:.3f}")
+    print(f"  Recommendations: {len(report['recommendations'])}")
+    for rec in report['recommendations']:
+        print(f"    - {rec}")
+
+    # Stop monitoring
+    monitor.stop_monitoring()
+
+    # Create visualizations
+    print("\nCreating performance visualizations...")
+    dashboard.visualize_performance()
+
+    # Performance summary
+    print(f"\nPerformance Evaluation Summary:")
+    print("-" * 30)
+    print(f"• Data collection period: 5 seconds")
+    print(f"• Metrics evaluated: {len(current_perf)-1} (composite score included)")
+    print(f"• Optimization opportunities: {len(opportunities)}")
+    print(f"• Parameters optimized: {comprehensive_result['optimizations_performed']}")
+    print(f"• Final composite score: {comprehensive_result['final_performance']['composite_score']:.3f}")
+
+    # Calculate performance improvement
+    initial_composite = current_perf['composite_score']
+    final_composite = comprehensive_result['final_performance']['composite_score']
+    improvement = ((final_composite - initial_composite) / initial_composite) * 100 if initial_composite > 0 else 0
+    print(f"• Overall improvement: {improvement:.2f}%")
+
+    print(f"\nPerformance evaluation and optimization completed!")
+    print("The system can continuously monitor and optimize robot performance.")
+
+# Run the performance evaluation
+run_performance_evaluation()
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy for numerical computations
+- Matplotlib for visualization
+- Basic understanding of performance metrics and optimization
+- Knowledge of robotics systems and control theory
+
+## Step-by-Step Instructions
+
+1. **Design Performance Monitor**: Create a system to continuously monitor robot performance metrics
+2. **Implement Metrics Collection**: Build systems to collect mobility, stability, efficiency, and other metrics
+3. **Create Optimization Engine**: Implement algorithms to optimize robot parameters
+4. **Develop Evaluation Framework**: Build systems to evaluate overall performance
+5. **Build Dashboard**: Create visualization tools for performance monitoring
+6. **Run Optimization Cycles**: Execute optimization procedures and measure improvements
+7. **Generate Reports**: Create comprehensive performance reports
+
+## Code Snippets
+
+### Performance Monitoring System
+
+```python
+class PerformanceMonitor:
+    """Monitors and records robot performance metrics"""
+
+    def __init__(self):
+        self.samples: List[PerformanceSample] = []
+        self.current_metrics = {}
+        self.baseline_performance = {}
+        self.metric_history = {}
+        self.monitoring_active = False
+        self.monitoring_thread = None
+
+    def start_monitoring(self):
+        """Start continuous performance monitoring"""
+        self.monitoring_active = True
+        self.monitoring_thread = threading.Thread(target=self._monitoring_loop)
+        self.monitoring_thread.start()
+
+    def stop_monitoring(self):
+        """Stop performance monitoring"""
+        self.monitoring_active = False
+        if self.monitoring_thread:
+            self.monitoring_thread.join()
+
+    def _monitoring_loop(self):
+        """Continuous monitoring loop"""
+        while self.monitoring_active:
+            # Simulate collecting various metrics
+            self._collect_metrics()
+            time.sleep(0.1)  # 10Hz monitoring
+
+    def _collect_metrics(self):
+        """Collect performance metrics from the robot"""
+        # Simulate various metrics
+        timestamp = datetime.now()
+
+        # Mobility metrics
+        mobility_value = random.uniform(0.5, 1.5)  # m/s walking speed
+        self.samples.append(PerformanceSample(
+            timestamp=timestamp,
+            metric=PerformanceMetric.MOBILITY,
+            value=mobility_value,
+            unit="m/s",
+            context="walking_forward",
+            robot_state={"battery_level": random.uniform(80, 100)}
+        ))
+
+        # Additional metrics collection...
+
+    def get_metric_history(self, metric: PerformanceMetric,
+                          hours_back: int = 1) -> List[PerformanceSample]:
+        """Get historical data for a specific metric"""
+        cutoff_time = datetime.now() - timedelta(hours=hours_back)
+        return [s for s in self.samples
+                if s.metric == metric and s.timestamp > cutoff_time]
+
+    def calculate_average_performance(self, metric: PerformanceMetric,
+                                   hours_back: int = 1) -> float:
+        """Calculate average performance for a metric over time"""
+        history = self.get_metric_history(metric, hours_back)
+        if not history:
+            return 0.0
+        return sum(s.value for s in history) / len(history)
+```
+
+### Optimization Engine
+
+```python
+class RobotOptimizer:
+    """Optimizes robot performance based on collected data"""
+
+    def __init__(self, monitor: PerformanceMonitor):
+        self.monitor = monitor
+        self.optimization_parameters: List[OptimizationParameter] = [
+            OptimizationParameter("kp_balance", 80.0, 10.0, 200.0, 1.0, "Balance controller proportional gain"),
+            OptimizationParameter("kd_balance", 15.0, 1.0, 50.0, 0.5, "Balance controller derivative gain"),
+            OptimizationParameter("step_height", 0.05, 0.02, 0.1, 0.005, "Walking step height"),
+            OptimizationParameter("walk_speed", 0.8, 0.1, 2.0, 0.05, "Target walking speed"),
+            OptimizationParameter("torque_limit", 80.0, 50.0, 120.0, 2.0, "Actuator torque limit")
+        ]
+        self.optimization_history = []
+        self.active_optimizations = []
+
+    def evaluate_current_performance(self) -> Dict[str, float]:
+        """Evaluate current overall performance"""
+        metrics = {
+            "mobility": self.monitor.calculate_average_performance(PerformanceMetric.MOBILITY),
+            "stability": self.monitor.calculate_average_performance(PerformanceMetric.STABILITY),
+            "efficiency": self.monitor.calculate_average_performance(PerformanceMetric.EFFICIENCY)
+        }
+
+        # Calculate composite score
+        weights = {"mobility": 0.3, "stability": 0.4, "efficiency": 0.3}
+        composite_score = sum(metrics[metric] * weight
+                            for metric, weight in weights.items())
+
+        metrics["composite_score"] = composite_score
+        return metrics
+
+    def identify_optimization_opportunities(self) -> List[Tuple[OptimizationTarget, float]]:
+        """Identify areas for optimization based on performance data"""
+        current_perf = self.evaluate_current_performance()
+        opportunities = []
+
+        # Check if mobility needs improvement
+        if current_perf["mobility"] < 1.0:  # Below target of 1.0 m/s
+            improvement_potential = (1.0 - current_perf["mobility"]) / 1.0
+            opportunities.append((OptimizationTarget.SPEED, improvement_potential))
+
+        # Check if stability needs improvement
+        if current_perf["stability"] < 0.9:  # Below target of 0.9
+            improvement_potential = (0.9 - current_perf["stability"]) / 0.9
+            opportunities.append((OptimizationTarget.STABILITY, improvement_potential))
+
+        # Check if efficiency needs improvement
+        if current_perf["efficiency"] < 90:  # Below target of 90%
+            improvement_potential = (90 - current_perf["efficiency"]) / 90
+            opportunities.append((OptimizationTarget.ENERGY, improvement_potential))
+
+        return opportunities
+
+    def optimize_parameter(self, param_name: str, target: OptimizationTarget,
+                          test_duration: float = 5.0) -> Dict[str, Any]:
+        """Optimize a specific parameter for a target"""
+        # Find the parameter
+        param = next((p for p in self.optimization_parameters if p.name == param_name), None)
+        if not param:
+            return {"success": False, "message": f"Parameter {param_name} not found"}
+
+        # Current performance baseline
+        baseline_perf = self.evaluate_current_performance()
+
+        # Test different parameter values
+        test_values = np.arange(param.min_value, param.max_value, param.step_size)
+        best_value = param.current_value
+        best_performance = baseline_perf["composite_score"]
+        performance_data = []
+
+        for value in test_values:
+            # Simulate setting the parameter and measuring performance
+            temp_value = value
+            # Calculate potential performance improvement (simulated)
+            if target == OptimizationTarget.STABILITY:
+                # For stability, higher kp might improve balance
+                simulated_performance = baseline_perf["stability"] + (temp_value - param.current_value) * 0.001
+                simulated_performance = max(0.1, min(0.99, simulated_performance))  # Clamp
+            elif target == OptimizationTarget.SPEED:
+                # For speed, higher walk_speed parameter
+                simulated_performance = baseline_perf["mobility"] + (temp_value - param.current_value) * 0.01
+                simulated_performance = max(0.1, min(2.0, simulated_performance))
+            else:
+                # For other targets, use a general model
+                deviation = abs(temp_value - (param.min_value + param.max_value) / 2)
+                center_performance = baseline_perf["composite_score"]
+                simulated_performance = center_performance - (deviation * 0.0001)
+
+            performance_data.append((value, simulated_performance))
+
+            if simulated_performance > best_performance:
+                best_performance = simulated_performance
+                best_value = value
+
+        # Update the parameter if improvement found
+        improvement = best_performance - baseline_perf["composite_score"]
+        if improvement > 0.01:  # Only update if significant improvement
+            old_value = param.current_value
+            param.current_value = best_value
+            result = {
+                "success": True,
+                "parameter": param_name,
+                "old_value": old_value,
+                "new_value": best_value,
+                "improvement": improvement,
+                "performance_data": performance_data
+            }
+        else:
+            result = {
+                "success": False,
+                "parameter": param_name,
+                "message": "No significant improvement found",
+                "current_value": param.current_value
+            }
+
+        return result
+```
+
+## Review Questions
+
+1. What are the key performance metrics for humanoid robots?
+2. How do you identify optimization opportunities in robotic systems?
+3. What is the difference between offline and online optimization?
+4. How do you balance competing optimization targets?
+5. What role does continuous monitoring play in performance optimization?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**What is a key benefit of continuous performance monitoring in robotics?**
+
+A) It makes robots move faster
+B) It allows for real-time optimization and early detection of performance degradation
+C) It reduces manufacturing costs
+D) It improves robot appearance
+
+<details>
+<summary>Answer</summary>
+B) It allows for real-time optimization and early detection of performance degradation - Continuous monitoring enables proactive optimization and maintenance.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**Why is it important to consider multiple optimization targets simultaneously?**
+
+A) It makes the robot heavier
+B) Different targets may conflict, requiring balanced optimization approaches
+C) It reduces computational requirements
+D) It simplifies the control system
+
+<details>
+<summary>Answer</summary>
+B) Different targets may conflict, requiring balanced optimization approaches - Optimization targets often compete, requiring careful balancing.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the performance evaluation system to include machine learning-based optimization. Implement a reinforcement learning algorithm that can learn optimal parameter settings through interaction with the robot. Create a system that can adaptively optimize robot behavior based on task requirements and environmental conditions.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Design and implement performance evaluation systems for robots
+- Identify optimization opportunities using data analysis
+- Apply optimization techniques to improve robot performance
+- Create monitoring and visualization tools for performance tracking
+- Understand the balance between different performance metrics

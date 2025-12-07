@@ -1,0 +1,144 @@
+---
+title: "Sensors and Actuators in Humanoid Robots"
+description: "Exploring the sensory and motor systems that enable humanoid robots to interact with their environment"
+tags: [sensors, actuators, perception, motor-control, humanoid-robotics]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Sensors and Actuators in Humanoid Robots
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Identify different types of sensors used in humanoid robots
+- Understand the role of actuators in robot movement and control
+- Analyze sensor fusion techniques for enhanced perception
+- Design basic control systems for actuator coordination
+
+## Key Concepts
+
+- **Proprioceptive Sensors**: Internal sensors measuring robot state (joint angles, forces, IMU)
+- **Exteroceptive Sensors**: External sensors perceiving the environment (cameras, LIDAR, touch)
+- **Actuators**: Motors and devices that produce robot movement (servos, hydraulic, pneumatic)
+- **Sensor Fusion**: Combining data from multiple sensors for better perception
+- **Force Control**: Precise control of interaction forces with the environment
+
+## Theory Summary
+
+Humanoid robots require sophisticated sensory and motor systems to interact effectively with human environments. The sensory system provides information about both the robot's internal state and the external environment, while the actuator system enables movement and interaction. The integration of these systems is crucial for achieving human-like capabilities and safe human-robot interaction.
+
+Sensors in humanoid robots include vision systems for object recognition, tactile sensors for manipulation, inertial measurement units for balance, and proprioceptive sensors for joint position and force feedback. Actuators must provide precise control, adequate power, and safe operation, often requiring advanced control algorithms to coordinate multiple degrees of freedom.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="simulation" label="Simulation">
+Explore a humanoid robot simulation with various sensor modalities and actuator controls.
+</TabItem>
+<TabItem value="analysis" label="Analysis Exercise">
+Analyze sensor data from a real humanoid robot and identify different environmental features.
+</TabItem>
+<TabItem value="control" label="Control Exercise">
+Implement basic actuator control algorithms for joint positioning and force control.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Robot simulation environment (PyBullet, Gazebo, Webots)
+- Sensor data visualization tools
+- Control system development environment
+- Basic understanding of control theory
+
+## Step-by-Step Instructions
+
+1. Set up a humanoid robot simulation with multiple sensor types
+2. Configure camera, LIDAR, and IMU sensors
+3. Implement basic sensor data processing pipelines
+4. Configure and test different actuator control modes
+5. Implement sensor fusion algorithms
+6. Test coordinated sensor-actuator behaviors
+
+## Code Snippets
+
+```python
+import numpy as np
+
+class SensorFusion:
+    def __init__(self):
+        self.camera_data = None
+        self.lidar_data = None
+        self.imu_data = None
+        self.joint_data = None
+
+    def kalman_filter(self, measurement, prediction, uncertainty):
+        """Simplified Kalman filter for sensor fusion"""
+        # Prediction update
+        predicted_state = prediction
+        predicted_uncertainty = uncertainty + 0.1  # Process noise
+
+        # Measurement update
+        kalman_gain = predicted_uncertainty / (predicted_uncertainty + 0.1)  # Measurement noise
+        updated_state = predicted_state + kalman_gain * (measurement - predicted_state)
+        updated_uncertainty = (1 - kalman_gain) * predicted_uncertainty
+
+        return updated_state, updated_uncertainty
+
+    def fuse_vision_lidar(self, camera_pos, lidar_pos, confidence=0.7):
+        """Fuse camera and LIDAR position estimates"""
+        fused_pos = confidence * camera_pos + (1 - confidence) * lidar_pos
+        return fused_pos
+
+class ActuatorController:
+    def __init__(self, num_joints):
+        self.num_joints = num_joints
+        self.target_positions = np.zeros(num_joints)
+        self.current_positions = np.zeros(num_joints)
+        self.max_torque = 100.0  # Nm
+
+    def position_control(self, joint_index, target_pos, current_pos, kp=10.0):
+        """Simple proportional position control"""
+        error = target_pos - current_pos
+        torque = kp * error
+        # Limit torque to safe values
+        torque = np.clip(torque, -self.max_torque, self.max_torque)
+        return torque
+
+    def force_control(self, joint_index, target_force, actual_force, kp=1.0, ki=0.1):
+        """Force control with integral component"""
+        error = target_force - actual_force
+        self.integral_error = getattr(self, 'integral_error', 0) + error
+        torque = kp * error + ki * self.integral_error
+        return torque
+```
+
+## Review Questions
+
+1. What are the main differences between proprioceptive and exteroceptive sensors?
+2. Why is sensor fusion important in humanoid robotics?
+3. What are the key requirements for actuators in humanoid robots?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="design" label="Design Challenge">
+Design a sensor configuration for a humanoid robot that needs to navigate and manipulate objects.
+</TabItem>
+<TabItem value="analysis" label="Analysis">
+Analyze the trade-offs between different actuator types (servo, hydraulic, pneumatic).
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Create a sensor fusion system that combines data from multiple sensors (e.g., vision and IMU) to improve the robot's perception of its environment. Implement and test the system in simulation.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the different types of sensors and actuators in humanoid robots
+- Recognize the importance of sensor fusion for enhanced perception
+- Be able to implement basic control algorithms for actuators
+- Appreciate the challenges in coordinating sensory and motor systems

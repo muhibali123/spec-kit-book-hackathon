@@ -1,0 +1,196 @@
+---
+title: "Basic AI Algorithms for Robotics"
+description: "Introduction to artificial intelligence algorithms specifically designed for robotic applications"
+tags: [ai-algorithms, robotics, path-planning, machine-learning, computer-vision]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Basic AI Algorithms for Robotics
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement basic path planning algorithms for robot navigation
+- Apply computer vision techniques for object recognition and tracking
+- Understand machine learning approaches for robot control
+- Design decision-making systems for autonomous robot behavior
+
+## Key Concepts
+
+- **Path Planning**: Algorithms for finding optimal routes (A*, RRT, Dijkstra's)
+- **SLAM**: Simultaneous Localization and Mapping for navigation in unknown environments
+- **Computer Vision**: Image processing and object recognition for robot perception
+- **Reinforcement Learning**: Learning optimal behaviors through environmental interaction
+- **Behavior Trees**: Hierarchical decision-making structures for robot autonomy
+
+## Theory Summary
+
+AI algorithms in robotics bridge the gap between raw sensor data and intelligent action. These algorithms enable robots to perceive their environment, make decisions, and execute appropriate actions. Path planning algorithms help robots navigate through complex environments, while computer vision systems enable object recognition and scene understanding. Machine learning techniques allow robots to adapt to new situations and improve their performance over time.
+
+The integration of AI algorithms with robot control systems creates intelligent agents capable of autonomous operation in dynamic environments. This integration requires careful consideration of real-time constraints, sensor noise, and the need for robust, safe behavior.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="path-planning" label="Path Planning">
+Implement and compare different path planning algorithms in a simulated environment.
+</TabItem>
+<TabItem value="computer-vision" label="Computer Vision">
+Apply object detection algorithms to robot camera data for scene understanding.
+</TabItem>
+<TabItem value="reinforcement-learning" label="Reinforcement Learning">
+Train a simple RL agent to perform a basic robotic task in simulation.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with OpenCV, NumPy, and SciPy
+- Robot simulation environment
+- Machine learning libraries (scikit-learn, TensorFlow/PyTorch)
+- Path planning libraries or custom implementations
+
+## Step-by-Step Instructions
+
+1. Implement a basic path planning algorithm (A* or Dijkstra's)
+2. Set up a simulated environment with obstacles
+3. Apply computer vision techniques to process camera data
+4. Implement a simple SLAM algorithm for mapping
+5. Create a basic reinforcement learning agent for a robotic task
+6. Integrate the algorithms and test the complete system
+
+## Code Snippets
+
+```python
+import numpy as np
+import cv2
+from collections import deque
+
+class PathPlanner:
+    def __init__(self, grid):
+        self.grid = grid
+        self.rows, self.cols = grid.shape
+
+    def a_star(self, start, goal):
+        """A* path planning algorithm"""
+        open_set = [(0, start)]
+        came_from = {}
+        g_score = {start: 0}
+        f_score = {start: self.heuristic(start, goal)}
+
+        while open_set:
+            current = min(open_set, key=lambda x: x[0])[1]
+            open_set = [item for item in open_set if item[1] != current]
+
+            if current == goal:
+                path = []
+                while current in came_from:
+                    path.append(current)
+                    current = came_from[current]
+                path.reverse()
+                return path
+
+            for neighbor in self.get_neighbors(current):
+                tentative_g = g_score[current] + 1
+
+                if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g
+                    f_score[neighbor] = tentative_g + self.heuristic(neighbor, goal)
+                    open_set.append((f_score[neighbor], neighbor))
+
+        return []  # No path found
+
+    def heuristic(self, a, b):
+        """Manhattan distance heuristic"""
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    def get_neighbors(self, pos):
+        """Get valid neighboring positions"""
+        neighbors = []
+        for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            nx, ny = pos[0] + dx, pos[1] + dy
+            if 0 <= nx < self.rows and 0 <= ny < self.cols and self.grid[nx][ny] == 0:
+                neighbors.append((nx, ny))
+        return neighbors
+
+class ObjectDetector:
+    def __init__(self):
+        self.object_cascade = cv2.CascadeClassifier()  # In practice, load a trained classifier
+
+    def detect_objects(self, image):
+        """Simple object detection using color segmentation"""
+        # Convert to HSV for better color detection
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        # Define color range for object detection (e.g., red objects)
+        lower_red = np.array([0, 100, 100])
+        upper_red = np.array([10, 255, 255])
+
+        mask = cv2.inRange(hsv, lower_red, upper_red)
+
+        # Find contours
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        objects = []
+        for contour in contours:
+            if cv2.contourArea(contour) > 100:  # Filter small contours
+                x, y, w, h = cv2.boundingRect(contour)
+                objects.append((x, y, w, h))
+
+        return objects
+
+class SimpleRLAgent:
+    def __init__(self, state_size, action_size, learning_rate=0.1, discount=0.95, epsilon=0.1):
+        self.state_size = state_size
+        self.action_size = action_size
+        self.learning_rate = learning_rate
+        self.discount = discount
+        self.epsilon = epsilon
+        self.q_table = np.zeros((state_size, action_size))
+
+    def choose_action(self, state):
+        """Epsilon-greedy action selection"""
+        if np.random.random() < self.epsilon:
+            return np.random.choice(self.action_size)
+        else:
+            return np.argmax(self.q_table[state, :])
+
+    def update_q_value(self, state, action, reward, next_state):
+        """Update Q-value using Q-learning formula"""
+        best_next_action = np.argmax(self.q_table[next_state, :])
+        td_target = reward + self.discount * self.q_table[next_state, best_next_action]
+        td_error = td_target - self.q_table[state, action]
+        self.q_table[state, action] += self.learning_rate * td_error
+```
+
+## Review Questions
+
+1. What are the key differences between A* and RRT path planning algorithms?
+2. How does SLAM enable robots to navigate in unknown environments?
+3. What are the advantages of using reinforcement learning in robotics?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="algorithm-comparison" label="Algorithm Comparison">
+Compare the performance of different path planning algorithms in various scenarios.
+</TabItem>
+<TabItem value="vision-system" label="Vision System">
+Design a computer vision pipeline for object recognition in a robotic system.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Implement a complete AI system for a mobile robot that includes path planning, object detection, and decision-making capabilities. Test the system in simulation with various scenarios.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand fundamental AI algorithms used in robotics
+- Be able to implement path planning and computer vision algorithms
+- Recognize the role of machine learning in robotic autonomy
+- Appreciate the challenges in integrating AI algorithms with robot systems

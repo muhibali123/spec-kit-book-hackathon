@@ -1,0 +1,198 @@
+---
+title: "Control Systems and Feedback Mechanisms"
+description: "Understanding the control theory and feedback systems essential for stable robot operation"
+tags: [control-systems, feedback, stability, robotics-control, PID]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Control Systems and Feedback Mechanisms
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Design PID controllers for robot joint control
+- Analyze system stability and response characteristics
+- Implement feedback control for robot balance and movement
+- Understand advanced control techniques for humanoid robots
+
+## Key Concepts
+
+- **PID Control**: Proportional-Integral-Derivative control for precise system regulation
+- **Feedback Control**: Using system output to adjust control inputs
+- **Stability**: Ensuring robot systems remain controlled and predictable
+- **Impedance Control**: Controlling interaction forces with the environment
+- **Adaptive Control**: Adjusting control parameters based on changing conditions
+
+## Theory Summary
+
+Control systems are fundamental to robot operation, enabling precise movement, balance, and interaction with the environment. Feedback control uses sensor measurements to continuously adjust control inputs, ensuring the robot behaves as intended despite disturbances and uncertainties. For humanoid robots, control systems must handle complex dynamics, maintain balance during locomotion, and ensure safe interaction with humans and objects.
+
+PID controllers are widely used in robotics due to their simplicity and effectiveness. The proportional term responds to current error, the integral term addresses accumulated past errors, and the derivative term predicts future errors based on the rate of change. Advanced control techniques like impedance control allow robots to regulate their interaction with the environment by controlling stiffness, damping, and inertia properties.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="pid-tuning" label="PID Tuning">
+Implement and tune PID controllers for robot joint position control.
+</TabItem>
+<TabItem value="balance-control" label="Balance Control">
+Design a feedback control system to maintain robot balance.
+</TabItem>
+<TabItem value="simulation" label="Simulation">
+Test control algorithms in a physics simulation environment.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Physics simulation environment (PyBullet, Gazebo)
+- Control system design tools
+- Data visualization and analysis tools
+- Basic understanding of differential equations and system dynamics
+
+## Step-by-Step Instructions
+
+1. Set up a simulation environment with a simple robot model
+2. Implement basic PID control for joint position regulation
+3. Tune PID parameters for optimal response
+4. Implement balance control using IMU feedback
+5. Test control system response to disturbances
+6. Analyze stability and performance metrics
+
+## Code Snippets
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+class PIDController:
+    def __init__(self, kp, ki, kd, output_limits=(-np.inf, np.inf)):
+        self.kp = kp  # Proportional gain
+        self.ki = ki  # Integral gain
+        self.kd = kd  # Derivative gain
+        self.output_limits = output_limits
+
+        self.previous_error = 0
+        self.integral = 0
+        self.previous_time = None
+
+    def compute(self, setpoint, measurement, dt=None):
+        """Compute PID output based on setpoint and measurement"""
+        current_time = time.time()
+
+        if dt is None:
+            if self.previous_time is None:
+                dt = 0.01  # Default time step
+            else:
+                dt = current_time - self.previous_time
+        self.previous_time = current_time
+
+        # Calculate error
+        error = setpoint - measurement
+
+        # Proportional term
+        proportional = self.kp * error
+
+        # Integral term
+        self.integral += error * dt
+        integral = self.ki * self.integral
+
+        # Derivative term
+        derivative = 0
+        if dt > 0:
+            derivative = self.kd * (error - self.previous_error) / dt
+        self.previous_error = error
+
+        # Calculate output
+        output = proportional + integral + derivative
+
+        # Apply output limits
+        output = np.clip(output, self.output_limits[0], self.output_limits[1])
+
+        return output
+
+class BalanceController:
+    def __init__(self, robot_model):
+        self.robot = robot_model
+        self.ankle_controller = PIDController(kp=200, ki=10, kd=5)
+        self.hip_controller = PIDController(kp=150, ki=5, kd=3)
+        self.target_com = np.array([0, 0, 0.8])  # Target center of mass position
+
+    def compute_balance_control(self, current_com, current_com_vel, target_com=None):
+        """Compute balance control torques based on COM position and velocity"""
+        if target_com is None:
+            target_com = self.target_com
+
+        # Calculate COM error
+        com_error = target_com - current_com
+        com_vel_error = -current_com_vel  # Negative because we want to oppose velocity
+
+        # Compute control forces using PD control (simplified)
+        control_force = 100 * com_error + 20 * com_vel_error  # Stiffness and damping gains
+
+        # Convert forces to joint torques (simplified mapping)
+        # In a real implementation, this would involve complex inverse dynamics
+        ankle_torque = self.ankle_controller.compute(0, -control_force[0])
+        hip_torque = self.hip_controller.compute(0, -control_force[1])
+
+        return ankle_torque, hip_torque
+
+class ImpedanceController:
+    def __init__(self, stiffness=1000, damping=100, mass=10):
+        self.stiffness = stiffness  # Spring constant
+        self.damping = damping      # Damping coefficient
+        self.mass = mass           # Apparent mass
+        self.target_pos = np.zeros(3)
+        self.target_vel = np.zeros(3)
+
+    def compute_impedance_force(self, current_pos, current_vel, external_force=np.zeros(3)):
+        """Compute impedance control force"""
+        pos_error = self.target_pos - current_pos
+        vel_error = self.target_vel - current_vel
+
+        # Impedance control law: F = M*a_desired + D*v_error + K*x_error - F_external
+        acceleration = (self.stiffness * pos_error +
+                       self.damping * vel_error -
+                       external_force) / self.mass
+
+        return self.mass * acceleration
+
+# Example usage
+import time
+
+# Initialize controllers
+pid_controller = PIDController(kp=1.2, ki=0.1, kd=0.05, output_limits=(-10, 10))
+balance_controller = BalanceController(robot_model=None)  # Simplified
+impedance_controller = ImpedanceController(stiffness=500, damping=50, mass=5)
+```
+
+## Review Questions
+
+1. What are the roles of the proportional, integral, and derivative terms in a PID controller?
+2. Why is feedback control essential for humanoid robot balance?
+3. How does impedance control differ from traditional position control?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="controller-design" label="Controller Design">
+Design a PID controller for a specific robot joint and analyze its performance.
+</TabItem>
+<TabItem value="stability-analysis" label="Stability Analysis">
+Analyze the stability of a feedback control system using appropriate methods.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Implement a complete control system for a humanoid robot that maintains balance while tracking a desired trajectory. Test the system with various disturbances and evaluate its performance.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the principles of PID and feedback control
+- Be able to design and tune controllers for robot systems
+- Recognize the importance of control systems for robot stability
+- Appreciate advanced control techniques for humanoid robotics

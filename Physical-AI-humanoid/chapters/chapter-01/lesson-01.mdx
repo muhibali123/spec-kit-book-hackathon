@@ -1,0 +1,110 @@
+---
+title: "Defining Physical AI and Humanoid Robotics"
+description: "Introduction to the fundamental concepts of Physical AI and Humanoid Robotics"
+tags: [physical-ai, humanoid-robotics, introduction, fundamentals]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Defining Physical AI and Humanoid Robotics
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Define Physical AI and distinguish it from traditional AI
+- Explain the key characteristics of humanoid robotics
+- Identify the main applications and challenges in the field
+- Understand the interdisciplinary nature of Physical AI
+
+## Key Concepts
+
+- **Physical AI**: AI systems that interact with the physical world through sensors and actuators
+- **Humanoid Robotics**: Robots designed with human-like form and capabilities
+- **Embodied Cognition**: The idea that cognitive processes are influenced by the body's interactions with the environment
+- **Morphological Computation**: The idea that the physical structure of a robot contributes to its intelligence
+
+## Theory Summary
+
+Physical AI represents a paradigm shift from traditional AI systems that operate primarily in digital environments to AI systems that must navigate, interact with, and adapt to the physical world. This requires a fundamentally different approach to intelligence, one that integrates perception, action, and learning in real-time physical environments.
+
+Humanoid robotics specifically focuses on creating robots with human-like form and capabilities, which offers unique advantages in human environments and human-robot interaction scenarios.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="simulation" label="Simulation">
+In this exercise, you'll explore a basic simulation environment to understand how a humanoid robot perceives its environment.
+</TabItem>
+<TabItem value="code" label="Code Exercise">
+Implement a simple perception algorithm to detect objects in a simulated environment.
+</TabItem>
+<TabItem value="hardware" label="Hardware">
+If you have access to a physical robot platform, follow the instructions to set up basic perception capabilities.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Simulation environment (e.g., Gazebo, PyBullet, or Webots)
+- Python programming environment
+- Basic knowledge of robotics frameworks (ROS/ROS2)
+
+## Step-by-Step Instructions
+
+1. Set up the simulation environment
+2. Load the humanoid robot model
+3. Configure sensors (cameras, LIDAR, IMU)
+4. Run basic perception algorithms
+5. Analyze the robot's interaction with the environment
+
+## Code Snippets
+
+```python
+# Example: Basic robot initialization in simulation
+import pybullet as p
+import pybullet_data
+
+# Connect to physics server
+physicsClient = p.connect(p.GUI)
+p.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+# Load plane and robot
+planeId = p.loadURDF("plane.urdf")
+robotStartPos = [0,0,1]
+robotStartOrientation = p.getQuaternionFromEuler([0,0,0])
+robotId = p.loadURDF("humanoid.urdf", robotStartPos, robotStartOrientation)
+```
+
+## Review Questions
+
+1. What distinguishes Physical AI from traditional AI systems?
+2. Why is the humanoid form factor important in robotics?
+3. How does embodiment influence cognitive processes in robots?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="mcq" label="Multiple Choice">
+Which of the following best describes Physical AI?
+A) AI systems that exist only in digital environments
+B) AI systems that interact with the physical world through sensors and actuators
+C) AI systems that simulate human emotions
+D) AI systems that process physical materials
+</TabItem>
+<TabItem value="short-answer" label="Short Answer">
+Explain the concept of morphological computation and provide an example.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design a simple experiment to test how a robot's physical form affects its ability to navigate through a doorway. Consider different body shapes and sizes.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the fundamental differences between Physical AI and traditional AI
+- Recognize the importance of embodiment in robotics
+- Be able to set up a basic simulation environment for humanoid robots
+- Appreciate the interdisciplinary nature of the field

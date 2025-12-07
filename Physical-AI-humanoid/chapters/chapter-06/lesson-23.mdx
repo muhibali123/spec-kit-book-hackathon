@@ -1,0 +1,567 @@
+---
+title: "Imitation Learning and Behavioral Cloning"
+description: "Learning robot behaviors by observing and mimicking expert demonstrations"
+tags: [imitation-learning, behavioral-cloning, expert-demonstrations, learning-from-observation, robotics]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Imitation Learning and Behavioral Cloning
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement behavioral cloning algorithms for robot learning
+- Design effective expert demonstration collection systems
+- Apply advanced imitation learning techniques like GAIL and DAgger
+- Evaluate the effectiveness of learned behaviors in physical systems
+
+## Key Concepts
+
+- **Behavioral Cloning**: Supervised learning approach to mimic expert behavior
+- **Generative Adversarial Imitation Learning (GAIL)**: Adversarial approach to imitation
+- **Dataset Aggregation (DAgger)**: Interactive approach to improve policy
+- **Learning from Observation**: Extracting behavior from visual demonstrations
+- **One-shot Learning**: Learning complex behaviors from minimal demonstrations
+
+## Theory Summary
+
+Imitation learning enables robots to acquire complex behaviors by observing and mimicking expert demonstrations, which is often more efficient than learning from scratch through reinforcement learning. This approach is particularly valuable in robotics where designing reward functions can be challenging and safety during exploration is critical.
+
+Behavioral cloning is the simplest form of imitation learning, treating the problem as a supervised learning task where the robot learns to map observations to actions based on expert demonstrations. However, behavioral cloning suffers from compounding errors over time, as the robot's state distribution drifts from the expert's distribution during execution.
+
+Advanced techniques like Dataset Aggregation (DAgger) address this issue by iteratively collecting new demonstrations as the robot improves, ensuring the training data covers states the robot is likely to encounter. Generative Adversarial Imitation Learning (GAIL) uses adversarial training to match the state-action distribution of the expert, often achieving better performance than behavioral cloning.
+
+Learning from observation is particularly important for physical AI, as it allows robots to learn from natural human demonstrations without requiring specialized recording equipment. This approach can extract behavioral patterns from visual observations alone, making it more practical for real-world deployment.
+
+The quality and diversity of expert demonstrations significantly impact the success of imitation learning. Demonstrations should cover various scenarios, edge cases, and recovery behaviors to ensure the learned policy is robust and generalizable.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="behavioral-cloning" label="Behavioral Cloning">
+Implement a behavioral cloning system for robot manipulation tasks.
+</TabItem>
+<TabItem value="gail-implementation" label="GAIL Implementation">
+Create a GAIL system for robot control.
+</TabItem>
+<TabItem value="demonstration-collection" label="Demonstration Collection">
+Design a system for collecting high-quality expert demonstrations.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with PyTorch or TensorFlow
+- Robot simulation environment (PyBullet, Mujoco)
+- Computer vision libraries (OpenCV, MediaPipe)
+- Imitation learning libraries (Stable Baselines3, imitation)
+
+## Step-by-Step Instructions
+
+1. Set up imitation learning environment
+2. Collect expert demonstrations
+3. Implement behavioral cloning algorithm
+4. Create advanced imitation learning systems
+5. Test with various robot tasks
+6. Evaluate performance and generalization
+
+## Code Snippets
+
+```python
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, TensorDataset
+from typing import Tuple, List, Dict, Any, Optional
+import gym
+from gym import spaces
+import random
+from collections import deque
+import cv2
+
+class RobotImitationEnv(gym.Env):
+    """Environment for imitation learning with demonstrations"""
+    def __init__(self):
+        super(RobotImitationEnv, self).__init__()
+
+        # Action space: [velocity_x, velocity_y, angular_velocity]
+        self.action_space = spaces.Box(low=np.array([-1.0, -1.0, -1.0]),
+                                      high=np.array([1.0, 1.0, 1.0]),
+                                      dtype=np.float32)
+
+        # Observation space: [x_pos, y_pos, angle, goal_x, goal_y, obstacle_x, obstacle_y, vel_x, vel_y]
+        self.observation_space = spaces.Box(low=-10.0, high=10.0, shape=(9,), dtype=np.float32)
+
+        # Robot state
+        self.robot_pos = np.array([0.0, 0.0])
+        self.robot_angle = 0.0
+        self.robot_vel = np.array([0.0, 0.0])
+        self.goal_pos = np.array([5.0, 5.0])
+        self.obstacle_pos = np.array([2.5, 2.5])
+        self.max_steps = 200
+        self.current_step = 0
+
+    def reset(self) -> np.ndarray:
+        """Reset the environment"""
+        # Random starting position near origin
+        self.robot_pos = np.random.uniform(-1.0, 1.0, size=2)
+        self.robot_angle = np.random.uniform(-np.pi, np.pi)
+        self.robot_vel = np.array([0.0, 0.0])
+        self.current_step = 0
+
+        # Randomize goal and obstacle positions
+        self.goal_pos = np.random.uniform(3.0, 6.0, size=2)
+        self.obstacle_pos = np.random.uniform(-2.0, 2.0, size=2)
+
+        return self._get_observation()
+
+    def _get_observation(self) -> np.ndarray:
+        """Get current observation"""
+        return np.concatenate([
+            self.robot_pos,
+            [self.robot_angle],
+            self.goal_pos,
+            self.obstacle_pos,
+            self.robot_vel
+        ])
+
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Dict]:
+        """Execute one step in the environment"""
+        action = np.clip(action, -1.0, 1.0)
+        dt = 0.05
+
+        # Update robot dynamics
+        self.robot_vel[0] += action[0] * 0.1
+        self.robot_vel[1] += action[1] * 0.1
+        self.robot_angle += action[2] * 0.2
+
+        # Limit velocities
+        self.robot_vel = np.clip(self.robot_vel, -0.5, 0.5)
+
+        # Update position
+        self.robot_pos[0] += self.robot_vel[0] * dt
+        self.robot_pos[1] += self.robot_vel[1] * dt
+
+        # Calculate reward (for evaluation, not for imitation learning)
+        distance_to_goal = np.linalg.norm(self.robot_pos - self.goal_pos)
+        reward = -distance_to_goal * 0.1
+
+        # Check termination
+        done = distance_to_goal < 0.2 or self.current_step >= self.max_steps
+        self.current_step += 1
+
+        info = {'distance_to_goal': distance_to_goal}
+        return self._get_observation(), reward, done, info
+
+class ImitationPolicy(nn.Module):
+    """Policy network for imitation learning"""
+    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 256):
+        super(ImitationPolicy, self).__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
+        )
+
+        # Initialize with small weights for stable learning
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        """Initialize weights"""
+        if isinstance(module, nn.Linear):
+            nn.init.xavier_uniform_(module.weight)
+            nn.init.constant_(module.bias, 0)
+
+    def forward(self, state: torch.Tensor) -> torch.Tensor:
+        return torch.tanh(self.network(state))  # Bound actions to [-1, 1]
+
+class BehavioralCloning:
+    """Behavioral cloning implementation"""
+    def __init__(self, state_dim: int, action_dim: int, lr: float = 1e-3):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.policy = ImitationPolicy(state_dim, action_dim)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
+        self.criterion = nn.MSELoss()
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.policy.to(self.device)
+
+    def train(self, demonstrations: List[Tuple[np.ndarray, np.ndarray]],
+              epochs: int = 100, batch_size: int = 64) -> List[float]:
+        """Train the policy using behavioral cloning"""
+        if not demonstrations:
+            return []
+
+        states, actions = zip(*demonstrations)
+        states = torch.FloatTensor(np.array(states)).to(self.device)
+        actions = torch.FloatTensor(np.array(actions)).to(self.device)
+
+        dataset = TensorDataset(states, actions)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+        losses = []
+        for epoch in range(epochs):
+            epoch_loss = 0
+            for batch_states, batch_actions in dataloader:
+                self.optimizer.zero_grad()
+                predicted_actions = self.policy(batch_states)
+                loss = self.criterion(predicted_actions, batch_actions)
+                loss.backward()
+                self.optimizer.step()
+                epoch_loss += loss.item()
+
+            avg_loss = epoch_loss / len(dataloader)
+            losses.append(avg_loss)
+
+            if epoch % 20 == 0:
+                print(f"BC Epoch {epoch}, Loss: {avg_loss:.6f}")
+
+        return losses
+
+    def predict(self, state: np.ndarray) -> np.ndarray:
+        """Predict action for given state"""
+        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        with torch.no_grad():
+            action = self.policy(state_tensor).squeeze(0).cpu().numpy()
+        return action
+
+class ExpertDemonstrator:
+    """Simulated expert demonstrator for generating training data"""
+    def __init__(self, env: gym.Env):
+        self.env = env
+
+    def generate_demonstration(self, max_steps: int = 200) -> List[Tuple[np.ndarray, np.ndarray]]:
+        """Generate expert demonstration for one episode"""
+        state = self.env.reset()
+        demonstration = []
+
+        for _ in range(max_steps):
+            # Simple expert policy: move toward goal while avoiding obstacles
+            obs = state
+            robot_pos = obs[:2]
+            robot_angle = obs[2]
+            goal_pos = obs[3:5]
+            obstacle_pos = obs[5:7]
+
+            # Calculate direction to goal
+            goal_dir = goal_pos - robot_pos
+            goal_dist = np.linalg.norm(goal_dir)
+            if goal_dist > 0:
+                goal_dir = goal_dir / goal_dist
+            else:
+                goal_dir = np.array([0.0, 0.0])
+
+            # Calculate direction away from obstacle if too close
+            obstacle_dir = np.array([0.0, 0.0])
+            obstacle_dist = np.linalg.norm(robot_pos - obstacle_pos)
+            if obstacle_dist < 1.0:
+                obstacle_dir = (robot_pos - obstacle_pos) / obstacle_dist if obstacle_dist > 0 else np.array([0.0, 0.0])
+
+            # Combine directions
+            combined_dir = 0.8 * goal_dir + 0.2 * obstacle_dir
+            combined_dir = combined_dir / max(np.linalg.norm(combined_dir), 0.1)
+
+            # Calculate velocity toward target
+            vel_x = combined_dir[0] * 0.8
+            vel_y = combined_dir[1] * 0.8
+
+            # Calculate angular velocity to face direction of movement
+            target_angle = np.arctan2(combined_dir[1], combined_dir[0])
+            angular_vel = (target_angle - robot_angle) * 0.5
+
+            action = np.array([vel_x, vel_y, angular_vel])
+            action = np.clip(action, -1.0, 1.0)
+
+            demonstration.append((state.copy(), action.copy()))
+
+            state, reward, done, info = self.env.step(action)
+            if done:
+                break
+
+        return demonstration
+
+    def collect_demonstrations(self, num_demonstrations: int) -> List[Tuple[np.ndarray, np.ndarray]]:
+        """Collect multiple demonstrations"""
+        all_demonstrations = []
+        for i in range(num_demonstrations):
+            demo = self.generate_demonstration()
+            all_demonstrations.extend(demo)
+            if (i + 1) % 10 == 0:
+                print(f"Collected {i + 1} demonstrations")
+        return all_demonstrations
+
+class DAgger:
+    """Dataset Aggregation for imitation learning"""
+    def __init__(self, state_dim: int, action_dim: int, bc_lr: float = 1e-3):
+        self.bc_agent = BehavioralCloning(state_dim, action_dim, bc_lr)
+        self.expert = None  # Will be set during training
+        self.dagger_iterations = 5
+        self.rollout_episodes = 10
+
+    def train(self, initial_demonstrations: List[Tuple[np.ndarray, np.ndarray]],
+              env: gym.Env, expert: ExpertDemonstrator) -> List[float]:
+        """Train using DAgger algorithm"""
+        self.expert = expert
+        dataset = initial_demonstrations.copy()
+        losses = []
+
+        for iteration in range(self.dagger_iterations):
+            print(f"DAgger iteration {iteration + 1}/{self.dagger_iterations}")
+
+            # Train behavioral cloning on current dataset
+            iter_losses = self.bc_agent.train(dataset, epochs=50)
+            losses.extend(iter_losses)
+
+            # Roll out current policy and collect expert actions for new states
+            new_demonstrations = []
+            for episode in range(self.rollout_episodes):
+                state = env.reset()
+                for step in range(100):  # Limited rollout
+                    # Get action from current policy
+                    policy_action = self.bc_agent.predict(state)
+
+                    # Get expert action for current state
+                    expert_action = self._get_expert_action(state, env)
+
+                    # Add to dataset
+                    new_demonstrations.append((state.copy(), expert_action.copy()))
+
+                    # Take step in environment
+                    state, reward, done, info = env.step(policy_action)
+                    if done:
+                        break
+
+            # Add new demonstrations to dataset
+            dataset.extend(new_demonstrations)
+            print(f"Added {len(new_demonstrations)} new demonstrations")
+
+        return losses
+
+    def _get_expert_action(self, state: np.ndarray, env: gym.Env) -> np.ndarray:
+        """Get expert action for current state by creating temporary env state"""
+        # This is a simplified approach - in practice, the expert should be able to
+        # provide actions for any given state
+        return np.array([0.5, 0.5, 0.0])  # Placeholder
+
+class GAILDiscriminator(nn.Module):
+    """Discriminator for GAIL (Generative Adversarial Imitation Learning)"""
+    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 256):
+        super(GAILDiscriminator, self).__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(state_dim + action_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1),
+            nn.Sigmoid()  # Output probability that state-action pair is from expert
+        )
+
+    def forward(self, state: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
+        x = torch.cat([state, action], dim=1)
+        return self.network(x)
+
+class GAIL:
+    """Generative Adversarial Imitation Learning implementation"""
+    def __init__(self, state_dim: int, action_dim: int, policy_lr: float = 1e-4,
+                 discriminator_lr: float = 1e-3, gamma: float = 0.99):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.gamma = gamma
+
+        # Policy network (generator)
+        self.policy = ImitationPolicy(state_dim, action_dim)
+        self.policy_optimizer = optim.Adam(self.policy.parameters(), lr=policy_lr)
+
+        # Discriminator network
+        self.discriminator = GAILDiscriminator(state_dim, action_dim)
+        self.discriminator_optimizer = optim.Adam(
+            self.discriminator.parameters(), lr=discriminator_lr
+        )
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.policy.to(self.device)
+        self.discriminator.to(self.device)
+
+    def compute_reward(self, state: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
+        """Compute reward from discriminator output"""
+        with torch.no_grad():
+            prob_expert = self.discriminator(state, action)
+            # Convert probability to reward (log(D))
+            reward = torch.log(prob_expert + 1e-8) - torch.log(1 - prob_expert + 1e-8)
+        return reward
+
+    def update_discriminator(self, expert_states: torch.Tensor, expert_actions: torch.Tensor,
+                           policy_states: torch.Tensor, policy_actions: torch.Tensor) -> float:
+        """Update discriminator to distinguish expert from policy trajectories"""
+        self.discriminator_optimizer.zero_grad()
+
+        # Probability that expert state-action pairs are from expert (should be high)
+        expert_prob = self.discriminator(expert_states, expert_actions)
+        expert_loss = F.binary_cross_entropy(expert_prob, torch.ones_like(expert_prob))
+
+        # Probability that policy state-action pairs are from expert (should be low)
+        policy_prob = self.discriminator(policy_states, policy_actions)
+        policy_loss = F.binary_cross_entropy(policy_prob, torch.zeros_like(policy_prob))
+
+        discriminator_loss = expert_loss + policy_loss
+        discriminator_loss.backward()
+        self.discriminator_optimizer.step()
+
+        return discriminator_loss.item()
+
+    def update_policy(self, states: torch.Tensor, actions: torch.Tensor) -> float:
+        """Update policy to fool discriminator"""
+        self.policy_optimizer.zero_grad()
+
+        # Get log probabilities of actions under current policy
+        predicted_actions = self.policy(states)
+
+        # Get reward from discriminator (we want to maximize this)
+        reward = self.compute_reward(states, actions)
+
+        # Policy loss: negative expected reward (we minimize this)
+        policy_loss = -torch.mean(reward)
+        policy_loss.backward()
+        self.policy_optimizer.step()
+
+        return policy_loss.item()
+
+class OneShotImitationLearner:
+    """System for learning from minimal demonstrations"""
+    def __init__(self, state_dim: int, action_dim: int):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.feature_extractor = self._build_feature_extractor()
+        self.policy = ImitationPolicy(state_dim, action_dim)
+
+    def _build_feature_extractor(self):
+        """Build feature extractor for learning from observation"""
+        return nn.Sequential(
+            nn.Linear(self.state_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU()
+        )
+
+    def encode_demonstration(self, demonstration: List[Tuple[np.ndarray, np.ndarray]]) -> torch.Tensor:
+        """Encode demonstration into a compact representation"""
+        states, actions = zip(*demonstration)
+        state_tensor = torch.FloatTensor(np.array(states))
+
+        # Extract features from all states in demonstration
+        features = self.feature_extractor(state_tensor)
+
+        # Aggregate features (e.g., mean, max)
+        encoded_demo = torch.mean(features, dim=0)  # Simple mean aggregation
+
+        return encoded_demo
+
+    def condition_policy(self, encoded_demo: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
+        """Condition policy on demonstration encoding"""
+        # Concatenate state features with demonstration encoding
+        state_features = self.feature_extractor(state.unsqueeze(0))
+        conditioned_input = torch.cat([state_features, encoded_demo.unsqueeze(0)], dim=1)
+
+        # Use a separate network to process conditioned input
+        conditioned_policy = nn.Sequential(
+            nn.Linear(64 + 64, 128),  # 64 from state features + 64 from demo features
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, self.action_dim)
+        )
+
+        action = torch.tanh(conditioned_policy(conditioned_input))
+        return action
+
+# Example usage function
+def run_imitation_learning_example():
+    """Run example of imitation learning techniques"""
+    print("=== Imitation Learning Example ===")
+
+    # Create environment and expert
+    env = RobotImitationEnv()
+    expert = ExpertDemonstrator(env)
+
+    # Collect demonstrations
+    print("Collecting expert demonstrations...")
+    demonstrations = expert.collect_demonstrations(num_demonstrations=20)
+    print(f"Collected {len(demonstrations)} demonstration steps")
+
+    # Split into training and validation
+    train_size = int(0.8 * len(demonstrations))
+    train_demos = demonstrations[:train_size]
+    val_demos = demonstrations[train_size:]
+
+    # Behavioral Cloning
+    print("\nTraining Behavioral Cloning...")
+    bc_agent = BehavioralCloning(
+        state_dim=env.observation_space.shape[0],
+        action_dim=env.action_space.shape[0]
+    )
+    bc_losses = bc_agent.train(train_demos, epochs=100)
+
+    # Evaluate BC policy
+    print("\nEvaluating BC policy...")
+    total_reward = 0
+    for episode in range(5):
+        state = env.reset()
+        episode_reward = 0
+        for step in range(100):
+            action = bc_agent.predict(state)
+            state, reward, done, info = env.step(action)
+            episode_reward += reward
+            if done:
+                break
+        total_reward += episode_reward
+        print(f"Episode {episode + 1}, Reward: {episode_reward:.2f}")
+
+    avg_reward = total_reward / 5
+    print(f"Average reward over 5 episodes: {avg_reward:.2f}")
+
+# Uncomment to run example
+# run_imitation_learning_example()
+```
+
+## Review Questions
+
+1. What are the main limitations of behavioral cloning compared to other approaches?
+2. How does DAgger address the covariate shift problem in imitation learning?
+3. What are the advantages of GAIL over traditional behavioral cloning?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="demonstration-quality" label="Demonstration Quality">
+Analyze the impact of demonstration quality on imitation learning performance.
+</TabItem>
+<TabItem value="algorithm-comparison" label="Algorithm Comparison">
+Compare different imitation learning algorithms on a robot task.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a complete imitation learning system for a robot task such as manipulation or navigation. Collect expert demonstrations and compare the performance of behavioral cloning, DAgger, and GAIL approaches.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand different imitation learning techniques
+- Be able to implement behavioral cloning and advanced methods
+- Recognize the importance of demonstration quality
+- Appreciate the challenges and benefits of learning from demonstration

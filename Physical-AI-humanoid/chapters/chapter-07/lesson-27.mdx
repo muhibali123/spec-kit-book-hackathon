@@ -1,0 +1,754 @@
+---
+title: "Attention Mechanisms and Selective Processing"
+description: "Implementing attention systems for selective information processing in cognitive architectures"
+tags: [attention-mechanisms, selective-processing, cognitive-control, saliency, focus]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Attention Mechanisms and Selective Processing
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement attention mechanisms for cognitive architectures
+- Design selective processing systems for information filtering
+- Understand the role of attention in cognitive control
+- Apply attention mechanisms to improve robot performance
+
+## Key Concepts
+
+- **Saliency Detection**: Identifying the most relevant stimuli in the environment
+- **Focus of Attention**: Concentrating processing resources on specific information
+- **Divided Attention**: Distributing attention across multiple stimuli
+- **Attention Control**: Managing attention allocation and switching
+- **Working Memory Gating**: Controlling what information enters working memory
+
+## Theory Summary
+
+Attention mechanisms in cognitive architectures enable humanoid robots to selectively process information, focusing computational resources on the most relevant stimuli while filtering out irrelevant information. This selective processing is crucial for managing the vast amount of sensory data that robots encounter in real-world environments.
+
+Bottom-up attention is driven by salient features in the environment, such as sudden movements, bright colors, or loud sounds. These stimuli automatically capture attention due to their inherent properties. In robotics, bottom-up attention systems often process visual, auditory, and tactile information to identify potentially important events.
+
+Top-down attention is goal-directed and influenced by the robot's current tasks, intentions, and expectations. This form of attention allows robots to actively search for specific information or maintain focus on relevant objects or locations. Top-down attention is closely linked to cognitive control and working memory.
+
+The coordination of attention mechanisms requires sophisticated control systems that can balance competing demands for attention. When multiple stimuli compete for processing resources, attention systems must implement selection criteria based on relevance, urgency, and task requirements.
+
+Attention in cognitive architectures also involves the control of information flow between different cognitive components. Attention mechanisms determine which perceptual inputs are processed in detail, which memories are retrieved, and which actions are selected. This gating function is essential for efficient cognitive processing.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="saliency-detection" label="Saliency Detection">
+Implement a visual saliency system for attention guidance.
+</TabItem>
+<TabItem value="attention-control" label="Attention Control">
+Create an attention control system for cognitive architecture.
+</TabItem>
+<TabItem value="selective-processing" label="Selective Processing">
+Design selective processing for multi-modal information.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with NumPy and SciPy
+- Computer vision libraries (OpenCV)
+- Signal processing tools
+- Basic understanding of cognitive psychology
+
+## Step-by-Step Instructions
+
+1. Set up attention mechanism framework
+2. Implement saliency detection algorithms
+3. Create attention control systems
+4. Develop selective processing mechanisms
+5. Test with multi-modal sensory input
+6. Evaluate attention performance
+
+## Code Snippets
+
+```python
+import numpy as np
+import cv2
+from typing import Dict, List, Tuple, Any, Optional
+from dataclasses import dataclass
+import time
+from enum import Enum
+from collections import deque, defaultdict
+import threading
+
+class AttentionType(Enum):
+    """Types of attention mechanisms"""
+    BOTTOM_UP = "bottom_up"
+    TOP_DOWN = "top_down"
+    DIVIDED = "divided"
+    FOCUSED = "focused"
+
+@dataclass
+class AttentionFocus:
+    """Represents current focus of attention"""
+    location: Tuple[float, float]  # x, y coordinates
+    modality: str  # 'visual', 'auditory', 'tactile', etc.
+    priority: float  # 0-1 scale
+    duration: float  # Expected duration of focus
+    start_time: float
+    task_relevance: float  # How relevant to current task
+
+class SaliencyMap:
+    """Computes visual saliency maps for attention guidance"""
+    def __init__(self, width: int = 640, height: int = 480):
+        self.width = width
+        self.height = height
+        self.last_saliency_map = np.zeros((height, width), dtype=np.float32)
+
+    def compute_intensity_saliency(self, image: np.ndarray) -> np.ndarray:
+        """Compute intensity-based saliency"""
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
+
+        # Apply DoG (Difference of Gaussians) for center-surround computation
+        gaussian_small = cv2.GaussianBlur(gray, (5, 5), 1.0)
+        gaussian_large = cv2.GaussianBlur(gray, (15, 15), 3.0)
+        intensity_saliency = np.abs(gaussian_small - gaussian_large)
+
+        # Normalize to [0, 1]
+        intensity_saliency = (intensity_saliency - intensity_saliency.min()) / \
+                            (intensity_saliency.max() - intensity_saliency.min() + 1e-6)
+
+        return intensity_saliency
+
+    def compute_color_saliency(self, image: np.ndarray) -> np.ndarray:
+        """Compute color-based saliency using opponent color channels"""
+        # Convert to Lab color space for better color opponency
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB).astype(np.float32)
+
+        # Compute color opponency (red-green, blue-yellow)
+        l_channel = lab[:, :, 0] / 255.0
+        a_channel = lab[:, :, 1] / 255.0  # Red-green
+        b_channel = lab[:, :, 2] / 255.0  # Blue-yellow
+
+        # Red-green opponency
+        rg = a_channel - 0.5
+        # Blue-yellow opponency
+        by = b_channel - 0.5
+
+        # Combine color opponency maps
+        color_saliency = np.abs(rg) + np.abs(by)
+
+        # Apply center-surround computation
+        color_saliency = cv2.GaussianBlur(color_saliency, (5, 5), 1.0) - \
+                        cv2.GaussianBlur(color_saliency, (15, 15), 3.0)
+
+        # Normalize to [0, 1]
+        color_saliency = np.abs(color_saliency)
+        color_saliency = (color_saliency - color_saliency.min()) / \
+                        (color_saliency.max() - color_saliency.min() + 1e-6)
+
+        return color_saliency
+
+    def compute_orientation_saliency(self, image: np.ndarray) -> np.ndarray:
+        """Compute orientation-based saliency"""
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
+
+        # Compute gradients in different orientations
+        kernel_0 = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], dtype=np.float32)  # Vertical edges
+        kernel_45 = np.array([[-2, -1, 0], [-1, 0, 1], [0, 1, 2]], dtype=np.float32)  # 45-degree edges
+        kernel_90 = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=np.float32)  # Horizontal edges
+        kernel_135 = np.array([[0, 1, 2], [-1, 0, 1], [-2, -1, 0]], dtype=np.float32)  # 135-degree edges
+
+        grad_0 = cv2.filter2D(gray, -1, kernel_0)
+        grad_45 = cv2.filter2D(gray, -1, kernel_45)
+        grad_90 = cv2.filter2D(gray, -1, kernel_90)
+        grad_135 = cv2.filter2D(gray, -1, kernel_135)
+
+        # Combine all orientations
+        orientation_map = np.sqrt(grad_0**2 + grad_45**2 + grad_90**2 + grad_135**2)
+
+        # Apply center-surround computation
+        orientation_saliency = cv2.GaussianBlur(orientation_map, (5, 5), 1.0) - \
+                              cv2.GaussianBlur(orientation_map, (15, 15), 3.0)
+
+        # Normalize to [0, 1]
+        orientation_saliency = np.abs(orientation_saliency)
+        orientation_saliency = (orientation_saliency - orientation_saliency.min()) / \
+                              (orientation_saliency.max() - orientation_saliency.min() + 1e-6)
+
+        return orientation_saliency
+
+    def compute_motion_saliency(self, current_frame: np.ndarray,
+                               previous_frame: Optional[np.ndarray] = None) -> np.ndarray:
+        """Compute motion-based saliency"""
+        if previous_frame is None:
+            return np.zeros((self.height, self.width), dtype=np.float32)
+
+        # Convert to grayscale
+        curr_gray = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
+        prev_gray = cv2.cvtColor(previous_frame, cv2.COLOR_BGR2GRAY)
+
+        # Compute optical flow
+        flow = cv2.calcOpticalFlowFarneback(prev_gray, curr_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+
+        # Compute motion magnitude
+        magnitude = np.sqrt(flow[:,:,0]**2 + flow[:,:,1]**2)
+
+        # Normalize to [0, 1]
+        if magnitude.max() > 0:
+            motion_saliency = magnitude / magnitude.max()
+        else:
+            motion_saliency = np.zeros_like(magnitude)
+
+        return motion_saliency
+
+    def compute_saliency_map(self, image: np.ndarray,
+                           previous_frame: Optional[np.ndarray] = None) -> np.ndarray:
+        """Compute comprehensive saliency map combining multiple features"""
+        # Compute individual saliency maps
+        intensity_sal = self.compute_intensity_saliency(image)
+        color_sal = self.compute_color_saliency(image)
+        orientation_sal = self.compute_orientation_saliency(image)
+        motion_sal = self.compute_motion_saliency(image, previous_frame)
+
+        # Weighted combination (weights can be learned or tuned)
+        weights = [0.25, 0.25, 0.25, 0.25]  # Equal weights for simplicity
+        combined_saliency = (weights[0] * intensity_sal +
+                           weights[1] * color_sal +
+                           weights[2] * orientation_sal +
+                           weights[3] * motion_sal)
+
+        # Normalize to [0, 1]
+        combined_saliency = (combined_saliency - combined_saliency.min()) / \
+                           (combined_saliency.max() - combined_saliency.min() + 1e-6)
+
+        self.last_saliency_map = combined_saliency
+        return combined_saliency
+
+class AudioSaliencyDetector:
+    """Detects salient audio events for attention"""
+    def __init__(self):
+        self.spectral_features = deque(maxlen=10)
+        self.onset_threshold = 0.5
+        self.silence_threshold = 0.05
+
+    def compute_audio_saliency(self, audio_signal: np.ndarray,
+                              sample_rate: int = 22050) -> Dict[str, float]:
+        """Compute saliency based on audio features"""
+        saliency_scores = {}
+
+        # Compute spectral centroid (brightness of sound)
+        from scipy.fft import fft
+        fft_result = fft(audio_signal)
+        magnitude = np.abs(fft_result[:len(fft_result)//2])
+        freqs = np.arange(len(magnitude)) * sample_rate / len(fft_result)
+
+        # Spectral centroid
+        spectral_centroid = np.sum(freqs * magnitude) / (np.sum(magnitude) + 1e-6)
+        saliency_scores['spectral_centroid'] = min(spectral_centroid / 1000.0, 1.0)  # Normalize
+
+        # Compute zero crossing rate (for percussive sounds)
+        zcr = np.mean(np.abs(np.diff(np.sign(audio_signal)))) / 2
+        saliency_scores['zero_crossing_rate'] = min(zcr * 100, 1.0)  # Normalize
+
+        # Compute energy (loudness)
+        energy = np.mean(audio_signal ** 2)
+        saliency_scores['energy'] = min(energy * 100, 1.0)  # Normalize
+
+        # Detect onsets (sudden changes in energy)
+        if len(self.spectral_features) > 0:
+            prev_energy = self.spectral_features[-1].get('energy', 0)
+            energy_change = abs(energy - prev_energy)
+            onset_saliency = 1.0 if energy_change > self.onset_threshold else 0.0
+            saliency_scores['onset'] = onset_saliency
+
+        # Store for next comparison
+        self.spectral_features.append(saliency_scores.copy())
+
+        return saliency_scores
+
+class TactileSaliencyDetector:
+    """Detects salient tactile events"""
+    def __init__(self):
+        self.force_threshold = 5.0  # Newtons
+        self.pressure_change_threshold = 2.0
+        self.vibration_threshold = 1.0
+
+    def compute_tactile_saliency(self, tactile_data: Dict[str, Any]) -> float:
+        """Compute saliency based on tactile input"""
+        saliency = 0.0
+
+        # Check for significant force changes
+        if 'force' in tactile_data:
+            force = tactile_data['force']
+            if force > self.force_threshold:
+                saliency += 0.4
+
+        # Check for pressure changes
+        if 'pressure' in tactile_data:
+            pressure = tactile_data['pressure']
+            if pressure > self.pressure_change_threshold:
+                saliency += 0.3
+
+        # Check for vibrations
+        if 'vibration' in tactile_data:
+            vibration = tactile_data['vibration']
+            if vibration > self.vibration_threshold:
+                saliency += 0.3
+
+        return min(saliency, 1.0)
+
+class AttentionController:
+    """Manages attention allocation and switching"""
+    def __init__(self, max_attention_spans: int = 5):
+        self.max_attention_spans = max_attention_spans
+        self.attention_spans: List[AttentionFocus] = []
+        self.saliency_map = SaliencyMap()
+        self.previous_visual_frame = None
+        self.attention_lock = threading.Lock()
+
+        # Task relevance weights for different modalities
+        self.modality_weights = {
+            'visual': 1.0,
+            'auditory': 0.8,
+            'tactile': 0.9,
+            'proprioceptive': 0.6
+        }
+
+    def update_sensory_input(self, sensory_data: Dict[str, Any]) -> List[AttentionFocus]:
+        """Process sensory input and determine attention foci"""
+        with self.attention_lock:
+            new_attention_foci = []
+
+            # Process visual input
+            if 'visual' in sensory_data:
+                visual_attention = self._process_visual_attention(sensory_data['visual'])
+                new_attention_foci.extend(visual_attention)
+
+            # Process auditory input
+            if 'auditory' in sensory_data:
+                auditory_attention = self._process_auditory_attention(sensory_data['auditory'])
+                new_attention_foci.extend(auditory_attention)
+
+            # Process tactile input
+            if 'tactile' in sensory_data:
+                tactile_attention = self._process_tactile_attention(sensory_data['tactile'])
+                new_attention_foci.extend(tactile_attention)
+
+            # Process other modalities
+            for modality, data in sensory_data.items():
+                if modality not in ['visual', 'auditory', 'tactile']:
+                    other_attention = self._process_other_attention(modality, data)
+                    new_attention_foci.extend(other_attention)
+
+            # Update attention spans
+            self._update_attention_spans(new_attention_foci)
+
+            # Return top attention foci
+            return self._get_top_attention_foci()
+
+    def _process_visual_attention(self, visual_data: Dict[str, Any]) -> List[AttentionFocus]:
+        """Process visual input for attention foci"""
+        attention_foci = []
+
+        if 'image' in visual_data:
+            image = visual_data['image']
+
+            # Compute saliency map
+            saliency_map = self.saliency_map.compute_saliency_map(
+                image, self.previous_visual_frame
+            )
+            self.previous_visual_frame = image.copy()
+
+            # Find salient regions (peaks in saliency map)
+            salient_points = self._find_salient_regions(saliency_map)
+
+            for point in salient_points:
+                x, y, saliency_value = point
+                attention_focus = AttentionFocus(
+                    location=(x, y),
+                    modality='visual',
+                    priority=saliency_value,
+                    duration=0.5,  # 500ms focus
+                    start_time=time.time(),
+                    task_relevance=0.7  # Default relevance
+                )
+                attention_foci.append(attention_focus)
+
+        return attention_foci
+
+    def _find_salient_regions(self, saliency_map: np.ndarray,
+                             num_regions: int = 3) -> List[Tuple[int, int, float]]:
+        """Find the most salient regions in the saliency map"""
+        # Flatten the saliency map and find top values
+        flat_saliency = saliency_map.flatten()
+        top_indices = np.argpartition(flat_saliency, -num_regions)[-num_regions:]
+        top_indices = top_indices[np.argsort(-flat_saliency[top_indices])]  # Sort descending
+
+        salient_regions = []
+        height, width = saliency_map.shape
+
+        for idx in top_indices:
+            if flat_saliency[idx] > 0.3:  # Only consider regions above threshold
+                y, x = np.unravel_index(idx, (height, width))
+                saliency_value = flat_saliency[idx]
+                salient_regions.append((int(x), int(y), float(saliency_value)))
+
+        return salient_regions
+
+    def _process_auditory_attention(self, auditory_data: Dict[str, Any]) -> List[AttentionFocus]:
+        """Process auditory input for attention foci"""
+        attention_foci = []
+
+        if 'audio_signal' in auditory_data:
+            audio_signal = auditory_data['audio_signal']
+            sample_rate = auditory_data.get('sample_rate', 22050)
+
+            # Compute audio saliency
+            audio_detector = AudioSaliencyDetector()
+            saliency_scores = audio_detector.compute_audio_saliency(audio_signal, sample_rate)
+
+            # Determine if audio is salient enough to warrant attention
+            max_saliency = max(saliency_scores.values()) if saliency_scores else 0
+
+            if max_saliency > 0.3:  # Threshold for attention
+                attention_focus = AttentionFocus(
+                    location=(0, 0),  # Audio doesn't have spatial location by default
+                    modality='auditory',
+                    priority=max_saliency,
+                    duration=0.3,  # 300ms focus
+                    start_time=time.time(),
+                    task_relevance=0.6
+                )
+                attention_foci.append(attention_focus)
+
+        return attention_foci
+
+    def _process_tactile_attention(self, tactile_data: Dict[str, Any]) -> List[AttentionFocus]:
+        """Process tactile input for attention foci"""
+        attention_foci = []
+
+        # Compute tactile saliency
+        tactile_detector = TactileSaliencyDetector()
+        saliency_value = tactile_detector.compute_tactile_saliency(tactile_data)
+
+        if saliency_value > 0.2:  # Threshold for attention
+            attention_focus = AttentionFocus(
+                location=tactile_data.get('location', (0, 0)),
+                modality='tactile',
+                priority=saliency_value,
+                duration=0.2,  # 200ms focus
+                start_time=time.time(),
+                task_relevance=0.8  # Tactile often very relevant
+            )
+            attention_foci.append(attention_focus)
+
+        return attention_foci
+
+    def _process_other_attention(self, modality: str, data: Any) -> List[AttentionFocus]:
+        """Process other modalities for attention foci"""
+        attention_foci = []
+
+        # For other modalities, assign default priority based on learned weights
+        weight = self.modality_weights.get(modality, 0.5)
+
+        if weight > 0.3:  # Only attend to modalities with significant weight
+            attention_focus = AttentionFocus(
+                location=(0, 0),
+                modality=modality,
+                priority=weight,
+                duration=0.2,
+                start_time=time.time(),
+                task_relevance=weight
+            )
+            attention_foci.append(attention_focus)
+
+        return attention_foci
+
+    def _update_attention_spans(self, new_foci: List[AttentionFocus]):
+        """Update the set of active attention spans"""
+        # Add new foci
+        self.attention_spans.extend(new_foci)
+
+        # Remove expired foci
+        current_time = time.time()
+        self.attention_spans = [
+            focus for focus in self.attention_spans
+            if current_time - focus.start_time < focus.duration
+        ]
+
+        # Limit number of attention spans
+        if len(self.attention_spans) > self.max_attention_spans:
+            # Sort by priority and keep top ones
+            self.attention_spans.sort(key=lambda x: x.priority * x.task_relevance, reverse=True)
+            self.attention_spans = self.attention_spans[:self.max_attention_spans]
+
+    def _get_top_attention_foci(self) -> List[AttentionFocus]:
+        """Get the top attention foci"""
+        # Sort by combined priority and task relevance
+        sorted_foci = sorted(
+            self.attention_spans,
+            key=lambda x: x.priority * x.task_relevance,
+            reverse=True
+        )
+        return sorted_foci
+
+    def get_current_attention_focus(self) -> Optional[AttentionFocus]:
+        """Get the primary focus of attention"""
+        if not self.attention_spans:
+            return None
+
+        return self.attention_spans[0]  # Highest priority focus
+
+    def get_attention_distribution(self) -> Dict[str, float]:
+        """Get distribution of attention across modalities"""
+        distribution = defaultdict(float)
+
+        for focus in self.attention_spans:
+            distribution[focus.modality] += focus.priority * focus.task_relevance
+
+        # Normalize to sum to 1
+        total = sum(distribution.values())
+        if total > 0:
+            for modality in distribution:
+                distribution[modality] /= total
+
+        return dict(distribution)
+
+class SelectiveProcessor:
+    """Processes information selectively based on attention"""
+    def __init__(self, attention_controller: AttentionController):
+        self.attention_controller = attention_controller
+        self.processing_history = deque(maxlen=100)
+        self.attention_gates = {}  # Modality -> processing function
+
+    def register_processing_module(self, modality: str, processing_func):
+        """Register a processing function for a specific modality"""
+        self.attention_gates[modality] = processing_func
+
+    def process_input_selectively(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process input selectively based on current attention"""
+        # Get current attention distribution
+        attention_dist = self.attention_controller.get_attention_distribution()
+
+        results = {}
+
+        # Process each modality according to its attention weight
+        for modality, data in input_data.items():
+            attention_weight = attention_dist.get(modality, 0.0)
+
+            if attention_weight > 0.1:  # Only process if attention is above threshold
+                if modality in self.attention_gates:
+                    # Process with attention-weighted intensity
+                    processed_result = self.attention_gates[modality](data, attention_weight)
+                    results[modality] = processed_result
+                else:
+                    # Default processing - just pass through with attention weight
+                    results[modality] = {
+                        'data': data,
+                        'attention_weight': attention_weight,
+                        'processed': False
+                    }
+
+        # Log processing for history
+        self.processing_history.append({
+            'timestamp': time.time(),
+            'input_modalities': list(input_data.keys()),
+            'attention_weights': attention_dist,
+            'results': list(results.keys())
+        })
+
+        return results
+
+    def get_processing_efficiency(self) -> float:
+        """Calculate processing efficiency based on selective attention"""
+        if not self.processing_history:
+            return 0.0
+
+        # Calculate efficiency as the inverse of average attention distribution
+        # (More focused attention = higher efficiency)
+        total_entropy = 0.0
+        for record in list(self.processing_history)[-10:]:  # Last 10 records
+            weights = list(record['attention_weights'].values())
+            if weights:
+                # Calculate entropy of attention distribution
+                entropy = -sum(w * np.log2(w + 1e-6) for w in weights if w > 0)
+                total_entropy += entropy
+
+        avg_entropy = total_entropy / min(len(self.processing_history), 10) if self.processing_history else 0
+
+        # Convert entropy to efficiency (lower entropy = higher efficiency)
+        efficiency = max(0.0, 1.0 - avg_entropy / np.log2(len(self.attention_gates) + 1))
+        return efficiency
+
+class CognitiveAttentionSystem:
+    """Integrated cognitive attention system"""
+    def __init__(self):
+        self.attention_controller = AttentionController()
+        self.selective_processor = SelectiveProcessor(self.attention_controller)
+        self.working_memory_gater = WorkingMemoryGater()
+
+        # Register default processing modules
+        self._register_default_processors()
+
+    def _register_default_processors(self):
+        """Register default processing functions"""
+        def default_visual_processor(data, attention_weight):
+            # Placeholder for visual processing
+            return {
+                'processed': True,
+                'attention_weight': attention_weight,
+                'features_extracted': data.get('features', []),
+                'saliency': data.get('saliency', 0.0)
+            }
+
+        def default_auditory_processor(data, attention_weight):
+            # Placeholder for auditory processing
+            return {
+                'processed': True,
+                'attention_weight': attention_weight,
+                'features_extracted': data.get('features', []),
+                'saliency': data.get('saliency', 0.0)
+            }
+
+        self.selective_processor.register_processing_module('visual', default_visual_processor)
+        self.selective_processor.register_processing_module('auditory', default_auditory_processor)
+
+    def process_sensory_input(self, sensory_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process sensory input through attention and selective processing"""
+        # Update attention based on sensory input
+        attention_foci = self.attention_controller.update_sensory_input(sensory_data)
+
+        # Process input selectively based on attention
+        processed_results = self.selective_processor.process_input_selectively(sensory_data)
+
+        # Gate information to working memory based on attention
+        working_memory_input = self.working_memory_gater.filter_for_working_memory(
+            processed_results, attention_foci
+        )
+
+        return {
+            'attention_foci': attention_foci,
+            'processed_results': processed_results,
+            'working_memory_input': working_memory_input,
+            'processing_efficiency': self.selective_processor.get_processing_efficiency()
+        }
+
+    def get_attention_state(self) -> Dict[str, Any]:
+        """Get current attention state"""
+        return {
+            'current_focus': self.attention_controller.get_current_attention_focus(),
+            'attention_distribution': self.attention_controller.get_attention_distribution(),
+            'active_spans_count': len(self.attention_controller.attention_spans),
+            'processing_efficiency': self.selective_processor.get_processing_efficiency()
+        }
+
+class WorkingMemoryGater:
+    """Controls what information enters working memory based on attention"""
+    def __init__(self, working_memory_capacity: int = 10):
+        self.capacity = working_memory_capacity
+        self.working_memory_content = {}
+        self.attention_threshold = 0.3
+
+    def filter_for_working_memory(self, processed_data: Dict[str, Any],
+                                 attention_foci: List[AttentionFocus]) -> Dict[str, Any]:
+        """Filter processed data for working memory based on attention"""
+        filtered_content = {}
+
+        for modality, data in processed_data.items():
+            # Check if this modality has sufficient attention
+            attention_focus = next((f for f in attention_foci if f.modality == modality), None)
+
+            if attention_focus and attention_focus.priority >= self.attention_threshold:
+                # Add to working memory
+                filtered_content[modality] = {
+                    'data': data,
+                    'attention_priority': attention_focus.priority,
+                    'timestamp': time.time()
+                }
+
+        # Update working memory (simple replacement for now)
+        self.working_memory_content = filtered_content
+
+        # Limit size if necessary
+        if len(self.working_memory_content) > self.capacity:
+            # Remove lowest priority items
+            sorted_items = sorted(
+                self.working_memory_content.items(),
+                key=lambda x: x[1].get('attention_priority', 0),
+                reverse=True
+            )
+            self.working_memory_content = dict(sorted_items[:self.capacity])
+
+        return self.working_memory_content
+
+# Example usage
+def example_usage():
+    print("=== Attention Mechanisms Example ===")
+
+    # Create cognitive attention system
+    attention_system = CognitiveAttentionSystem()
+
+    # Simulate sensory input
+    sensory_input = {
+        'visual': {
+            'image': np.random.rand(480, 640, 3) * 255,  # Random image
+            'features': ['edge', 'color', 'motion'],
+            'saliency': 0.8
+        },
+        'auditory': {
+            'audio_signal': np.random.rand(44100) * 0.1,  # Random audio
+            'sample_rate': 22050,
+            'features': ['frequency', 'amplitude'],
+            'saliency': 0.6
+        },
+        'tactile': {
+            'force': 8.5,
+            'pressure': 3.2,
+            'vibration': 0.8,
+            'location': (100, 200)
+        }
+    }
+
+    # Process the sensory input
+    result = attention_system.process_sensory_input(sensory_input)
+
+    print(f"Attention foci: {len(result['attention_foci'])}")
+    print(f"Processing efficiency: {result['processing_efficiency']:.2f}")
+    print(f"Working memory content: {list(result['working_memory_input'].keys())}")
+
+    # Get attention state
+    attention_state = attention_system.get_attention_state()
+    print(f"Current focus: {attention_state['current_focus']}")
+    print(f"Attention distribution: {attention_state['attention_distribution']}")
+
+# Uncomment to run example
+# example_usage()
+```
+
+## Review Questions
+
+1. What are the main differences between bottom-up and top-down attention?
+2. How does saliency detection guide attention in cognitive systems?
+3. What role does attention play in selective information processing?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="saliency-evaluation" label="Saliency Evaluation">
+Evaluate the effectiveness of different saliency detection methods.
+</TabItem>
+<TabItem value="attention-performance" label="Attention Performance">
+Measure the performance improvement from attention mechanisms.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a complete attention system for a humanoid robot that can process multi-modal sensory input and selectively focus on relevant information. Test the system with various sensory scenarios and evaluate its effectiveness.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand different attention mechanisms and their implementations
+- Be able to create selective processing systems
+- Recognize the importance of attention in cognitive architectures
+- Appreciate how attention improves information processing efficiency

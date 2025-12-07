@@ -1,0 +1,677 @@
+---
+title: "Adaptive Control and Online Learning"
+description: "Enabling robots to continuously adapt and learn during operation"
+tags: [adaptive-control, online-learning, continual-learning, meta-learning, lifelong-learning]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Adaptive Control and Online Learning
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement adaptive control systems that adjust to changing conditions
+- Design online learning algorithms for continuous adaptation
+- Apply meta-learning techniques for rapid task adaptation
+- Understand the challenges of lifelong learning in physical systems
+
+## Key Concepts
+
+- **Adaptive Control**: Control systems that adjust parameters based on system performance
+- **Online Learning**: Learning algorithms that update models with new data in real-time
+- **Meta-Learning**: Learning to learn - acquiring skills for rapid adaptation
+- **Continual Learning**: Learning multiple tasks without forgetting previous ones
+- **Transfer Learning**: Applying knowledge from one task to another
+
+## Theory Summary
+
+Adaptive control and online learning are essential for physical AI systems that must operate in dynamic, uncertain environments. Unlike traditional control systems with fixed parameters, adaptive systems continuously adjust their behavior based on feedback and changing conditions. This is particularly important for humanoid robots that encounter varying terrains, objects, and interaction scenarios.
+
+Online learning algorithms enable robots to continuously improve their performance without requiring complete retraining. These systems must balance the need for rapid adaptation with stability, ensuring that learning doesn't lead to unsafe or erratic behavior. The challenge lies in making learning efficient enough for real-time operation while maintaining safety guarantees.
+
+Meta-learning, or "learning to learn," enables robots to rapidly adapt to new tasks by leveraging prior learning experiences. This approach is particularly valuable for physical AI as it allows robots to acquire new skills with minimal experience, which is crucial when physical interaction is costly or risky.
+
+Continual learning addresses the challenge of learning multiple tasks sequentially without catastrophic forgetting of previously acquired skills. This is especially important for humanoid robots that must maintain a broad repertoire of capabilities while acquiring new ones.
+
+The implementation of adaptive systems in physical robots must carefully consider safety constraints, computational limitations, and the potential for learning-induced instability. These systems often use dual approaches: fast adaptation for immediate adjustments and slow learning for long-term improvements.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="adaptive-control" label="Adaptive Control">
+Implement an adaptive controller for robot balance or manipulation.
+</TabItem>
+<TabItem value="online-learning" label="Online Learning">
+Create an online learning system for robot perception.
+</TabItem>
+<TabItem value="meta-learning" label="Meta-Learning">
+Design a meta-learning system for rapid task adaptation.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with PyTorch or TensorFlow
+- Control systems libraries
+- Robot simulation environment
+- Basic understanding of adaptive control theory
+
+## Step-by-Step Instructions
+
+1. Set up adaptive control framework
+2. Implement online learning algorithms
+3. Create meta-learning systems
+4. Design continual learning mechanisms
+5. Test with changing environments
+6. Evaluate adaptation performance and stability
+
+## Code Snippets
+
+```python
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, TensorDataset
+from typing import Tuple, List, Dict, Any, Optional
+import gym
+from gym import spaces
+import random
+from collections import deque
+import threading
+import time
+
+class AdaptiveRobotEnv(gym.Env):
+    """Environment with changing dynamics for adaptive control"""
+    def __init__(self):
+        super(AdaptiveRobotEnv, self).__init__()
+
+        # Action space: [force_x, force_y, torque]
+        self.action_space = spaces.Box(low=np.array([-10.0, -10.0, -5.0]),
+                                      high=np.array([10.0, 10.0, 5.0]),
+                                      dtype=np.float32)
+
+        # Observation space: [x_pos, y_pos, angle, x_vel, y_vel, ang_vel, goal_x, goal_y, mass, friction]
+        self.observation_space = spaces.Box(low=-10.0, high=10.0, shape=(10,), dtype=np.float32)
+
+        # Robot dynamics parameters (change over time)
+        self.mass = 1.0
+        self.friction = 0.1
+        self.robot_state = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # [x, y, angle, vx, vy, vangle]
+        self.goal_pos = np.array([5.0, 5.0])
+        self.max_steps = 200
+        self.current_step = 0
+
+        # Change dynamics periodically
+        self.dynamics_change_interval = 50
+        self.last_dynamics_change = 0
+
+    def reset(self) -> np.ndarray:
+        """Reset the environment"""
+        self.robot_state = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        self.goal_pos = np.array([5.0, 5.0])
+        self.current_step = 0
+        self.last_dynamics_change = 0
+
+        # Randomize initial conditions
+        self.mass = random.uniform(0.8, 1.2)
+        self.friction = random.uniform(0.05, 0.2)
+
+        return self._get_observation()
+
+    def _get_observation(self) -> np.ndarray:
+        """Get current observation including dynamics parameters"""
+        return np.concatenate([
+            self.robot_state,
+            self.goal_pos,
+            [self.mass, self.friction]
+        ])
+
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Dict]:
+        """Execute one step in the environment"""
+        action = np.clip(action, -10.0, 10.0)
+        dt = 0.01
+
+        # Apply dynamics changes periodically
+        if self.current_step - self.last_dynamics_change > self.dynamics_change_interval:
+            # Randomly change mass and friction
+            self.mass = random.uniform(0.8, 1.2)
+            self.friction = random.uniform(0.05, 0.2)
+            self.last_dynamics_change = self.current_step
+
+        # Update robot dynamics
+        x, y, angle, vx, vy, vangle = self.robot_state
+
+        # Calculate accelerations (simplified physics)
+        ax = action[0] / self.mass - self.friction * vx
+        ay = action[1] / self.mass - self.friction * vy
+        aangle = action[2] / (self.mass * 0.1) - self.friction * vangle  # Moment of inertia factor
+
+        # Update velocities
+        vx += ax * dt
+        vy += ay * dt
+        vangle += aangle * dt
+
+        # Update positions
+        x += vx * dt
+        y += vy * dt
+        angle += vangle * dt
+
+        self.robot_state = np.array([x, y, angle, vx, vy, vangle])
+
+        # Calculate reward
+        distance_to_goal = np.linalg.norm(self.robot_state[:2] - self.goal_pos)
+        reward = -distance_to_goal * 0.1
+
+        # Penalty for excessive forces
+        force_magnitude = np.linalg.norm(action[:2])
+        reward -= force_magnitude * 0.001
+
+        # Check termination
+        done = distance_to_goal < 0.2 or self.current_step >= self.max_steps
+        self.current_step += 1
+
+        info = {
+            'distance_to_goal': distance_to_goal,
+            'dynamics': {'mass': self.mass, 'friction': self.friction}
+        }
+
+        return self._get_observation(), reward, done, info
+
+class AdaptiveController:
+    """Adaptive controller that adjusts parameters based on system performance"""
+    def __init__(self, state_dim: int, action_dim: int, lr: float = 0.01):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.learning_rate = lr
+
+        # Initialize controller parameters (e.g., PID gains)
+        self.kp = np.ones(action_dim) * 1.0  # Proportional gains
+        self.ki = np.ones(action_dim) * 0.1  # Integral gains
+        self.kd = np.ones(action_dim) * 0.05  # Derivative gains
+
+        # For integral and derivative terms
+        self.integral_error = np.zeros(action_dim)
+        self.previous_error = np.zeros(action_dim)
+        self.previous_time = time.time()
+
+        # Adaptation parameters
+        self.performance_history = deque(maxlen=100)
+        self.adaptation_enabled = True
+
+    def compute_control(self, state: np.ndarray, target: np.ndarray) -> np.ndarray:
+        """Compute control action using adaptive PID"""
+        # Calculate error
+        error = target[:self.action_dim] - state[:self.action_dim]
+
+        # Get current time for derivative calculation
+        current_time = time.time()
+        dt = current_time - self.previous_time if self.previous_time else 0.01
+        self.previous_time = current_time
+
+        # Update integral (with anti-windup)
+        self.integral_error += error * dt
+        # Clamp integral to prevent windup
+        max_integral = 10.0
+        self.integral_error = np.clip(self.integral_error, -max_integral, max_integral)
+
+        # Calculate derivative
+        if dt > 0:
+            derivative_error = (error - self.previous_error) / dt
+        else:
+            derivative_error = np.zeros_like(error)
+        self.previous_error = error
+
+        # Apply PID control
+        proportional = self.kp * error
+        integral = self.ki * self.integral_error
+        derivative = self.kd * derivative_error
+
+        control_action = proportional + integral + derivative
+
+        return control_action
+
+    def adapt_parameters(self, current_performance: float):
+        """Adapt controller parameters based on performance"""
+        if not self.adaptation_enabled:
+            return
+
+        # Store performance
+        self.performance_history.append(current_performance)
+
+        # Only adapt if we have enough data
+        if len(self.performance_history) < 10:
+            return
+
+        # Calculate recent performance average
+        recent_performance = np.mean(list(self.performance_history)[-10:])
+
+        # Adjust parameters based on performance (simplified approach)
+        # If performance is poor, increase gains gradually
+        if recent_performance < -5.0:  # Threshold for poor performance
+            self.kp *= 1.01  # Increase proportional gain slightly
+            self.ki *= 1.01  # Increase integral gain slightly
+        elif recent_performance > -1.0:  # Good performance
+            # Slightly decrease gains to reduce oscillation
+            self.kp *= 0.995
+            self.ki *= 0.995
+
+        # Keep gains within reasonable bounds
+        self.kp = np.clip(self.kp, 0.1, 10.0)
+        self.ki = np.clip(self.ki, 0.01, 2.0)
+        self.kd = np.clip(self.kd, 0.01, 1.0)
+
+class OnlineLearningModel(nn.Module):
+    """Online learning model that can be updated incrementally"""
+    def __init__(self, input_dim: int, output_dim: int, hidden_dim: int = 64):
+        super(OnlineLearningModel, self).__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, output_dim)
+        )
+
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.network(x)
+
+class OnlineLearner:
+    """Online learning system that updates model with new data"""
+    def __init__(self, input_dim: int, output_dim: int, lr: float = 0.001,
+                 memory_size: int = 1000, batch_size: int = 32):
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.batch_size = batch_size
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # Model and optimizer
+        self.model = OnlineLearningModel(input_dim, output_dim).to(self.device)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        self.criterion = nn.MSELoss()
+
+        # Experience replay buffer for online learning
+        self.memory = deque(maxlen=memory_size)
+        self.update_frequency = 10  # Update every N samples
+        self.sample_count = 0
+
+    def update(self, input_data: np.ndarray, target_data: np.ndarray) -> float:
+        """Update model with new data point"""
+        # Add to memory
+        self.memory.append((input_data, target_data))
+        self.sample_count += 1
+
+        # Update model periodically
+        if self.sample_count % self.update_frequency == 0 and len(self.memory) >= self.batch_size:
+            return self._train_batch()
+        else:
+            return 0.0  # No loss calculated yet
+
+    def _train_batch(self) -> float:
+        """Train on a batch of recent experiences"""
+        # Sample batch from memory
+        batch_size = min(self.batch_size, len(self.memory))
+        batch_indices = random.sample(range(len(self.memory)), batch_size)
+        batch = [self.memory[i] for i in batch_indices]
+
+        inputs, targets = zip(*batch)
+        inputs = torch.FloatTensor(np.array(inputs)).to(self.device)
+        targets = torch.FloatTensor(np.array(targets)).to(self.device)
+
+        # Train
+        self.optimizer.zero_grad()
+        outputs = self.model(inputs)
+        loss = self.criterion(outputs, targets)
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.item()
+
+    def predict(self, input_data: np.ndarray) -> np.ndarray:
+        """Make prediction with current model"""
+        input_tensor = torch.FloatTensor(input_data).unsqueeze(0).to(self.device)
+        with torch.no_grad():
+            output = self.model(input_tensor)
+        return output.squeeze(0).cpu().numpy()
+
+class MetaLearner(nn.Module):
+    """Meta-learning system for rapid adaptation to new tasks"""
+    def __init__(self, input_dim: int, output_dim: int, hidden_dim: int = 64):
+        super(MetaLearner, self).__init__()
+
+        # Embedding network to encode task context
+        self.context_encoder = nn.Sequential(
+            nn.Linear(input_dim + output_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim)
+        )
+
+        # Main network that takes context as input
+        self.main_network = nn.Sequential(
+            nn.Linear(input_dim + hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, output_dim)
+        )
+
+    def forward(self, x: torch.Tensor, context: torch.Tensor) -> torch.Tensor:
+        """Forward pass with context"""
+        # Encode context
+        context_encoded = self.context_encoder(context)
+
+        # Repeat context for each input in batch
+        context_repeated = context_encoded.unsqueeze(0).repeat(x.size(0), 1)
+
+        # Concatenate input with context
+        combined_input = torch.cat([x, context_repeated], dim=1)
+
+        return self.main_network(combined_input)
+
+class MAML:
+    """Model-Agnostic Meta-Learning implementation"""
+    def __init__(self, model: nn.Module, inner_lr: float = 0.01, outer_lr: float = 0.001):
+        self.model = model
+        self.inner_lr = inner_lr
+        self.outer_lr = outer_lr
+        self.optimizer = optim.Adam(model.parameters(), lr=outer_lr)
+
+    def inner_loop(self, model: nn.Module, support_data: Tuple[torch.Tensor, torch.Tensor],
+                   num_updates: int = 5) -> nn.Module:
+        """Inner loop adaptation to specific task"""
+        adapted_model = copy.deepcopy(model)
+        inner_optimizer = optim.SGD(adapted_model.parameters(), lr=self.inner_lr)
+
+        x_support, y_support = support_data
+        for _ in range(num_updates):
+            inner_optimizer.zero_grad()
+            pred = adapted_model(x_support)
+            loss = F.mse_loss(pred, y_support)
+            loss.backward()
+            inner_optimizer.step()
+
+        return adapted_model
+
+    def meta_update(self, tasks: List[Tuple[torch.Tensor, torch.Tensor]]) -> float:
+        """Update model based on multiple tasks"""
+        meta_loss = 0
+        for support_data, query_data in tasks:
+            # Adapt to specific task
+            adapted_model = self.inner_loop(self.model, support_data)
+
+            # Evaluate on query data
+            x_query, y_query = query_data
+            pred = adapted_model(x_query)
+            task_loss = F.mse_loss(pred, y_query)
+            meta_loss += task_loss
+
+        meta_loss /= len(tasks)
+
+        # Update original model
+        self.optimizer.zero_grad()
+        meta_loss.backward()
+        self.optimizer.step()
+
+        return meta_loss.item()
+
+class ContinualLearner:
+    """Continual learning system that learns multiple tasks without forgetting"""
+    def __init__(self, input_dim: int, output_dim: int, num_tasks: int, lr: float = 0.001):
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.num_tasks = num_tasks
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # Task-specific heads
+        self.shared_backbone = nn.Sequential(
+            nn.Linear(input_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU()
+        )
+
+        self.task_heads = nn.ModuleList([
+            nn.Linear(128, output_dim) for _ in range(num_tasks)
+        ])
+
+        self.optimizer = optim.Adam(list(self.shared_backbone.parameters()) +
+                                   list(self.task_heads.parameters()), lr=lr)
+        self.criterion = nn.MSELoss()
+
+        # Elastic Weight Consolidation parameters
+        self.fisher_matrix = {}
+        self.optimal_params = {}
+
+    def forward(self, x: torch.Tensor, task_id: int) -> torch.Tensor:
+        """Forward pass for specific task"""
+        features = self.shared_backbone(x)
+        output = self.task_heads[task_id](features)
+        return output
+
+    def update_task(self, x: torch.Tensor, y: torch.Tensor, task_id: int) -> float:
+        """Update for a specific task"""
+        self.optimizer.zero_grad()
+        pred = self.forward(x, task_id)
+        loss = self.criterion(pred, y)
+
+        # Add regularization to prevent forgetting previous tasks
+        if task_id > 0:
+            reg_loss = self._compute_regularization_loss(task_id)
+            loss += 0.01 * reg_loss  # Regularization strength
+
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.item()
+
+    def _compute_regularization_loss(self, current_task: int) -> torch.Tensor:
+        """Compute regularization loss to prevent forgetting"""
+        reg_loss = 0
+        for task in range(current_task):
+            for name, param in self.named_parameters():
+                if name in self.optimal_params and name in self.fisher_matrix:
+                    reg_loss += (self.fisher_matrix[name] *
+                                (param - self.optimal_params[name]) ** 2).sum()
+        return reg_loss
+
+    def update_importance_weights(self, task_id: int, dataloader: DataLoader):
+        """Update Fisher information matrix for EWC"""
+        # Compute Fisher information matrix for current task
+        self.eval()
+        for name, param in self.named_parameters():
+            self.fisher_matrix[name] = torch.zeros_like(param)
+
+        for x, y in dataloader:
+            x, y = x.to(self.device), y.to(self.device)
+            self.zero_grad()
+            output = self.forward(x, task_id)
+            loss = self.criterion(output, y)
+            loss.backward()
+
+            for name, param in self.named_parameters():
+                if param.grad is not None:
+                    self.fisher_matrix[name] += param.grad.data ** 2
+
+        # Normalize by dataset size
+        for name in self.fisher_matrix:
+            self.fisher_matrix[name] /= len(dataloader)
+
+        # Store optimal parameters
+        for name, param in self.named_parameters():
+            self.optimal_params[name] = param.clone()
+
+        self.train()
+
+class AdaptiveRobotSystem:
+    """Complete adaptive system combining multiple learning approaches"""
+    def __init__(self, state_dim: int, action_dim: int):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+
+        # Adaptive controller
+        self.controller = AdaptiveController(state_dim, action_dim)
+
+        # Online learning for perception/model learning
+        self.online_learner = OnlineLearner(state_dim, action_dim)
+
+        # Performance monitoring
+        self.performance_monitor = PerformanceMonitor(window_size=50)
+
+        # Safety constraints
+        self.safety_enabled = True
+        self.max_adaptation_rate = 0.1
+
+    def compute_action(self, state: np.ndarray, target: np.ndarray) -> np.ndarray:
+        """Compute action using adaptive control"""
+        # Get control action
+        action = self.controller.compute_control(state, target)
+
+        # Apply safety limits
+        if self.safety_enabled:
+            action = np.clip(action, -15.0, 15.0)
+
+        return action
+
+    def update_system(self, state: np.ndarray, action: np.ndarray,
+                     next_state: np.ndarray, reward: float):
+        """Update the adaptive system based on experience"""
+        # Update online learner
+        learner_loss = self.online_learner.update(state, action)
+
+        # Update performance monitor
+        self.performance_monitor.update(reward)
+
+        # Adapt controller parameters based on performance
+        current_performance = self.performance_monitor.get_current_performance()
+        self.controller.adapt_parameters(current_performance)
+
+        return {
+            'learner_loss': learner_loss,
+            'performance': current_performance,
+            'adaptation_applied': True
+        }
+
+class PerformanceMonitor:
+    """Monitor system performance for adaptation"""
+    def __init__(self, window_size: int = 100):
+        self.window_size = window_size
+        self.rewards = deque(maxlen=window_size)
+        self.episode_rewards = deque(maxlen=10)
+
+    def update(self, reward: float):
+        """Update with new reward"""
+        self.rewards.append(reward)
+
+    def update_episode(self, total_reward: float):
+        """Update with episode total reward"""
+        self.episode_rewards.append(total_reward)
+
+    def get_current_performance(self) -> float:
+        """Get current performance metric"""
+        if len(self.rewards) == 0:
+            return 0.0
+        return float(np.mean(self.rewards))
+
+    def get_episode_performance(self) -> float:
+        """Get recent episode performance"""
+        if len(self.episode_rewards) == 0:
+            return 0.0
+        return float(np.mean(self.episode_rewards))
+
+# Example usage function
+def run_adaptive_learning_example():
+    """Run example of adaptive learning system"""
+    print("=== Adaptive Learning Example ===")
+
+    # Create environment
+    env = AdaptiveRobotEnv()
+    state_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.shape[0]
+
+    # Create adaptive system
+    adaptive_system = AdaptiveRobotSystem(state_dim, action_dim)
+
+    # Training loop
+    num_episodes = 50
+    for episode in range(num_episodes):
+        state = env.reset()
+        total_reward = 0
+        episode_steps = 0
+
+        while True:
+            # Define target (goal position)
+            target = np.zeros(state_dim)
+            target[6:8] = env.goal_pos  # Goal position in observation
+
+            # Compute action using adaptive controller
+            action = adaptive_system.compute_action(state, target)
+
+            # Take step in environment
+            next_state, reward, done, info = env.step(action)
+
+            # Update adaptive system
+            update_info = adaptive_system.update_system(state, action, next_state, reward)
+
+            state = next_state
+            total_reward += reward
+            episode_steps += 1
+
+            if done:
+                break
+
+        # Update episode performance
+        adaptive_system.performance_monitor.update_episode(total_reward)
+
+        if episode % 10 == 0:
+            avg_performance = adaptive_system.performance_monitor.get_episode_performance()
+            print(f"Episode {episode}, Total Reward: {total_reward:.2f}, "
+                  f"Avg Performance: {avg_performance:.2f}, "
+                  f"Dynamics - Mass: {info['dynamics']['mass']:.2f}, "
+                  f"Friction: {info['dynamics']['friction']:.2f}")
+
+    print("Adaptive learning completed!")
+
+# Import required module
+import copy
+
+# Uncomment to run example
+# run_adaptive_learning_example()
+```
+
+## Review Questions
+
+1. What are the main challenges of implementing online learning in physical systems?
+2. How does meta-learning enable rapid adaptation to new tasks?
+3. What techniques can prevent catastrophic forgetting in continual learning?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="adaptation-stability" label="Adaptation Stability">
+Analyze the stability of adaptive control systems under various conditions.
+</TabItem>
+<TabItem value="meta-learning-evaluation" label="Meta-Learning Evaluation">
+Evaluate meta-learning performance on new tasks with limited data.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a complete adaptive learning system for a robot task that combines adaptive control, online learning, and meta-learning. Test the system's ability to adapt to changing conditions and learn new tasks rapidly.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand adaptive control and online learning techniques
+- Be able to implement systems that continuously adapt
+- Recognize the importance of stability in adaptive systems
+- Appreciate the challenges of lifelong learning in robotics

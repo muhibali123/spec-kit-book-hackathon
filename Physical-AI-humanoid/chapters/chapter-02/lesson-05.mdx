@@ -1,0 +1,122 @@
+---
+title: "Robotics Fundamentals: Kinematics and Dynamics"
+description: "Understanding the mathematical foundations of robot movement and motion planning"
+tags: [kinematics, dynamics, robotics-fundamentals, motion-planning, mathematics]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Robotics Fundamentals: Kinematics and Dynamics
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Understand forward and inverse kinematics in robotic systems
+- Apply dynamic modeling to predict robot behavior
+- Analyze the relationship between joint space and Cartesian space
+- Implement basic kinematic calculations for humanoid robots
+
+## Key Concepts
+
+- **Forward Kinematics**: Calculating end-effector position from joint angles
+- **Inverse Kinematics**: Determining joint angles to achieve desired end-effector position
+- **Jacobian Matrix**: Relating joint velocities to end-effector velocities
+- **Dynamics**: Forces and torques required for robot motion
+- **Degrees of Freedom**: Independent parameters defining robot configuration
+
+## Theory Summary
+
+Kinematics and dynamics form the mathematical foundation for understanding robot motion. Kinematics deals with the geometry of motion without considering forces, while dynamics incorporates forces and torques that cause motion. For humanoid robots, these concepts are essential for achieving natural, human-like movements and ensuring stability during complex tasks.
+
+Forward kinematics transforms joint space coordinates to Cartesian space, allowing us to determine where robot end-effectors are positioned based on joint angles. Inverse kinematics solves the reverse problem, determining the joint angles required to place end-effectors at desired positions.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="simulation" label="Simulation">
+Implement forward and inverse kinematics for a simple 2-link robotic arm in a simulation environment.
+</TabItem>
+<TabItem value="code" label="Code Exercise">
+Develop Python functions to calculate forward and inverse kinematics for a planar manipulator.
+</TabItem>
+<TabItem value="visualization" label="Visualization">
+Create visualizations showing the workspace and reachable positions of a humanoid robot arm.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with NumPy and Matplotlib
+- Robotics simulation environment (PyBullet, Gazebo, or similar)
+- Basic knowledge of linear algebra and calculus
+
+## Step-by-Step Instructions
+
+1. Set up the simulation environment with a simple robotic arm model
+2. Define the Denavit-Hartenberg parameters for the robot
+3. Implement forward kinematics equations
+4. Implement inverse kinematics solutions (geometric or numerical methods)
+5. Test with various target positions and analyze the results
+6. Visualize the robot configuration and workspace
+
+## Code Snippets
+
+```python
+import numpy as np
+
+def dh_transform(a, alpha, d, theta):
+    """Calculate Denavit-Hartenberg transformation matrix"""
+    T = np.array([
+        [np.cos(theta), -np.sin(theta)*np.cos(alpha), np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
+        [np.sin(theta), np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
+        [0, np.sin(alpha), np.cos(alpha), d],
+        [0, 0, 0, 1]
+    ])
+    return T
+
+def forward_kinematics(joint_angles, dh_params):
+    """Calculate forward kinematics for a robot arm"""
+    T_total = np.eye(4)
+    for i, (a, alpha, d, theta_offset) in enumerate(dh_params):
+        theta = theta_offset + joint_angles[i]
+        T_link = dh_transform(a, alpha, d, theta)
+        T_total = T_total @ T_link
+    return T_total
+
+def jacobian(joint_angles, dh_params, num_joints):
+    """Calculate the Jacobian matrix for the robot"""
+    # Simplified Jacobian calculation
+    J = np.zeros((6, num_joints))
+    # Implementation of Jacobian calculation would go here
+    return J
+```
+
+## Review Questions
+
+1. What is the difference between forward and inverse kinematics?
+2. Why is inverse kinematics more challenging than forward kinematics?
+3. How do degrees of freedom affect a robot's mobility and dexterity?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="calculation" label="Calculation">
+Calculate the forward kinematics for a 3-DOF planar robot with given joint angles.
+</TabItem>
+<TabItem value="analysis" label="Analysis">
+Analyze the workspace of a humanoid robot arm and identify singularities.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement an inverse kinematics solution for a humanoid robot arm that can reach specified positions in 3D space. Test the solution with various target positions and evaluate its performance.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the mathematical foundations of robot kinematics
+- Be able to implement forward and inverse kinematics solutions
+- Recognize the importance of kinematic modeling in humanoid robotics
+- Appreciate the computational challenges in solving inverse kinematics

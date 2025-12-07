@@ -1,0 +1,188 @@
+---
+title: "Vision Systems and Computer Vision for Humanoid Robots"
+description: "Exploring camera-based perception systems and computer vision algorithms for humanoid robots"
+tags: [computer-vision, cameras, perception, image-processing, humanoid-robotics]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Vision Systems and Computer Vision for Humanoid Robots
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Understand different types of vision systems used in humanoid robots
+- Implement basic computer vision algorithms for robot perception
+- Analyze the challenges of real-time vision processing in robotics
+- Design vision-based object recognition systems for humanoid robots
+
+## Key Concepts
+
+- **Stereo Vision**: Using two cameras to perceive depth and 3D structure
+- **Visual SLAM**: Simultaneous Localization and Mapping using visual features
+- **Object Recognition**: Identifying and classifying objects in robot's environment
+- **Visual Servoing**: Controlling robot motion based on visual feedback
+- **Face Detection**: Recognizing and tracking human faces for HRI
+
+## Theory Summary
+
+Vision systems are crucial for humanoid robots to perceive and understand their environment. Unlike traditional robots that operate in structured environments, humanoid robots must navigate complex human environments using visual information similar to how humans do. Computer vision algorithms enable robots to recognize objects, understand spatial relationships, detect faces, and navigate through dynamic scenes.
+
+Modern humanoid robots employ various vision systems, including monocular cameras, stereo vision systems, and RGB-D sensors. Each approach has trade-offs in terms of accuracy, computational requirements, and robustness. Real-time processing constraints require efficient algorithms that can operate within the robot's computational limitations while maintaining accuracy.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="object-detection" label="Object Detection">
+Implement a basic object detection algorithm using OpenCV to identify objects in robot camera feed.
+</TabItem>
+<TabItem value="face-recognition" label="Face Recognition">
+Create a face detection system to enable human-robot interaction.
+</TabItem>
+<TabItem value="depth-estimation" label="Depth Estimation">
+Use stereo vision principles to estimate depth from camera images.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with OpenCV, NumPy, and SciPy
+- Camera or simulated camera data
+- Basic knowledge of image processing techniques
+- Dobot simulation environment (optional)
+
+## Step-by-Step Instructions
+
+1. Set up camera interface and capture system
+2. Implement basic image preprocessing pipeline
+3. Apply computer vision algorithms for feature extraction
+4. Develop object recognition system
+5. Test with various lighting and environmental conditions
+6. Optimize for real-time performance
+
+## Code Snippets
+
+```python
+import cv2
+import numpy as np
+from typing import Tuple, List
+
+class VisionSystem:
+    def __init__(self, camera_config):
+        self.camera_matrix = camera_config['camera_matrix']
+        self.dist_coeffs = camera_config['dist_coeffs']
+        self.image_width = camera_config['width']
+        self.image_height = camera_config['height']
+
+    def undistort_image(self, image):
+        """Correct lens distortion in captured images"""
+        return cv2.undistort(image, self.camera_matrix, self.dist_coeffs)
+
+    def detect_edges(self, image, low_threshold=50, high_threshold=150):
+        """Apply Canny edge detection"""
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, low_threshold, high_threshold)
+        return edges
+
+    def detect_faces(self, image):
+        """Detect faces using Haar cascades"""
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+        return faces
+
+    def detect_colors(self, image, lower_color, upper_color):
+        """Detect objects of specific colors"""
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, lower_color, upper_color)
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        return contours
+
+class ObjectRecognizer:
+    def __init__(self, model_path=None):
+        self.model_path = model_path
+        self.feature_extractor = cv2.SIFT_create()  # or ORB, AKAZE, etc.
+        self.bf_matcher = cv2.BFMatcher()
+        self.known_objects = {}
+
+    def extract_features(self, image):
+        """Extract distinctive features from image"""
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        keypoints, descriptors = self.feature_extractor.detectAndCompute(gray, None)
+        return keypoints, descriptors
+
+    def train_object(self, object_name, training_images):
+        """Train the system to recognize a specific object"""
+        all_descriptors = []
+        for img in training_images:
+            _, descriptors = self.extract_features(img)
+            if descriptors is not None:
+                all_descriptors.append(descriptors)
+
+        if all_descriptors:
+            # Combine all descriptors for this object
+            self.known_objects[object_name] = np.vstack(all_descriptors)
+
+    def recognize_object(self, image):
+        """Recognize objects in the current image"""
+        kp2, desc2 = self.extract_features(image)
+        recognized_objects = []
+
+        if desc2 is None:
+            return recognized_objects
+
+        for obj_name, obj_descriptors in self.known_objects.items():
+            matches = self.bf_matcher.knnMatch(obj_descriptors, desc2, k=2)
+
+            # Apply Lowe's ratio test
+            good_matches = []
+            for match_pair in matches:
+                if len(match_pair) == 2:
+                    m, n = match_pair
+                    if m.distance < 0.7 * n.distance:
+                        good_matches.append(m)
+
+            # If enough good matches, consider it a recognition
+            if len(good_matches) > 10:  # threshold
+                recognized_objects.append((obj_name, len(good_matches)))
+
+        return recognized_objects
+
+# Example usage
+vision_system = VisionSystem({
+    'camera_matrix': np.array([[500, 0, 320], [0, 500, 240], [0, 0, 1]]),
+    'dist_coeffs': np.zeros((4, 1)),
+    'width': 640,
+    'height': 480
+})
+```
+
+## Review Questions
+
+1. What are the main differences between monocular and stereo vision systems?
+2. How does visual SLAM enable robots to navigate unknown environments?
+3. What are the computational challenges of real-time computer vision in robotics?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="algorithm-comparison" label="Algorithm Comparison">
+Compare the performance of different feature extraction algorithms (SIFT, ORB, SURF).
+</TabItem>
+<TabItem value="implementation" label="Implementation">
+Implement a simple object recognition system using template matching.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a vision system for a humanoid robot that can detect and recognize specific objects in its environment. Test the system with various objects and lighting conditions.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand the fundamentals of computer vision for robotics
+- Be able to implement basic vision processing algorithms
+- Recognize the challenges of real-time vision processing
+- Appreciate the importance of vision systems for humanoid robots

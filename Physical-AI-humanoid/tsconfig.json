@@ -1,0 +1,9 @@
+{
+  "//": "Editor config only",
+  "extends": [
+    "./tsconfig.base.json",
+    "@docusaurus/tsconfig"
+  ],
+  "compilerOptions": {},
+  "exclude": [".docusaurus", "build"]
+}

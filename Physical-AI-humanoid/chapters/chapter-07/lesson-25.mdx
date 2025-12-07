@@ -1,0 +1,493 @@
+---
+title: "Architectural Patterns in Cognitive Systems"
+description: "Exploring fundamental architectural patterns for cognitive systems in humanoid robots"
+tags: [cognitive-architecture, architectural-patterns, subsumption, three-layer, behavior-based-ai]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Architectural Patterns in Cognitive Systems
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Identify and compare different cognitive architectural patterns
+- Understand the trade-offs between various architectural approaches
+- Implement basic cognitive architectures for humanoid robots
+- Analyze the suitability of different patterns for specific tasks
+
+## Key Concepts
+
+- **Subsumption Architecture**: Hierarchical behavior layers with higher levels subsuming lower ones
+- **Three-Layer Architecture**: Reactive, executive, and deliberative layers
+- **Behavior-Based AI**: Decentralized approach with parallel behaviors
+- **Hybrid Architectures**: Combining symbolic and reactive approaches
+- **Module Integration**: Connecting perception, reasoning, and action modules
+
+## Theory Summary
+
+Cognitive architectures for humanoid robots define how different components of intelligence are organized and interact. These architectures must balance the need for reactive behaviors with higher-level reasoning, real-time performance with complex planning, and modularity with integration. The choice of architecture significantly impacts the robot's ability to handle complex, dynamic environments.
+
+Subsumption architecture, pioneered by Rodney Brooks, organizes behaviors in a hierarchy where higher-level behaviors can subsume or override lower-level ones. This approach emphasizes reactive behaviors and avoids complex internal models, making it suitable for real-time applications. However, it can struggle with tasks requiring complex reasoning or planning.
+
+The three-layer architecture separates concerns into distinct layers: a reactive layer for immediate responses, an executive layer for goal-oriented behaviors, and a deliberative layer for complex planning and reasoning. This separation allows for specialized processing at each level while maintaining overall coherence.
+
+Behavior-based AI takes a decentralized approach where multiple behaviors run in parallel and compete for control. Each behavior is responsible for a specific function and operates based on sensor inputs, producing action commands. This approach provides robustness and modularity but can be challenging to coordinate effectively.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="subsumption-implementation" label="Subsumption Implementation">
+Implement a subsumption architecture for robot navigation.
+</TabItem>
+<TabItem value="three-layer" label="Three-Layer">
+Create a three-layer cognitive architecture.
+</TabItem>
+<TabItem value="behavior-comparison" label="Behavior Comparison">
+Compare different architectural patterns for specific tasks.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with object-oriented programming
+- Robot simulation environment
+- Basic understanding of control systems
+- State machine libraries
+
+## Step-by-Step Instructions
+
+1. Set up cognitive architecture framework
+2. Implement subsumption behavior hierarchy
+3. Create three-layer architecture components
+4. Develop behavior-based AI system
+5. Test with different robot tasks
+6. Evaluate architectural trade-offs
+
+## Code Snippets
+
+```python
+import abc
+import time
+from typing import List, Dict, Any, Optional, Tuple
+from dataclasses import dataclass
+import threading
+import queue
+
+class Behavior(abc.ABC):
+    """Abstract base class for behaviors in cognitive architectures"""
+    def __init__(self, name: str, priority: int = 0):
+        self.name = name
+        self.priority = priority
+        self.active = False
+        self.last_execution_time = 0
+
+    @abc.abstractmethod
+    def sense_and_act(self, sensors: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Process sensor data and return action commands"""
+        pass
+
+    def consider_deactivation(self, sensors: Dict[str, Any]) -> bool:
+        """Determine if this behavior should deactivate"""
+        return False
+
+class SubsumptionBehavior(Behavior):
+    """Behavior for subsumption architecture"""
+    def __init__(self, name: str, priority: int, conditions: Dict[str, Any] = None):
+        super().__init__(name, priority)
+        self.conditions = conditions or {}
+        self.active = True
+
+    def sense_and_act(self, sensors: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Return action if conditions are met"""
+        if self._check_conditions(sensors):
+            return self._execute_behavior(sensors)
+        return None
+
+    def _check_conditions(self, sensors: Dict[str, Any]) -> bool:
+        """Check if behavior conditions are satisfied"""
+        for key, value in self.conditions.items():
+            if key not in sensors:
+                return False
+            if isinstance(value, (int, float)):
+                if not (sensors[key] >= value - 0.1 and sensors[key] <= value + 0.1):
+                    return False
+            elif isinstance(value, (list, tuple)):
+                if sensors[key] not in value:
+                    return False
+            else:
+                if sensors[key] != value:
+                    return False
+        return True
+
+    def _execute_behavior(self, sensors: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the specific behavior - to be implemented by subclasses"""
+        return {}
+
+class AvoidObstacleBehavior(SubsumptionBehavior):
+    """Behavior to avoid obstacles"""
+    def __init__(self):
+        super().__init__("avoid_obstacle", priority=3, conditions={"obstacle_distance": 0.5})
+
+    def _execute_behavior(self, sensors: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute obstacle avoidance"""
+        obstacle_angle = sensors.get("obstacle_angle", 0)
+        # Turn away from obstacle
+        turn_direction = -1 if obstacle_angle > 0 else 1
+        return {
+            "linear_velocity": 0.1,
+            "angular_velocity": turn_direction * 0.5,
+            "priority": self.priority
+        }
+
+class MoveForwardBehavior(SubsumptionBehavior):
+    """Behavior to move forward"""
+    def __init__(self):
+        super().__init__("move_forward", priority=1)
+
+    def sense_and_act(self, sensors: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        # Only move forward if no close obstacles
+        obstacle_distance = sensors.get("obstacle_distance", float('inf'))
+        if obstacle_distance > 0.7:
+            return {
+                "linear_velocity": 0.5,
+                "angular_velocity": 0.0,
+                "priority": self.priority
+            }
+        return None
+
+class ExploreBehavior(SubsumptionBehavior):
+    """Behavior to explore environment"""
+    def __init__(self):
+        super().__init__("explore", priority=2)
+
+    def sense_and_act(self, sensors: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        # Explore if no obstacles and not moving toward goal
+        obstacle_distance = sensors.get("obstacle_distance", float('inf'))
+        if obstacle_distance > 1.0:
+            return {
+                "linear_velocity": 0.3,
+                "angular_velocity": 0.2,  # Gentle turn to explore
+                "priority": self.priority
+            }
+        return None
+
+class SubsumptionArchitecture:
+    """Implementation of subsumption architecture"""
+    def __init__(self):
+        self.behaviors: List[SubsumptionBehavior] = []
+        self.sensors = {}
+        self.actuators = {}
+
+    def add_behavior(self, behavior: SubsumptionBehavior):
+        """Add a behavior to the architecture"""
+        self.behaviors.append(behavior)
+        # Sort by priority (higher priority first)
+        self.behaviors.sort(key=lambda b: b.priority, reverse=True)
+
+    def sense(self) -> Dict[str, Any]:
+        """Update sensor readings"""
+        # In a real implementation, this would interface with actual sensors
+        return self.sensors
+
+    def act(self, commands: Dict[str, Any]):
+        """Execute action commands"""
+        # In a real implementation, this would interface with actuators
+        self.actuators.update(commands)
+
+    def step(self, sensor_input: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute one step of the subsumption architecture"""
+        # Update sensors
+        self.sensors.update(sensor_input)
+
+        # Process behaviors in priority order
+        for behavior in self.behaviors:
+            action = behavior.sense_and_act(self.sensors)
+            if action is not None:
+                # Higher priority behavior wins
+                self.act(action)
+                return action
+
+        # No behavior activated
+        self.act({"linear_velocity": 0.0, "angular_velocity": 0.0})
+        return {"linear_velocity": 0.0, "angular_velocity": 0.0}
+
+class ReactiveLayer:
+    """Reactive layer in three-layer architecture"""
+    def __init__(self):
+        self.behaviors: List[SubsumptionBehavior] = [
+            AvoidObstacleBehavior(),
+            MoveForwardBehavior(),
+            ExploreBehavior()
+        ]
+
+    def process(self, sensors: Dict[str, Any]) -> Dict[str, Any]:
+        """Process reactive behaviors"""
+        for behavior in self.behaviors:
+            action = behavior.sense_and_act(sensors)
+            if action is not None:
+                return action
+        return {"linear_velocity": 0.0, "angular_velocity": 0.0}
+
+class ExecutiveLayer:
+    """Executive layer in three-layer architecture"""
+    def __init__(self):
+        self.current_goal = None
+        self.goal_queue = []
+        self.reactive_commands = {}
+
+    def set_goal(self, goal: Dict[str, Any]):
+        """Set a new goal for the executive layer"""
+        self.goal_queue.append(goal)
+
+    def process(self, sensors: Dict[str, Any], reactive_output: Dict[str, Any]) -> Dict[str, Any]:
+        """Process executive level behaviors"""
+        # Store reactive commands to potentially override
+        self.reactive_commands = reactive_output
+
+        # If we have goals, try to achieve them
+        if self.goal_queue:
+            current_goal = self.goal_queue[0]
+            # Simple goal achievement logic
+            if self._goal_achieved(current_goal, sensors):
+                self.goal_queue.pop(0)  # Remove achieved goal
+                if self.goal_queue:
+                    self.current_goal = self.goal_queue[0]
+                else:
+                    self.current_goal = None
+            else:
+                # Generate commands to achieve goal
+                goal_commands = self._generate_goal_commands(current_goal, sensors)
+                # For now, prioritize goal commands over reactive ones
+                return goal_commands
+
+        return reactive_output
+
+    def _goal_achieved(self, goal: Dict[str, Any], sensors: Dict[str, Any]) -> bool:
+        """Check if goal has been achieved"""
+        if "target_position" in goal:
+            current_pos = sensors.get("position", (0, 0))
+            target_pos = goal["target_position"]
+            distance = ((current_pos[0] - target_pos[0])**2 + (current_pos[1] - target_pos[1])**2)**0.5
+            return distance < goal.get("tolerance", 0.2)
+        return False
+
+    def _generate_goal_commands(self, goal: Dict[str, Any], sensors: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate commands to achieve a goal"""
+        if "target_position" in goal:
+            current_pos = sensors.get("position", (0, 0))
+            target_pos = goal["target_position"]
+
+            dx = target_pos[0] - current_pos[0]
+            dy = target_pos[1] - current_pos[1]
+            distance = (dx**2 + dy**2)**0.5
+
+            if distance > 0.1:  # Not at target
+                linear_vel = min(0.5, distance)  # Scale with distance
+                angular_vel = 0.5 * (dy/distance if distance > 0 else 0)
+                return {
+                    "linear_velocity": linear_vel,
+                    "angular_velocity": angular_vel
+                }
+
+        return {"linear_velocity": 0.0, "angular_velocity": 0.0}
+
+class DeliberativeLayer:
+    """Deliberative layer in three-layer architecture"""
+    def __init__(self):
+        self.high_level_goals = []
+        self.plans = []
+
+    def add_goal(self, goal: Dict[str, Any]):
+        """Add a high-level goal"""
+        self.high_level_goals.append(goal)
+
+    def process(self, world_model: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Process high-level planning"""
+        plans = []
+        for goal in self.high_level_goals:
+            plan = self._create_plan(goal, world_model)
+            plans.append(plan)
+        return plans
+
+    def _create_plan(self, goal: Dict[str, Any], world_model: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Create a plan to achieve a high-level goal"""
+        # Simplified planning - in reality, this would use sophisticated algorithms
+        plan = [
+            {"action": "navigate_to", "target": goal.get("target_location")},
+            {"action": "perform_task", "task": goal.get("task")},
+            {"action": "return_to_base"}
+        ]
+        return plan
+
+class ThreeLayerArchitecture:
+    """Implementation of three-layer cognitive architecture"""
+    def __init__(self):
+        self.reactive_layer = ReactiveLayer()
+        self.executive_layer = ExecutiveLayer()
+        self.deliberative_layer = DeliberativeLayer()
+        self.world_model = {}
+
+    def sense(self, sensor_data: Dict[str, Any]):
+        """Update world model with sensor data"""
+        self.world_model.update(sensor_data)
+
+    def act(self, commands: List[Dict[str, Any]]):
+        """Execute action commands"""
+        # In real implementation, this would send commands to actuators
+        pass
+
+    def step(self, sensor_input: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute one step of the three-layer architecture"""
+        # Update world model
+        self.sense(sensor_input)
+
+        # Reactive layer processes sensors directly
+        reactive_output = self.reactive_layer.process(sensor_input)
+
+        # Executive layer processes reactive output and goals
+        executive_output = self.executive_layer.process(sensor_input, reactive_output)
+
+        # Deliberative layer handles high-level planning (simplified here)
+        # In a real system, this would run less frequently
+
+        return executive_output
+
+class BehaviorBasedAI:
+    """Behavior-based AI architecture"""
+    def __init__(self):
+        self.behaviors: List[Behavior] = []
+        self.arbitrator = BehaviorArbitrator()
+        self.sensors = {}
+        self.actuators = {}
+
+    def add_behavior(self, behavior: Behavior):
+        """Add a behavior to the system"""
+        self.behaviors.append(behavior)
+
+    def step(self, sensor_input: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute one step of behavior-based AI"""
+        self.sensors.update(sensor_input)
+
+        # Execute all behaviors in parallel
+        behavior_outputs = []
+        for behavior in self.behaviors:
+            output = behavior.sense_and_act(self.sensors)
+            if output:
+                behavior_outputs.append((behavior.priority, output))
+
+        # Arbitrate between behavior outputs
+        final_output = self.arbitrator.select_action(behavior_outputs)
+        self.actuators.update(final_output)
+
+        return final_output
+
+    def act(self, commands: Dict[str, Any]):
+        """Execute action commands"""
+        # In a real implementation, this would interface with actuators
+        pass
+
+class BehaviorArbitrator:
+    """Arbitrates between competing behavior outputs"""
+    def __init__(self):
+        self.conflict_resolution_strategy = "priority"
+
+    def select_action(self, behavior_outputs: List[Tuple[int, Dict[str, Any]]]) -> Dict[str, Any]:
+        """Select action based on behavior outputs"""
+        if not behavior_outputs:
+            return {"linear_velocity": 0.0, "angular_velocity": 0.0}
+
+        if self.conflict_resolution_strategy == "priority":
+            # Select behavior with highest priority
+            highest_priority = max(behavior_outputs, key=lambda x: x[0])
+            return highest_priority[1]
+        else:
+            # Weighted combination approach
+            linear_vel = 0.0
+            angular_vel = 0.0
+            total_weight = 0.0
+
+            for priority, output in behavior_outputs:
+                weight = priority  # Use priority as weight
+                linear_vel += output.get("linear_velocity", 0.0) * weight
+                angular_vel += output.get("angular_velocity", 0.0) * weight
+                total_weight += weight
+
+            if total_weight > 0:
+                linear_vel /= total_weight
+                angular_vel /= total_weight
+
+            return {
+                "linear_velocity": linear_vel,
+                "angular_velocity": angular_vel
+            }
+
+# Example usage
+def example_usage():
+    print("=== Subsumption Architecture Example ===")
+    subsumption_arch = SubsumptionArchitecture()
+    subsumption_arch.add_behavior(AvoidObstacleBehavior())
+    subsumption_arch.add_behavior(ExploreBehavior())
+    subsumption_arch.add_behavior(MoveForwardBehavior())
+
+    # Simulate sensor input
+    sensor_data = {
+        "obstacle_distance": 0.3,  # Close obstacle
+        "obstacle_angle": 0.2,
+        "position": (1.0, 1.0)
+    }
+
+    action = subsumption_arch.step(sensor_data)
+    print(f"Action: {action}")
+
+    print("\n=== Three-Layer Architecture Example ===")
+    three_layer_arch = ThreeLayerArchitecture()
+    three_layer_arch.executive_layer.set_goal({
+        "target_position": (5.0, 5.0),
+        "tolerance": 0.2
+    })
+
+    action = three_layer_arch.step(sensor_data)
+    print(f"Action: {action}")
+
+    print("\n=== Behavior-Based AI Example ===")
+    behavior_ai = BehaviorBasedAI()
+    behavior_ai.add_behavior(AvoidObstacleBehavior())
+    behavior_ai.add_behavior(MoveForwardBehavior())
+
+    action = behavior_ai.step(sensor_data)
+    print(f"Action: {action}")
+
+# Uncomment to run example
+# example_usage()
+```
+
+## Review Questions
+
+1. What are the main differences between subsumption and three-layer architectures?
+2. How does behavior-based AI handle conflicts between competing behaviors?
+3. What are the trade-offs of different cognitive architectural patterns?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="architecture-comparison" label="Architecture Comparison">
+Compare the performance of different architectures on robot navigation tasks.
+</TabItem>
+<TabItem value="hybrid-approach" label="Hybrid Approach">
+Design a hybrid architecture combining multiple patterns.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Implement and compare different cognitive architectures for a robot navigation task. Evaluate their performance in terms of reactivity, adaptability, and robustness to environmental changes.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand different cognitive architectural patterns
+- Be able to implement basic cognitive architectures
+- Recognize the trade-offs between different approaches
+- Appreciate the importance of architectural choice in cognitive systems

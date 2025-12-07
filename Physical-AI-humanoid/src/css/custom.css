@@ -1,0 +1,66 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #1a73e8;          /* Professional blue */
+  --ifm-color-primary-dark: #1865d0;     /* Darker blue */
+  --ifm-color-primary-darker: #175bb8;   /* Even darker blue */
+  --ifm-color-primary-darkest: #134a96;  /* Darkest blue */
+  --ifm-color-primary-light: #2a80eb;    /* Lighter blue */
+  --ifm-color-primary-lighter: #3a8bed;  /* Even lighter blue */
+  --ifm-color-primary-lightest: #5ca0f0; /* Lightest blue */
+
+  /* Professional neutral colors - replacing greys with deeper tones */
+  --ifm-color-secondary: #000000;        /* Pure black */
+  --ifm-color-secondary-dark: #1a1a1a;   /* Dark grey-black */
+  --ifm-color-secondary-darker: #0f0f0f; /* Darker black */
+  --ifm-color-secondary-darkest: #000000; /* Pure black */
+  --ifm-color-secondary-light: #333333;  /* Dark grey */
+  --ifm-color-secondary-lighter: #4d4d4d; /* Medium grey */
+  --ifm-color-secondary-lightest: #666666; /* Lighter grey */
+
+  /* Text colors for professional appearance with proper contrast */
+  --ifm-color-content: #2c3e50;          /* Dark blue-grey text for better readability */
+  --ifm-color-content-inverse: #ffffff;   /* White text */
+  --ifm-heading-color: #1a2c3d;          /* Dark professional heading color */
+  --ifm-text-color: #2c3e50;             /* Body text color */
+  --ifm-link-color: #1a73e8;             /* Link color matching primary */
+  --ifm-link-hover-color: #0d5db9;        /* Link hover color */
+
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #4285f4;          /* Light blue for dark mode */
+  --ifm-color-primary-dark: #3371e3;     /* Darker blue for dark mode */
+  --ifm-color-primary-darker: #2a65d0;   /* Even darker for dark mode */
+  --ifm-color-primary-darkest: #2254b8;  /* Darkest for dark mode */
+  --ifm-color-primary-light: #5a95f5;    /* Lighter blue for dark mode */
+  --ifm-color-primary-lighter: #72a5f7;  /* Even lighter for dark mode */
+  --ifm-color-primary-lightest: #8bb5f8; /* Lightest blue for dark mode */
+
+  /* Dark mode neutral colors */
+  --ifm-color-secondary: #ffffff;        /* White for dark mode */
+  --ifm-color-secondary-dark: #e6e6e6;   /* Light grey for dark mode */
+  --ifm-color-secondary-darker: #d9d9d9; /* Lighter grey for dark mode */
+  --ifm-color-secondary-darkest: #cccccc; /* Even lighter for dark mode */
+  --ifm-color-secondary-light: #bfbfbf;   /* Grey for dark mode */
+  --ifm-color-secondary-lighter: #a6a6a6; /* Darker grey for dark mode */
+  --ifm-color-secondary-lightest: #999999; /* Darker grey for dark mode */
+
+  /* Dark mode text colors */
+  --ifm-color-content: #e6e6e6;          /* Light text for dark mode */
+  --ifm-color-content-inverse: #000000;   /* Black text for dark mode */
+  --ifm-heading-color: #ffffff;           /* White headings for dark mode */
+  --ifm-text-color: #e6e6e6;             /* Light body text for dark mode */
+  --ifm-link-color: #5a95f5;             /* Light link color for dark mode */
+  --ifm-link-hover-color: #72a5f7;        /* Lighter link hover for dark mode */
+
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}

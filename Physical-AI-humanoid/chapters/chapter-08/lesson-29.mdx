@@ -1,0 +1,292 @@
+---
+title: "Spatial Reasoning and Mapping"
+description: "Learn how humanoid robots create and maintain spatial representations of their environment for navigation and interaction."
+tags: ["spatial reasoning", "mapping", "navigation", "embodied AI", "world modeling"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Spatial Reasoning and Mapping
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Define spatial reasoning and its role in embodied AI systems
+- Explain different mapping techniques used by humanoid robots
+- Describe the relationship between spatial reasoning and world modeling
+- Implement basic spatial reasoning algorithms for navigation tasks
+- Analyze the challenges of real-time spatial mapping in dynamic environments
+
+## Key Concepts
+
+- **Spatial Reasoning**: The cognitive process of understanding and manipulating spatial relationships between objects and locations
+- **SLAM (Simultaneous Localization and Mapping)**: Technique for building maps while simultaneously tracking the robot's position
+- **Occupancy Grids**: Discrete representation of space where each cell indicates the probability of occupancy
+- **Topological Maps**: Graph-based representation of space using nodes (locations) and edges (connections)
+- **Metric Maps**: Geometrically accurate representation of space with precise coordinates
+- **Spatial Memory**: The ability to store and recall spatial information for future use
+
+## Theory Summary
+
+Spatial reasoning is a fundamental capability for humanoid robots that enables them to understand their environment, navigate effectively, and interact with objects in three-dimensional space. It encompasses the processes by which robots perceive, represent, and reason about spatial relationships between themselves, objects, and locations in their environment.
+
+The foundation of spatial reasoning lies in the robot's ability to construct accurate models of its surroundings. These models, known as spatial maps, serve as internal representations that the robot can query and update as it moves and interacts with the world. Different mapping approaches offer various trade-offs between accuracy, computational efficiency, and robustness to environmental changes.
+
+SLAM (Simultaneous Localization and Mapping) represents one of the most important techniques in spatial reasoning, allowing robots to build maps of unknown environments while simultaneously determining their position within those maps. This chicken-and-egg problem is solved through probabilistic methods that iteratively refine both the map and the robot's estimated position.
+
+Occupancy grids provide a discrete, cell-based representation where each location is marked as occupied, free, or unknown based on sensor data. This approach is particularly effective for mobile robots operating in indoor environments and provides a foundation for path planning algorithms.
+
+Topological maps focus on the connectivity between locations rather than geometric accuracy, representing the environment as a graph of places connected by paths. This approach is useful for high-level navigation and can be more robust to changes in the environment than metric maps.
+
+## Hands-on Activity
+
+### Activity: Implementing a Basic Grid-Based Mapping System
+
+In this activity, you'll implement a simple occupancy grid mapping system that simulates how a humanoid robot might build a map of its environment.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+
+class OccupancyGrid:
+    def __init__(self, width, height, resolution=0.1):
+        """
+        Initialize an occupancy grid map
+        :param width: Map width in meters
+        :param height: Map height in meters
+        :param resolution: Size of each grid cell in meters
+        """
+        self.resolution = resolution
+        self.width = width
+        self.height = height
+        self.grid_width = int(width / resolution)
+        self.grid_height = int(height / resolution)
+
+        # Initialize grid: -1 = unknown, 0 = free, 1 = occupied
+        self.grid = np.full((self.grid_height, self.grid_width), -1, dtype=np.int8)
+
+    def world_to_grid(self, x, y):
+        """Convert world coordinates to grid indices"""
+        grid_x = int((x + self.width/2) / self.resolution)
+        grid_y = int((y + self.height/2) / self.resolution)
+        return grid_x, grid_y
+
+    def grid_to_world(self, grid_x, grid_y):
+        """Convert grid indices to world coordinates"""
+        x = grid_x * self.resolution - self.width/2
+        y = grid_y * self.resolution - self.height/2
+        return x, y
+
+    def update_cell(self, x, y, occupied):
+        """Update a cell based on sensor reading"""
+        grid_x, grid_y = self.world_to_grid(x, y)
+
+        if 0 <= grid_x < self.grid_width and 0 <= grid_y < self.grid_height:
+            self.grid[grid_y, grid_x] = 1 if occupied else 0
+
+    def add_obstacle_line(self, start_pos, end_pos, occupied=True):
+        """Add a line of obstacles using Bresenham's algorithm"""
+        start_x, start_y = self.world_to_grid(*start_pos)
+        end_x, end_y = self.world_to_grid(*end_pos)
+
+        dx = abs(end_x - start_x)
+        dy = abs(end_y - start_y)
+        sx = 1 if start_x < end_x else -1
+        sy = 1 if start_y < end_y else -1
+        err = dx - dy
+
+        x, y = start_x, start_y
+
+        while True:
+            if 0 <= x < self.grid_width and 0 <= y < self.grid_height:
+                self.grid[y, x] = 1 if occupied else 0
+
+            if x == end_x and y == end_y:
+                break
+
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x += sx
+            if e2 < dx:
+                err += dx
+                y += sy
+
+    def visualize(self):
+        """Visualize the occupancy grid"""
+        # Create a colormap: unknown = gray, free = white, occupied = black
+        colors = ['#808080', '#FFFFFF', '#000000']  # gray, white, black
+        cmap = ListedColormap(colors)
+
+        plt.figure(figsize=(10, 8))
+        plt.imshow(self.grid, cmap=cmap, origin='lower', extent=[-self.width/2, self.width/2, -self.height/2, self.height/2])
+        plt.title('Occupancy Grid Map')
+        plt.xlabel('X (meters)')
+        plt.ylabel('Y (meters)')
+        plt.grid(True, alpha=0.3)
+        plt.colorbar(ticks=[-1, 0, 1], label='Occupancy Status')
+        plt.show()
+
+# Example usage
+def simulate_robot_mapping():
+    """Simulate a robot mapping its environment"""
+    # Create a 10x10 meter map with 0.1m resolution
+    map_obj = OccupancyGrid(10, 10, 0.1)
+
+    # Add some obstacles to simulate the environment
+    map_obj.add_obstacle_line((-4, -4), (4, -4))  # Bottom wall
+    map_obj.add_obstacle_line((-4, 4), (4, 4))    # Top wall
+    map_obj.add_obstacle_line((-4, -4), (-4, 4))  # Left wall
+    map_obj.add_obstacle_line((4, -4), (4, 4))    # Right wall
+
+    # Add some interior obstacles
+    map_obj.add_obstacle_line((-2, -1), (-2, 2))  # Vertical wall
+    map_obj.add_obstacle_line((1, -2), (3, -2))   # Horizontal wall
+
+    # Add some furniture
+    for i in range(5):
+        for j in range(3):
+            map_obj.update_cell(-3.5 + i*0.2, 1.5 + j*0.2, True)
+
+    # Visualize the map
+    map_obj.visualize()
+
+    return map_obj
+
+# Run the simulation
+robot_map = simulate_robot_mapping()
+print("Occupancy grid mapping simulation completed!")
+print(f"Map size: {robot_map.grid_width} x {robot_map.grid_height} cells")
+print(f"Resolution: {robot_map.resolution}m per cell")
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy library for numerical computations
+- Matplotlib for visualization
+- Basic understanding of coordinate systems and transformations
+
+## Step-by-Step Instructions
+
+1. **Initialize the Grid Map**: Create an occupancy grid with specified dimensions and resolution
+2. **Implement Coordinate Conversion**: Create functions to convert between world coordinates and grid indices
+3. **Update Grid Cells**: Implement the logic to update grid cells based on sensor readings
+4. **Add Obstacle Detection**: Create methods to add obstacles using line algorithms
+5. **Visualize the Map**: Create a visualization function to display the occupancy grid
+6. **Simulate Mapping**: Build a simulation that demonstrates the robot mapping its environment
+7. **Test with Different Scenarios**: Experiment with different obstacle configurations
+
+## Code Snippets
+
+### Coordinate Transformation Functions
+
+```python
+def world_to_grid(self, x, y):
+    """Convert world coordinates to grid indices"""
+    grid_x = int((x + self.width/2) / self.resolution)
+    grid_y = int((y + self.height/2) / self.resolution)
+    return grid_x, grid_y
+
+def grid_to_world(self, grid_x, grid_y):
+    """Convert grid indices to world coordinates"""
+    x = grid_x * self.resolution - self.width/2
+    y = grid_y * self.resolution - self.height/2
+    return x, y
+```
+
+### Bresenham's Line Algorithm for Obstacle Mapping
+
+```python
+def add_obstacle_line(self, start_pos, end_pos, occupied=True):
+    """Add a line of obstacles using Bresenham's algorithm"""
+    start_x, start_y = self.world_to_grid(*start_pos)
+    end_x, end_y = self.world_to_grid(*end_pos)
+
+    dx = abs(end_x - start_x)
+    dy = abs(end_y - start_y)
+    sx = 1 if start_x < end_x else -1
+    sy = 1 if start_y < end_y else -1
+    err = dx - dy
+
+    x, y = start_x, start_y
+
+    while True:
+        if 0 <= x < self.grid_width and 0 <= y < self.grid_height:
+            self.grid[y, x] = 1 if occupied else 0
+
+        if x == end_x and y == end_y:
+            break
+
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy
+            x += sx
+        if e2 < dx:
+            err += dx
+            y += sy
+```
+
+## Review Questions
+
+1. What is the difference between metric and topological maps in spatial reasoning?
+2. How does SLAM solve the simultaneous localization and mapping problem?
+3. What are the advantages and disadvantages of occupancy grid mapping?
+4. How does spatial reasoning enable humanoid robots to navigate complex environments?
+5. What challenges arise when mapping dynamic environments where objects move over time?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**Which mapping approach is most suitable for a humanoid robot that needs to navigate between rooms in a building?**
+
+A) Topological maps
+B) Occupancy grids
+C) Point clouds
+D) Geometric models
+
+<details>
+<summary>Answer</summary>
+A) Topological maps - For navigating between rooms, a topological map that represents rooms as nodes and doorways as connections is often more efficient than detailed metric maps.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**What is the main challenge with SLAM in dynamic environments?**
+
+A) Computational complexity
+B) Distinguishing between moving objects and static environment
+C) Sensor accuracy
+D) Memory requirements
+
+<details>
+<summary>Answer</summary>
+B) Distinguishing between moving objects and static environment - SLAM assumes a static environment, making it difficult to handle moving objects that change over time.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Create a simple path planning algorithm that works with your occupancy grid map. Implement a basic A* algorithm that can find a path from a start position to a goal position while avoiding obstacles in the map. Test your algorithm with different obstacle configurations to verify it works correctly.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Implement basic occupancy grid mapping for humanoid robots
+- Understand the trade-offs between different spatial representation approaches
+- Create visualization tools for spatial reasoning systems
+- Apply spatial reasoning concepts to navigation tasks
+- Design mapping algorithms that work with sensor data from humanoid robots

@@ -1,0 +1,615 @@
+---
+title: "Service Robotics and Customer Interaction"
+description: "Explore how humanoid robots are transforming service industries through enhanced customer interaction and experience."
+tags: ["service robotics", "customer interaction", "humanoid applications", "social robotics", "hospitality"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Service Robotics and Customer Interaction
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Analyze the role of humanoid robots in service industries
+- Design effective customer interaction patterns for service robots
+- Evaluate the technical requirements for service robotics applications
+- Understand the challenges of deploying robots in customer-facing roles
+- Assess the impact of service robots on customer experience and business operations
+
+## Key Concepts
+
+- **Service Robotics**: Robots designed to perform useful tasks for humans in service environments
+- **Customer Experience Design**: Creating positive interactions between robots and customers
+- **Social Navigation**: Moving through crowds and social spaces appropriately
+- **Conversational AI**: Natural language processing for customer interactions
+- **Cultural Adaptation**: Adjusting robot behavior for different cultural contexts
+- **Service Quality Metrics**: Measuring effectiveness of robotic service delivery
+- **Human-Robot Collaboration**: Coordinating with human staff in service environments
+- **Customer Acceptance**: Factors influencing customer comfort with service robots
+
+## Theory Summary
+
+Service robotics represents a rapidly growing application area for humanoid robots, with deployments in hospitality, retail, healthcare, and other customer-facing industries. These robots must excel at human interaction while performing specific service tasks, requiring a unique combination of social skills, task execution capabilities, and environmental awareness.
+
+The primary challenge in service robotics is balancing automation with the human touch that customers often expect and value. Service robots must be able to handle the unpredictable nature of customer interactions while maintaining the efficiency and consistency that automation provides. This requires sophisticated perception, natural language processing, and adaptive behavior systems.
+
+Customer experience design for service robots involves creating interactions that feel natural and helpful rather than mechanical or intrusive. This includes appropriate timing of interactions, suitable response patterns, and the ability to recognize and respond to customer emotional states. The robot's physical appearance and movement patterns also significantly impact customer perception and acceptance.
+
+Social navigation in service environments is particularly challenging because robots must move through spaces populated by people who may behave unpredictably. The robot must follow social conventions for movement while avoiding collisions and maintaining customer comfort. This includes understanding personal space, appropriate eye contact, and social signaling.
+
+Conversational AI systems for service robots must handle a wide range of customer queries and requests, often with limited domain knowledge. The system must be able to gracefully handle requests outside its capabilities while maintaining a helpful and friendly demeanor. Multi-modal interaction combining speech, gestures, and visual displays often provides the best user experience.
+
+Cultural adaptation is crucial for service robots operating in international markets. Different cultures have varying expectations about appropriate robot behavior, personal space, eye contact, and interaction styles. A successful service robot must be able to adapt its behavior to match local cultural norms.
+
+Service quality metrics for robots differ from traditional service metrics because they must account for both task completion and customer satisfaction. Key metrics include task success rate, customer satisfaction scores, interaction time, and the robot's ability to handle edge cases without human intervention.
+
+Human-robot collaboration in service environments requires careful coordination between automated systems and human staff. Robots should enhance rather than replace human workers, taking on routine tasks while allowing humans to focus on complex customer needs and relationship building.
+
+Customer acceptance of service robots varies significantly based on factors such as age, cultural background, previous technology exposure, and the specific service context. Understanding these factors is crucial for successful deployment.
+
+## Hands-on Activity
+
+### Activity: Implementing a Service Robot Customer Interaction System
+
+In this activity, you'll create a service robot that can interact with customers in a restaurant setting, handle orders, and provide assistance.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple, Optional, Any
+import random
+import json
+from dataclasses import dataclass, asdict
+from enum import Enum
+from datetime import datetime, timedelta
+import re
+
+class CustomerMood(Enum):
+    """Customer mood states"""
+    HAPPY = "happy"
+    NEUTRAL = "neutral"
+    CONFUSED = "confused"
+    ANNOYED = "annoyed"
+    EXCITED = "excited"
+
+class ServiceTask(Enum):
+    """Types of service tasks"""
+    GREETING = "greeting"
+    TAKING_ORDER = "taking_order"
+    ANSWERING_QUESTIONS = "answering_questions"
+    GUIDING = "guiding"
+    PROCESSING_PAYMENT = "processing_payment"
+    CLEANING = "cleaning"
+    ASSISTANCE = "assistance"
+
+class InteractionMode(Enum):
+    """Modes of interaction"""
+    AUTONOMOUS = "autonomous"
+    HUMAN_ASSISTED = "human_assisted"
+    ESCALATION = "escalation"
+
+@dataclass
+class Customer:
+    """Represents a customer in the service environment"""
+    id: str
+    name: str
+    mood: CustomerMood
+    wait_time: int  # Minutes waited
+    order: Optional[Dict] = None
+    satisfaction: float = 5.0  # 1-10 scale
+    language: str = "English"
+    cultural_preference: str = "standard"
+
+@dataclass
+class MenuItem:
+    """Represents a menu item"""
+    id: str
+    name: str
+    description: str
+    price: float
+    category: str
+    dietary_info: List[str]  # e.g., ["vegetarian", "gluten-free"]
+
+@dataclass
+class Order:
+    """Represents a customer order"""
+    customer_id: str
+    items: List[Dict]  # [{"item_id": str, "quantity": int, "special_requests": str}]
+    status: str  # "pending", "preparing", "ready", "delivered"
+    timestamp: datetime
+
+class ServiceRobot:
+    """Service robot for customer interaction in service environments"""
+
+    def __init__(self, name: str = "ServeBot", location: str = "Restaurant"):
+        self.name = name
+        self.location = location
+        self.current_customers: Dict[str, Customer] = {}
+        self.menu: List[MenuItem] = self._initialize_menu()
+        self.orders: List[Order] = []
+        self.interaction_history: List[Dict] = []
+        self.current_time = datetime.now()
+        self.battery_level = 100.0
+        self.location_coords = (0, 0)  # Current position in the service area
+        self.interaction_mode = InteractionMode.AUTONOMOUS
+        self.service_metrics = {
+            'interactions': 0,
+            'satisfaction_score': 0.0,
+            'task_completion_rate': 0.0,
+            'human_esc_count': 0
+        }
+
+    def _initialize_menu(self) -> List[MenuItem]:
+        """Initialize the restaurant menu"""
+        return [
+            MenuItem("B001", "Classic Burger", "Beef patty with lettuce, tomato, and special sauce", 12.99, "Main Course", ["contains meat"]),
+            MenuItem("S001", "Caesar Salad", "Romaine lettuce with parmesan, croutons, and caesar dressing", 9.99, "Salad", ["vegetarian"]),
+            MenuItem("P001", "Margherita Pizza", "Tomato sauce, mozzarella, and fresh basil", 14.99, "Main Course", ["vegetarian"]),
+            MenuItem("D001", "Chocolate Cake", "Rich chocolate cake with vanilla ice cream", 7.99, "Dessert", ["vegetarian"]),
+            MenuItem("B002", "Veggie Burger", "Plant-based patty with vegetables and special sauce", 13.99, "Main Course", ["vegetarian", "vegan"]),
+            MenuItem("S002", "Greek Salad", "Mixed greens with feta, olives, and greek dressing", 10.99, "Salad", ["vegetarian"]),
+            MenuItem("D002", "Fruit Parfait", "Layered yogurt with fresh berries", 6.99, "Dessert", ["vegetarian", "vegan"])
+        ]
+
+    def detect_customer(self, customer_id: str, name: str = "Guest") -> Customer:
+        """Detect and register a new customer"""
+        if customer_id not in self.current_customers:
+            # Determine initial mood based on arrival time and other factors
+            mood = random.choice(list(CustomerMood))
+
+            customer = Customer(
+                id=customer_id,
+                name=name,
+                mood=mood,
+                wait_time=0
+            )
+            self.current_customers[customer_id] = customer
+
+            # Generate greeting based on mood
+            greeting = self._generate_greeting(customer)
+            self._log_interaction(customer_id, ServiceTask.GREETING, greeting)
+
+            return customer
+        else:
+            return self.current_customers[customer_id]
+
+    def _generate_greeting(self, customer: Customer) -> str:
+        """Generate appropriate greeting based on customer mood and preferences"""
+        greetings = {
+            CustomerMood.HAPPY: f"Hello {customer.name}! Welcome to {self.location}. You look like you're having a great day!",
+            CustomerMood.NEUTRAL: f"Hello {customer.name}! Welcome to {self.location}. How can I assist you today?",
+            CustomerMood.CONFUSED: f"Hello {customer.name}! Welcome to {self.location}. Don't worry, I'm here to help you.",
+            CustomerMood.ANNOYED: f"Hello {customer.name}! Welcome to {self.location}. I hope I can make your experience pleasant.",
+            CustomerMood.EXCITED: f"Hello {customer.name}! Welcome to {self.location}. Your enthusiasm is wonderful!"
+        }
+
+        return greetings.get(customer.mood, f"Hello {customer.name}! Welcome to {self.location}.")
+
+    def handle_customer_request(self, customer_id: str, request: str) -> str:
+        """Handle various customer requests"""
+        if customer_id not in self.current_customers:
+            return "I don't see you in my customer list. Let me find you first."
+
+        customer = self.current_customers[customer_id]
+
+        # Process the request using simple pattern matching
+        request_lower = request.lower()
+
+        if any(word in request_lower for word in ["menu", "what", "offer", "food", "eat"]):
+            return self._show_menu(customer)
+
+        elif any(word in request_lower for word in ["order", "buy", "get", "food"]):
+            return self._start_order_process(customer)
+
+        elif any(word in request_lower for word in ["table", "seat", "sit", "place"]):
+            return self._guide_to_table(customer)
+
+        elif any(word in request_lower for word in ["question", "ask", "help"]):
+            return self._answer_questions(customer, request)
+
+        elif any(word in request_lower for word in ["bathroom", "restroom", "toilet", "washroom"]):
+            return "The restrooms are located straight down the hall, to your left."
+
+        elif any(word in request_lower for word in ["bill", "check", "payment", "pay"]):
+            return self._process_payment(customer)
+
+        else:
+            # If uncertain, ask for clarification or offer help
+            return f"I'm not sure I understood, {customer.name}. Would you like to see our menu, place an order, or do you have a specific question?"
+
+    def _show_menu(self, customer: Customer) -> str:
+        """Show menu items to customer"""
+        menu_categories = {}
+        for item in self.menu:
+            if item.category not in menu_categories:
+                menu_categories[item.category] = []
+            menu_categories[item.category].append(f"{item.name} - ${item.price:.2f}")
+
+        menu_text = f"Here's our menu, {customer.name}:\n"
+        for category, items in menu_categories.items():
+            menu_text += f"\n{category}:\n"
+            for item in items:
+                menu_text += f"  • {item}\n"
+
+        menu_text += "\nWould you like to place an order or do you have questions about any items?"
+        return menu_text
+
+    def _start_order_process(self, customer: Customer) -> str:
+        """Start the order taking process"""
+        return f"Great, {customer.name}! I can help you place an order. Please let me know what you'd like to order. You can say something like 'I'd like the Classic Burger' or 'One Caesar Salad please.'"
+
+    def _guide_to_table(self, customer: Customer) -> str:
+        """Guide customer to available table"""
+        # In a real system, this would integrate with a table management system
+        table_number = random.randint(1, 20)
+        return f"{customer.name}, I can guide you to table {table_number}. Please follow me, and I'll lead you to your seat."
+
+    def _answer_questions(self, customer: Customer, question: str) -> str:
+        """Answer customer questions about menu items or services"""
+        # Simple question answering based on keywords
+        if any(word in question.lower() for word in ["vegetarian", "veggie", "meatless", "plant"]):
+            veg_items = [item.name for item in self.menu if "vegetarian" in item.dietary_info]
+            if veg_items:
+                return f"We have several vegetarian options: {', '.join(veg_items)}. Would you like more details about any of these?"
+            else:
+                return "We don't have specific vegetarian options, but I can check with the kitchen about modifications."
+
+        elif any(word in question.lower() for word in ["spicy", "hot", "pepper", "chili"]):
+            return "Our kitchen can prepare dishes with varying spice levels. Please let me know your preference when ordering."
+
+        elif any(word in question.lower() for word in ["allergy", "dietary", "restriction", "gluten", "nuts"]):
+            return "We take dietary restrictions seriously. Please inform me of any allergies when placing your order, and I'll ensure the kitchen is aware."
+
+        else:
+            return f"I'd be happy to answer your question, {customer.name}. Our menu items are prepared fresh daily, and we can accommodate most special requests. Is there something specific you'd like to know?"
+
+    def _process_payment(self, customer: Customer) -> str:
+        """Process payment for customer"""
+        # Check if customer has an order
+        customer_orders = [order for order in self.orders if order.customer_id == customer.id]
+
+        if not customer_orders:
+            return f"You don't have any active orders, {customer.name}. Would you like to place an order first?"
+
+        # Find pending or ready orders
+        active_orders = [order for order in customer_orders if order.status in ["ready", "delivered"]]
+
+        if not active_orders:
+            return f"Your order is still being prepared, {customer.name}. Would you like me to check on its status?"
+
+        # Calculate total
+        total = 0
+        for order in active_orders:
+            for item in order.items:
+                menu_item = next((mi for mi in self.menu if mi.id == item['item_id']), None)
+                if menu_item:
+                    total += menu_item.price * item['quantity']
+
+        return f"Your total is ${total:.2f}, {customer.name}. You can pay at the front desk or I can guide you there. Payment options include credit card, cash, or mobile payment."
+
+    def take_order(self, customer_id: str, order_items: List[Dict]) -> str:
+        """Take and process customer order"""
+        if customer_id not in self.current_customers:
+            return "I don't see you in my customer list. Let me find you first."
+
+        customer = self.current_customers[customer_id]
+
+        # Validate order items
+        valid_items = []
+        invalid_items = []
+
+        for item in order_items:
+            menu_item = next((mi for mi in self.menu if mi.id == item['item_id']), None)
+            if menu_item:
+                valid_items.append(item)
+            else:
+                invalid_items.append(item['item_id'])
+
+        if invalid_items:
+            return f"I couldn't find the following items: {', '.join(invalid_items)}. Here are the valid options: {[item.name for item in self.menu]}"
+
+        # Create order
+        order = Order(
+            customer_id=customer_id,
+            items=valid_items,
+            status="pending",
+            timestamp=datetime.now()
+        )
+
+        self.orders.append(order)
+
+        # Prepare confirmation message
+        item_names = []
+        for item in valid_items:
+            menu_item = next(mi for mi in self.menu if mi.id == item['item_id'])
+            item_names.append(f"{item['quantity']}x {menu_item.name}")
+
+        order_summary = ", ".join(item_names)
+        preparation_time = random.randint(15, 45)  # 15-45 minutes
+
+        confirmation = f"Thank you, {customer.name}! Your order has been placed: {order_summary}. Estimated preparation time is {preparation_time} minutes. I'll update you when it's ready."
+
+        self._log_interaction(customer_id, ServiceTask.TAKING_ORDER, confirmation)
+        return confirmation
+
+    def update_order_status(self, order_id: int, new_status: str) -> bool:
+        """Update the status of an order"""
+        if 0 <= order_id < len(self.orders):
+            self.orders[order_id].status = new_status
+            return True
+        return False
+
+    def _log_interaction(self, customer_id: str, task: ServiceTask, content: str):
+        """Log customer interaction"""
+        interaction = {
+            'timestamp': datetime.now().isoformat(),
+            'customer_id': customer_id,
+            'task': task.value,
+            'content': content,
+            'location': self.location
+        }
+        self.interaction_history.append(interaction)
+        self.service_metrics['interactions'] += 1
+
+    def get_service_metrics(self) -> Dict:
+        """Get service performance metrics"""
+        total_interactions = len(self.interaction_history)
+        if total_interactions > 0:
+            avg_satisfaction = sum(c.satisfaction for c in self.current_customers.values()) / len(self.current_customers) if self.current_customers else 5.0
+        else:
+            avg_satisfaction = 5.0
+
+        return {
+            'total_customers_served': len(self.current_customers),
+            'total_interactions': total_interactions,
+            'average_satisfaction': avg_satisfaction,
+            'active_orders': len([o for o in self.orders if o.status in ["pending", "preparing"]]),
+            'completed_orders': len([o for o in self.orders if o.status == "delivered"])
+        }
+
+def simulate_service_robot():
+    """Simulate a service robot in a restaurant environment"""
+    print("Service Robot Simulation")
+    print("=" * 30)
+
+    # Create service robot
+    robot = ServiceRobot(name="ServeBot-01", location="TechBurger Restaurant")
+
+    # Simulate customer interactions
+    print("\nCustomer 1 enters - Alice")
+    customer1 = robot.detect_customer("CUST001", "Alice")
+
+    # Customer requests menu
+    print(f"\nAlice: What do you have on the menu?")
+    response = robot.handle_customer_request("CUST001", "What do you have on the menu?")
+    print(f"Robot: {response}")
+
+    # Customer orders food
+    print(f"\nAlice: I'd like the Classic Burger and a Chocolate Cake")
+    # Parse order from customer request
+    order_items = [
+        {"item_id": "B001", "quantity": 1, "special_requests": "no onions"},
+        {"item_id": "D001", "quantity": 1, "special_requests": "extra whipped cream"}
+    ]
+    order_response = robot.take_order("CUST001", order_items)
+    print(f"Robot: {order_response}")
+
+    print("\nCustomer 2 enters - Bob")
+    customer2 = robot.detect_customer("CUST002", "Bob")
+
+    # Customer asks about vegetarian options
+    print(f"\nBob: Are there any vegetarian options?")
+    response = robot.handle_customer_request("CUST002", "Are there any vegetarian options?")
+    print(f"Robot: {response}")
+
+    # Bob orders vegetarian items
+    print(f"\nBob: I'll have the Veggie Burger and Greek Salad")
+    order_items_bob = [
+        {"item_id": "B002", "quantity": 1, "special_requests": "add avocado"},
+        {"item_id": "S002", "quantity": 1, "special_requests": "dressing on the side"}
+    ]
+    order_response_bob = robot.take_order("CUST002", order_items_bob)
+    print(f"Robot: {order_response_bob}")
+
+    # Customer asks for directions
+    print(f"\nBob: Where are the restrooms?")
+    restroom_response = robot.handle_customer_request("CUST002", "Where are the restrooms?")
+    print(f"Robot: {restroom_response}")
+
+    # Simulate order completion
+    print(f"\nSimulating order preparation...")
+    robot.update_order_status(0, "ready")  # Alice's order
+    robot.update_order_status(1, "ready")  # Bob's order
+
+    print(f"\nRobot: {customer1.name}, your order is ready! Please proceed to the pickup counter.")
+    print(f"Robot: {customer2.name}, your order is ready! Please proceed to the pickup counter.")
+
+    # Get service metrics
+    print(f"\nService Metrics:")
+    metrics = robot.get_service_metrics()
+    for key, value in metrics.items():
+        print(f"  {key}: {value}")
+
+    # Update customer satisfaction
+    robot.current_customers["CUST001"].satisfaction = 8.5
+    robot.current_customers["CUST002"].satisfaction = 9.0
+
+    print(f"\nUpdated satisfaction scores:")
+    for customer_id, customer in robot.current_customers.items():
+        print(f"  {customer.name}: {customer.satisfaction}/10")
+
+    print(f"\nTotal interactions logged: {len(robot.interaction_history)}")
+    print("Service robot simulation completed!")
+
+# Run the simulation
+simulate_service_robot()
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy for numerical computations
+- Basic understanding of service industry operations
+- Knowledge of human-robot interaction principles
+- Understanding of customer service concepts
+
+## Step-by-Step Instructions
+
+1. **Design Customer Data Structure**: Create classes to represent customers, menu items, and orders
+2. **Implement Service Robot**: Build a robot class that can handle various service tasks
+3. **Create Menu System**: Implement a restaurant menu with items and categories
+4. **Add Interaction Processing**: Build systems to handle customer requests and questions
+5. **Implement Order Management**: Create functionality for taking and processing orders
+6. **Simulate Service Scenarios**: Test the robot with various customer interactions
+7. **Track Service Metrics**: Monitor and evaluate service performance
+
+## Code Snippets
+
+### Customer Request Handling System
+
+```python
+def handle_customer_request(self, customer_id: str, request: str) -> str:
+    """Handle various customer requests"""
+    if customer_id not in self.current_customers:
+        return "I don't see you in my customer list. Let me find you first."
+
+    customer = self.current_customers[customer_id]
+
+    # Process the request using simple pattern matching
+    request_lower = request.lower()
+
+    if any(word in request_lower for word in ["menu", "what", "offer", "food", "eat"]):
+        return self._show_menu(customer)
+
+    elif any(word in request_lower for word in ["order", "buy", "get", "food"]):
+        return self._start_order_process(customer)
+
+    elif any(word in request_lower for word in ["table", "seat", "sit", "place"]):
+        return self._guide_to_table(customer)
+
+    elif any(word in request_lower for word in ["question", "ask", "help"]):
+        return self._answer_questions(customer, request)
+
+    elif any(word in request_lower for word in ["bathroom", "restroom", "toilet", "washroom"]):
+        return "The restrooms are located straight down the hall, to your left."
+
+    elif any(word in request_lower for word in ["bill", "check", "payment", "pay"]):
+        return self._process_payment(customer)
+
+    else:
+        # If uncertain, ask for clarification or offer help
+        return f"I'm not sure I understood, {customer.name}. Would you like to see our menu, place an order, or do you have a specific question?"
+```
+
+### Order Management System
+
+```python
+def take_order(self, customer_id: str, order_items: List[Dict]) -> str:
+    """Take and process customer order"""
+    if customer_id not in self.current_customers:
+        return "I don't see you in my customer list. Let me find you first."
+
+    customer = self.current_customers[customer_id]
+
+    # Validate order items
+    valid_items = []
+    invalid_items = []
+
+    for item in order_items:
+        menu_item = next((mi for mi in self.menu if mi.id == item['item_id']), None)
+        if menu_item:
+            valid_items.append(item)
+        else:
+            invalid_items.append(item['item_id'])
+
+    if invalid_items:
+        return f"I couldn't find the following items: {', '.join(invalid_items)}. Here are the valid options: {[item.name for item in self.menu]}"
+
+    # Create order
+    order = Order(
+        customer_id=customer_id,
+        items=valid_items,
+        status="pending",
+        timestamp=datetime.now()
+    )
+
+    self.orders.append(order)
+
+    # Prepare confirmation message
+    item_names = []
+    for item in valid_items:
+        menu_item = next(mi for mi in self.menu if mi.id == item['item_id'])
+        item_names.append(f"{item['quantity']}x {menu_item.name}")
+
+    order_summary = ", ".join(item_names)
+    preparation_time = random.randint(15, 45)  # 15-45 minutes
+
+    confirmation = f"Thank you, {customer.name}! Your order has been placed: {order_summary}. Estimated preparation time is {preparation_time} minutes. I'll update you when it's ready."
+
+    self._log_interaction(customer_id, ServiceTask.TAKING_ORDER, confirmation)
+    return confirmation
+```
+
+## Review Questions
+
+1. What are the key challenges in designing service robots for customer interaction?
+2. How does cultural adaptation affect service robot behavior?
+3. What metrics are important for evaluating service robot performance?
+4. How can service robots enhance rather than replace human workers?
+5. What factors influence customer acceptance of service robots?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**What is a primary challenge in service robotics compared to industrial robotics?**
+
+A) Higher precision requirements
+B) Need to interact with unpredictable humans in social contexts
+C) More complex manipulation tasks
+D) Greater computational requirements
+
+<details>
+<summary>Answer</summary>
+B) Need to interact with unpredictable humans in social contexts - Service robots must handle unpredictable customer behavior and social interactions, unlike industrial robots in controlled environments.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**Why is cultural adaptation important for service robots?**
+
+A) It reduces manufacturing costs
+B) Different cultures have varying expectations about appropriate robot behavior
+C) It improves robot performance metrics
+D) It increases robot speed
+
+<details>
+<summary>Answer</summary>
+B) Different cultures have varying expectations about appropriate robot behavior - Cultural adaptation ensures robots behave appropriately for local social norms and expectations.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the service robot system to include emotional intelligence capabilities. Implement a system that can recognize customer emotional states through voice tone analysis, facial expression recognition, or behavioral cues. Create appropriate response strategies for different emotional states (e.g., patient responses for confused customers, efficient service for hurried customers).
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Design service robots that effectively interact with customers
+- Implement systems for handling various customer requests and tasks
+- Create appropriate interaction patterns for service environments
+- Understand the challenges and opportunities in service robotics
+- Evaluate the impact of service robots on customer experience

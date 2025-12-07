@@ -1,0 +1,955 @@
+---
+title: "System Design and Integration"
+description: "Design and integrate the complete humanoid robot system, combining all components learned throughout the course."
+tags: ["system design", "integration", "robotics architecture", "capstone project", "humanoid robot"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# System Design and Integration
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Design a complete humanoid robot system architecture
+- Integrate components from previous chapters into a cohesive system
+- Apply system engineering principles to robotics projects
+- Create detailed system specifications and interface definitions
+- Plan the integration process for complex robotic systems
+
+## Key Concepts
+
+- **System Architecture**: High-level design of the complete robot system
+- **Component Integration**: Connecting different subsystems to work together
+- **Interface Design**: Defining how components communicate and interact
+- **System Specifications**: Detailed requirements for the complete system
+- **Integration Testing**: Verifying that integrated components work correctly
+- **Modular Design**: Structuring systems for easier integration and maintenance
+- **Real-time Systems**: Ensuring timely responses across all components
+- **Safety Architecture**: Building safety into the system design
+
+## Theory Summary
+
+System design and integration represent the culmination of all the knowledge gained throughout the course, requiring the synthesis of mechanical, electrical, software, and control components into a functioning humanoid robot. This process involves creating a comprehensive architecture that defines how all subsystems interact and communicate.
+
+The system architecture defines the high-level organization of the robot, including the mechanical structure, sensor systems, actuator networks, computational units, and communication pathways. This architecture must account for power distribution, data flow, timing constraints, and safety requirements while enabling the robot to perform its intended functions.
+
+Component integration involves connecting the various subsystems—locomotion, manipulation, perception, cognition, and communication—so they work harmoniously. Each component must be designed with clear interfaces that specify how it connects to and communicates with other components. This modular approach enables individual components to be developed, tested, and modified independently while maintaining system integrity.
+
+Interface design is critical for successful integration, defining the protocols, data formats, and timing requirements for communication between components. Well-designed interfaces abstract the complexity of individual components while providing clear contracts for their interaction. These interfaces should be robust, well-documented, and support both normal operation and error conditions.
+
+System specifications translate high-level requirements into detailed technical requirements for each subsystem. These specifications must account for the interactions between components, ensuring that each subsystem's outputs meet the inputs required by its consumers. Specifications should include performance requirements, safety constraints, and environmental operating conditions.
+
+Integration testing verifies that the combined system functions correctly, going beyond individual component testing to validate system-level behaviors. This includes testing for emergent behaviors, timing constraints, resource conflicts, and safety requirements that only become apparent when all components operate together.
+
+Modular design principles facilitate integration by creating well-defined boundaries between components. Each module should have a clear purpose, well-defined interfaces, and minimal dependencies on other modules. This approach simplifies testing, enables parallel development, and supports system maintenance and upgrades.
+
+Real-time considerations are critical in humanoid robotics, where timing constraints from different subsystems must be coordinated. The system architecture must ensure that safety-critical functions (like balance control) receive priority over less time-sensitive functions, while maintaining overall system responsiveness.
+
+## Hands-on Activity
+
+### Activity: Design a Complete Humanoid Robot Architecture
+
+In this activity, you'll design the complete architecture for a humanoid robot, integrating all components learned throughout the course.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple, Optional, Any
+import random
+from dataclasses import dataclass
+from enum import Enum
+from datetime import datetime
+
+class ComponentType(Enum):
+    """Types of system components"""
+    MECHANICAL = "mechanical"
+    ELECTRICAL = "electrical"
+    SOFTWARE = "software"
+    SENSOR = "sensor"
+    ACTUATOR = "actuator"
+    COMMUNICATION = "communication"
+
+class SystemPriority(Enum):
+    """Priority levels for system components"""
+    CRITICAL = "critical"  # Safety-critical, must always function
+    HIGH = "high"          # Important for basic operation
+    MEDIUM = "medium"      # Enhances functionality
+    LOW = "low"            # Nice-to-have features
+
+class InterfaceProtocol(Enum):
+    """Communication protocols between components"""
+    CAN_BUS = "CAN bus"
+    ETHERCAT = "EtherCAT"
+    ETHERNET = "Ethernet"
+    SERIAL = "Serial"
+    SHARED_MEMORY = "Shared Memory"
+    ROS = "ROS (Robot Operating System)"
+
+@dataclass
+class SystemComponent:
+    """Represents a component in the robot system"""
+    id: str
+    name: str
+    component_type: ComponentType
+    priority: SystemPriority
+    interfaces: List[str]  # What this component connects to
+    resource_requirements: Dict[str, float]  # CPU, memory, power, etc.
+    timing_requirements: Dict[str, float]  # Frequency, latency, etc.
+    dependencies: List[str]  # Components this depends on
+    description: str
+
+@dataclass
+class SystemInterface:
+    """Defines an interface between system components"""
+    id: str
+    name: str
+    protocol: InterfaceProtocol
+    source_component: str
+    target_component: str
+    data_rate: float  # bytes/second
+    latency_requirement: float  # seconds
+    reliability_requirement: float  # 0.0 to 1.0
+    description: str
+
+@dataclass
+class SystemArchitecture:
+    """Complete system architecture for the humanoid robot"""
+    name: str
+    version: str
+    components: List[SystemComponent]
+    interfaces: List[SystemInterface]
+    resource_budget: Dict[str, float]
+    safety_requirements: List[str]
+    performance_requirements: Dict[str, float]
+
+class HumanoidRobotDesigner:
+    """Designs and integrates a complete humanoid robot system"""
+
+    def __init__(self, robot_name: str = "HumanoidRobot-01"):
+        self.robot_name = robot_name
+        self.components: List[SystemComponent] = []
+        self.interfaces: List[SystemInterface] = []
+        self.architecture: Optional[SystemArchitecture] = None
+
+    def create_core_components(self):
+        """Create the core components of the humanoid robot"""
+        # Mechanical components
+        self.components.append(SystemComponent(
+            id="M001",
+            name="Frame and Structure",
+            component_type=ComponentType.MECHANICAL,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["actuators", "sensors"],
+            resource_requirements={"weight": 15.0, "size": 1.8},  # kg, meters
+            timing_requirements={},
+            dependencies=[],
+            description="Aluminum frame providing structural support for all components"
+        ))
+
+        self.components.append(SystemComponent(
+            id="M002",
+            name="Leg Assembly",
+            component_type=ComponentType.MECHANICAL,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["hip_actuator", "knee_actuator", "ankle_actuator", "ft_sensors"],
+            resource_requirements={"weight": 8.0, "joints": 6},
+            timing_requirements={},
+            dependencies=["M001"],
+            description="Two legs with 6 DOF each for walking and balance"
+        ))
+
+        self.components.append(SystemComponent(
+            id="M003",
+            name="Arm Assembly",
+            component_type=ComponentType.MECHANICAL,
+            priority=SystemPriority.HIGH,
+            interfaces=["shoulder_actuator", "elbow_actuator", "wrist_actuator", "gripper"],
+            resource_requirements={"weight": 6.0, "joints": 14},
+            timing_requirements={},
+            dependencies=["M001"],
+            description="Two arms with 7 DOF each for manipulation"
+        ))
+
+        # Actuator components
+        self.components.append(SystemComponent(
+            id="A001",
+            name="Hip Actuators",
+            component_type=ComponentType.ACTUATOR,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["leg_controller", "power_system"],
+            resource_requirements={"power": 150.0, "torque": 100.0},  # W, Nm
+            timing_requirements={"response_time": 0.01},  # seconds
+            dependencies=["M002"],
+            description="High-torque actuators for hip joints"
+        ))
+
+        self.components.append(SystemComponent(
+            id="A002",
+            name="Knee Actuators",
+            component_type=ComponentType.ACTUATOR,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["leg_controller", "power_system"],
+            resource_requirements={"power": 120.0, "torque": 80.0},
+            timing_requirements={"response_time": 0.01},
+            dependencies=["M002"],
+            description="High-torque actuators for knee joints"
+        ))
+
+        self.components.append(SystemComponent(
+            id="A003",
+            name="Shoulder Actuators",
+            component_type=ComponentType.ACTUATOR,
+            priority=SystemPriority.HIGH,
+            interfaces=["arm_controller", "power_system"],
+            resource_requirements={"power": 80.0, "torque": 50.0},
+            timing_requirements={"response_time": 0.02},
+            dependencies=["M003"],
+            description="Actuators for shoulder joints"
+        ))
+
+        # Sensor components
+        self.components.append(SystemComponent(
+            id="S001",
+            name="IMU System",
+            component_type=ComponentType.SENSOR,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["state_estimator", "balance_controller"],
+            resource_requirements={"power": 5.0, "data_rate": 1000.0},  # W, Hz
+            timing_requirements={"update_rate": 0.001},
+            dependencies=[],
+            description="Inertial measurement unit for balance and orientation"
+        ))
+
+        self.components.append(SystemComponent(
+            id="S002",
+            name="Force/Torque Sensors",
+            component_type=ComponentType.SENSOR,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["contact_detector", "force_controller"],
+            resource_requirements={"power": 3.0, "data_rate": 500.0},
+            timing_requirements={"update_rate": 0.002},
+            dependencies=["M002", "M003"],  # Legs and arms
+            description="Sensors for detecting contact and applied forces"
+        ))
+
+        self.components.append(SystemComponent(
+            id="S003",
+            name="Vision System",
+            component_type=ComponentType.SENSOR,
+            priority=SystemPriority.HIGH,
+            interfaces=["perception_module", "object_detector"],
+            resource_requirements={"power": 25.0, "data_rate": 30.0e6},  # 30 MB/s
+            timing_requirements={"frame_rate": 0.033},  # 30 fps
+            dependencies=[],
+            description="Stereo vision system for environment perception"
+        ))
+
+        # Computing components
+        self.components.append(SystemComponent(
+            id="C001",
+            name="Main Controller",
+            component_type=ComponentType.SOFTWARE,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["all_subsystems"],
+            resource_requirements={"cpu": 0.8, "memory": 4.0},  # fraction, GB
+            timing_requirements={"control_rate": 0.001},  # 1 kHz
+            dependencies=["A001", "A002", "A003", "S001", "S002", "S003"],
+            description="Central controller running core robotics algorithms"
+        ))
+
+        self.components.append(SystemComponent(
+            id="C002",
+            name="Perception Module",
+            component_type=ComponentType.SOFTWARE,
+            priority=SystemPriority.HIGH,
+            interfaces=["vision_system", "state_estimator"],
+            resource_requirements={"cpu": 0.6, "memory": 2.0},
+            timing_requirements={"processing_rate": 0.033},  # 30 Hz
+            dependencies=["S003"],
+            description="Vision and perception processing module"
+        ))
+
+        self.components.append(SystemComponent(
+            id="C003",
+            name="Balance Controller",
+            component_type=ComponentType.SOFTWARE,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["imu", "actuators", "state_estimator"],
+            resource_requirements={"cpu": 0.4, "memory": 1.0},
+            timing_requirements={"control_rate": 0.001},  # 1 kHz
+            dependencies=["S001", "A001", "A002"],
+            description="Real-time balance control system"
+        ))
+
+        # Power system
+        self.components.append(SystemComponent(
+            id="P001",
+            name="Power System",
+            component_type=ComponentType.ELECTRICAL,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["all_actuators", "computing", "sensors"],
+            resource_requirements={"capacity": 200.0, "weight": 3.0},  # Wh, kg
+            timing_requirements={"supply_stability": 0.999},
+            dependencies=[],
+            description="Battery and power distribution system"
+        ))
+
+    def create_interfaces(self):
+        """Define interfaces between system components"""
+        # Critical interfaces for balance and safety
+        self.interfaces.append(SystemInterface(
+            id="I001",
+            name="IMU to State Estimator",
+            protocol=InterfaceProtocol.SHARED_MEMORY,
+            source_component="S001",
+            target_component="C003",
+            data_rate=1000.0,
+            latency_requirement=0.001,
+            reliability_requirement=0.999,
+            description="Critical interface for balance control"
+        ))
+
+        self.interfaces.append(SystemInterface(
+            id="I002",
+            name="Balance Controller to Hip Actuators",
+            protocol=InterfaceProtocol.CAN_BUS,
+            source_component="C003",
+            target_component="A001",
+            data_rate=1000.0,
+            latency_requirement=0.002,
+            reliability_requirement=0.999,
+            description="Control interface for hip joint actuators"
+        ))
+
+        self.interfaces.append(SystemInterface(
+            id="I003",
+            name="Vision to Perception Module",
+            protocol=InterfaceProtocol.ETHERNET,
+            source_component="S003",
+            target_component="C002",
+            data_rate=30.0e6,
+            latency_requirement=0.033,
+            reliability_requirement=0.95,
+            description="High-bandwidth interface for vision processing"
+        ))
+
+        # General interfaces
+        self.interfaces.append(SystemInterface(
+            id="I004",
+            name="Main Controller to All Actuators",
+            protocol=InterfaceProtocol.CAN_BUS,
+            source_component="C001",
+            target_component="all_actuators",
+            data_rate=10000.0,
+            latency_requirement=0.01,
+            reliability_requirement=0.99,
+            description="Main control interface to all actuators"
+        ))
+
+        self.interfaces.append(SystemInterface(
+            id="I005",
+            name="Power to Actuators",
+            protocol=InterfaceProtocol.ELECTRICAL,
+            source_component="P001",
+            target_component="all_actuators",
+            data_rate=0.0,  # Power, not data
+            latency_requirement=0.001,
+            reliability_requirement=0.999,
+            description="Power distribution to actuators"
+        ))
+
+    def create_system_architecture(self) -> SystemArchitecture:
+        """Create the complete system architecture"""
+        # Define resource budget
+        resource_budget = {
+            "total_weight": 45.0,  # kg
+            "power_capacity": 200.0,  # Wh
+            "computing_power": 2.0,  # TeraFLOPS
+            "memory": 16.0,  # GB
+            "cost_budget": 150000.0  # USD
+        }
+
+        # Define safety requirements
+        safety_requirements = [
+            "Emergency stop functionality",
+            "Collision detection and avoidance",
+            "Fall detection and recovery",
+            "Safe operational boundaries",
+            "Human safety protocols"
+        ]
+
+        # Define performance requirements
+        performance_requirements = {
+            "walking_speed": 1.0,  # m/s
+            "balance_stability": 0.99,  # 99% stability
+            "manipulation_accuracy": 0.01,  # 1cm accuracy
+            "battery_life": 2.0,  # hours
+            "response_time": 0.1  # seconds for basic commands
+        }
+
+        self.architecture = SystemArchitecture(
+            name=f"{self.robot_name} Architecture",
+            version="1.0",
+            components=self.components,
+            interfaces=self.interfaces,
+            resource_budget=resource_budget,
+            safety_requirements=safety_requirements,
+            performance_requirements=performance_requirements
+        )
+
+        return self.architecture
+
+    def generate_integration_plan(self) -> Dict[str, Any]:
+        """Generate a plan for integrating the system components"""
+        # Group components by integration phase
+        integration_phases = {
+            "Phase 1 - Core Structure": [
+                comp.id for comp in self.components
+                if comp.component_type == ComponentType.MECHANICAL
+            ],
+            "Phase 2 - Actuation System": [
+                comp.id for comp in self.components
+                if comp.component_type == ComponentType.ACTUATOR
+            ],
+            "Phase 3 - Sensing System": [
+                comp.id for comp in self.components
+                if comp.component_type == ComponentType.SENSOR
+            ],
+            "Phase 4 - Computing System": [
+                comp.id for comp in self.components
+                if comp.component_type == ComponentType.SOFTWARE
+            ],
+            "Phase 5 - Power System": [
+                comp.id for comp in self.components
+                if comp.component_type == ComponentType.ELECTRICAL
+            ],
+            "Phase 6 - Full Integration": [
+                # All components for final integration
+                comp.id for comp in self.components
+            ]
+        }
+
+        # Define integration dependencies
+        integration_dependencies = {
+            "Phase 2 - Actuation System": ["Phase 1 - Core Structure"],
+            "Phase 3 - Sensing System": ["Phase 1 - Core Structure"],
+            "Phase 4 - Computing System": ["Phase 1 - Core Structure", "Phase 3 - Sensing System"],
+            "Phase 5 - Power System": ["Phase 1 - Core Structure"],
+            "Phase 6 - Full Integration": ["Phase 1 - Core Structure", "Phase 2 - Actuation System",
+                                           "Phase 3 - Sensing System", "Phase 4 - Computing System",
+                                           "Phase 5 - Power System"]
+        }
+
+        # Define testing requirements for each phase
+        testing_requirements = {
+            "Phase 1 - Core Structure": [
+                "Structural integrity test",
+                "Joint range of motion verification",
+                "Weight distribution check"
+            ],
+            "Phase 2 - Actuation System": [
+                "Actuator torque verification",
+                "Position control accuracy",
+                "Power consumption measurement"
+            ],
+            "Phase 3 - Sensing System": [
+                "Sensor calibration",
+                "Data accuracy verification",
+                "Interface functionality test"
+            ],
+            "Phase 4 - Computing System": [
+                "Algorithm performance test",
+                "Real-time constraint verification",
+                "Communication protocol test"
+            ],
+            "Phase 5 - Power System": [
+                "Power distribution verification",
+                "Battery life test",
+                "Safety shutoff test"
+            ],
+            "Phase 6 - Full Integration": [
+                "End-to-end functionality test",
+                "Safety system validation",
+                "Performance requirement verification"
+            ]
+        }
+
+        return {
+            "integration_phases": integration_phases,
+            "dependencies": integration_dependencies,
+            "testing_requirements": testing_requirements,
+            "estimated_timeline": "6 months for complete integration",
+            "risk_factors": [
+                "Component compatibility issues",
+                "Timing constraint violations",
+                "Power budget overruns",
+                "Communication protocol conflicts"
+            ]
+        }
+
+    def validate_architecture(self) -> Dict[str, Any]:
+        """Validate the system architecture for consistency and feasibility"""
+        validation_results = {
+            "component_dependencies": self._validate_dependencies(),
+            "resource_feasibility": self._validate_resources(),
+            "interface_compatibility": self._validate_interfaces(),
+            "timing_feasibility": self._validate_timing(),
+            "safety_considerations": self._validate_safety()
+        }
+
+        # Overall validation score
+        scores = [v for v in validation_results.values() if isinstance(v, dict) and 'score' in v]
+        overall_score = sum(s['score'] for s in scores) / len(scores) if scores else 0
+
+        validation_results["overall_validation_score"] = overall_score
+        validation_results["is_architecture_valid"] = overall_score > 0.7
+
+        return validation_results
+
+    def _validate_dependencies(self) -> Dict[str, Any]:
+        """Validate component dependencies"""
+        all_component_ids = {comp.id for comp in self.components}
+        broken_deps = []
+
+        for comp in self.components:
+            for dep in comp.dependencies:
+                if dep not in all_component_ids and dep != "all_actuators":  # Special case
+                    broken_deps.append(f"{comp.id} depends on non-existent {dep}")
+
+        score = 1.0 if not broken_deps else max(0.0, 1.0 - len(broken_deps) * 0.1)
+        return {
+            "score": score,
+            "broken_dependencies": broken_deps,
+            "valid": len(broken_deps) == 0
+        }
+
+    def _validate_resources(self) -> Dict[str, Any]:
+        """Validate resource allocation"""
+        # Check if total weight exceeds budget
+        total_weight = sum(
+            comp.resource_requirements.get("weight", 0)
+            for comp in self.components
+            if "weight" in comp.resource_requirements
+        )
+
+        budget_weight = self.architecture.resource_budget["total_weight"] if self.architecture else 45.0
+        weight_exceeded = total_weight > budget_weight
+
+        # Check if total computing power exceeds budget
+        total_cpu = sum(
+            comp.resource_requirements.get("cpu", 0)
+            for comp in self.components
+            if "cpu" in comp.resource_requirements
+        )
+        cpu_exceeded = total_cpu > 1.0  # Assuming 100% of CPU available
+
+        score = 0.9 if not (weight_exceeded or cpu_exceeded) else 0.5
+        return {
+            "score": score,
+            "total_weight": total_weight,
+            "weight_budget": budget_weight,
+            "weight_exceeded": weight_exceeded,
+            "cpu_usage": total_cpu,
+            "cpu_exceeded": cpu_exceeded
+        }
+
+    def _validate_interfaces(self) -> Dict[str, Any]:
+        """Validate interface compatibility"""
+        # Check if all interfaces have corresponding components
+        component_ids = {comp.id for comp in self.components}
+        broken_interfaces = []
+
+        for interface in self.interfaces:
+            if interface.source_component not in component_ids and interface.source_component != "all_actuators":
+                broken_interfaces.append(f"Interface {interface.id} source {interface.source_component} not found")
+            if interface.target_component not in component_ids and interface.target_component != "all_actuators":
+                broken_interfaces.append(f"Interface {interface.id} target {interface.target_component} not found")
+
+        score = 1.0 if not broken_interfaces else max(0.0, 1.0 - len(broken_interfaces) * 0.1)
+        return {
+            "score": score,
+            "broken_interfaces": broken_interfaces,
+            "valid": len(broken_interfaces) == 0
+        }
+
+    def _validate_timing(self) -> Dict[str, Any]:
+        """Validate timing requirements"""
+        # Check if critical components meet their timing requirements
+        timing_issues = []
+        for comp in self.components:
+            if comp.priority == SystemPriority.CRITICAL:
+                if "control_rate" in comp.timing_requirements:
+                    rate = comp.timing_requirements["control_rate"]
+                    if rate > 0.01:  # More than 10ms per control cycle
+                        timing_issues.append(f"Critical component {comp.id} has slow control rate: {rate}s")
+
+        score = 1.0 if not timing_issues else max(0.0, 1.0 - len(timing_issues) * 0.2)
+        return {
+            "score": score,
+            "timing_issues": timing_issues,
+            "valid": len(timing_issues) == 0
+        }
+
+    def _validate_safety(self) -> Dict[str, Any]:
+        """Validate safety considerations"""
+        # Check for critical safety components
+        has_imu = any(comp.id == "S001" for comp in self.components)  # IMU for balance
+        has_ft_sensors = any("ft_sensors" in comp.interfaces for comp in self.components)  # Force/torque sensors
+        has_emergency_stop = any("emergency_stop" in comp.description.lower() for comp in self.components)
+
+        safety_score = 0.3  # Base score
+        if has_imu: safety_score += 0.3
+        if has_ft_sensors: safety_score += 0.2
+        if has_emergency_stop: safety_score += 0.2
+
+        return {
+            "score": safety_score,
+            "has_imu": has_imu,
+            "has_ft_sensors": has_ft_sensors,
+            "has_emergency_stop": has_emergency_stop,
+            "safety_score": safety_score
+        }
+
+def design_humanoid_robot():
+    """Design and validate a complete humanoid robot system"""
+    print("Humanoid Robot System Design and Integration")
+    print("=" * 45)
+
+    # Create robot designer
+    designer = HumanoidRobotDesigner("RoboHuman-01")
+
+    # Create components and interfaces
+    print("Creating system components...")
+    designer.create_core_components()
+    print(f"Created {len(designer.components)} components")
+
+    print("Creating system interfaces...")
+    designer.create_interfaces()
+    print(f"Created {len(designer.interfaces)} interfaces")
+
+    # Create system architecture
+    print("Creating system architecture...")
+    architecture = designer.create_system_architecture()
+    print(f"Architecture created: {architecture.name}")
+
+    # Generate integration plan
+    print("Generating integration plan...")
+    integration_plan = designer.generate_integration_plan()
+
+    print(f"\nIntegration Plan:")
+    print("-" * 18)
+    for phase, components in integration_plan["integration_phases"].items():
+        print(f"{phase}: {len(components)} components")
+        for req in integration_plan["testing_requirements"][phase][:2]:  # Show first 2 requirements
+            print(f"  - {req}")
+        if len(integration_plan["testing_requirements"][phase]) > 2:
+            print(f"  ... and {len(integration_plan['testing_requirements'][phase]) - 2} more")
+
+    # Validate architecture
+    print(f"\nValidating architecture...")
+    validation_results = designer.validate_architecture()
+
+    print(f"\nArchitecture Validation Results:")
+    print("-" * 30)
+    print(f"Overall Score: {validation_results['overall_validation_score']:.2f}")
+    print(f"Valid Architecture: {validation_results['is_architecture_valid']}")
+
+    for key, value in validation_results.items():
+        if key not in ['overall_validation_score', 'is_architecture_valid']:
+            if isinstance(value, dict) and 'score' in value:
+                print(f"{key}: {value['score']:.2f}")
+
+    # Component summary
+    print(f"\nComponent Summary:")
+    print("-" * 17)
+    for comp_type in ComponentType:
+        type_comps = [c for c in designer.components if c.component_type == comp_type]
+        print(f"{comp_type.value}: {len(type_comps)} components")
+
+    # Resource summary
+    print(f"\nResource Summary:")
+    print("-" * 15)
+    if architecture:
+        for resource, value in architecture.resource_budget.items():
+            print(f"  {resource}: {value}")
+
+    # Show critical components
+    print(f"\nCritical Components:")
+    print("-" * 19)
+    critical_comps = [c for c in designer.components if c.priority == SystemPriority.CRITICAL]
+    for comp in critical_comps:
+        print(f"  - {comp.name} ({comp.id}): {comp.description}")
+
+    # Visualization
+    plt.figure(figsize=(15, 10))
+
+    # Plot 1: Component types distribution
+    plt.subplot(2, 3, 1)
+    comp_types = [c.component_type.value for c in designer.components]
+    unique_types = list(set(comp_types))
+    type_counts = [comp_types.count(t) for t in unique_types]
+    plt.pie(type_counts, labels=unique_types, autopct='%1.1f%%')
+    plt.title('Component Types Distribution')
+
+    # Plot 2: Component priorities
+    plt.subplot(2, 3, 2)
+    priorities = [c.priority.value for c in designer.components]
+    unique_prios = list(set(priorities))
+    prio_counts = [priorities.count(p) for p in unique_prios]
+    plt.bar(unique_prios, prio_counts)
+    plt.title('Component Priority Distribution')
+    plt.ylabel('Number of Components')
+    plt.xticks(rotation=45)
+
+    # Plot 3: Resource requirements (simplified)
+    plt.subplot(2, 3, 3)
+    comp_names = [c.name[:10] for c in designer.components[:10]]  # First 10 components
+    weights = [c.resource_requirements.get('weight', 0) for c in designer.components[:10]]
+    plt.bar(comp_names, weights)
+    plt.title('Component Weights (First 10)')
+    plt.ylabel('Weight (kg)')
+    plt.xticks(rotation=45)
+
+    # Plot 4: Interface protocols
+    plt.subplot(2, 3, 4)
+    protocols = [i.protocol.value for i in designer.interfaces]
+    unique_protos = list(set(protocols))
+    proto_counts = [protocols.count(p) for p in unique_protos]
+    plt.bar(unique_protos, proto_counts)
+    plt.title('Interface Protocols')
+    plt.ylabel('Number of Interfaces')
+    plt.xticks(rotation=45)
+
+    # Plot 5: Integration phases
+    plt.subplot(2, 3, 5)
+    phases = list(integration_plan["integration_phases"].keys())
+    phase_counts = [len(comps) for comps in integration_plan["integration_phases"].values()]
+    colors = ['red' if 'Phase 1' in p else 'orange' if 'Phase 2' in p else 'yellow' if 'Phase 3' in p else 'green' for p in phases]
+    plt.barh(phases, phase_counts, color=colors)
+    plt.title('Integration Phases')
+    plt.xlabel('Number of Components')
+
+    # Plot 6: Validation scores
+    plt.subplot(2, 3, 6)
+    validation_scores = {}
+    for key, value in validation_results.items():
+        if isinstance(value, dict) and 'score' in value:
+            validation_scores[key] = value['score']
+
+    if validation_scores:
+        plt.bar(validation_scores.keys(), validation_scores.values())
+        plt.title('Validation Scores')
+        plt.ylabel('Score (0-1)')
+        plt.xticks(rotation=45)
+
+    plt.tight_layout()
+    plt.show()
+
+    print(f"\nSystem design and integration planning completed!")
+    print("The architecture provides a foundation for building the complete humanoid robot.")
+
+# Run the system design
+design_humanoid_robot()
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- NumPy for numerical computations
+- Matplotlib for visualization
+- Basic understanding of system engineering principles
+- Knowledge of robotics architecture and integration concepts
+
+## Step-by-Step Instructions
+
+1. **Design System Architecture**: Create a high-level design for the complete robot system
+2. **Define Components**: Identify and specify all system components (mechanical, electrical, software)
+3. **Create Interfaces**: Define how components communicate and interact with each other
+4. **Set Priorities**: Assign priority levels to components based on criticality
+5. **Plan Integration**: Create a phased integration plan with dependencies
+6. **Validate Design**: Check the architecture for consistency and feasibility
+7. **Visualize Architecture**: Create diagrams to understand the system structure
+
+## Code Snippets
+
+### System Component Definition
+
+```python
+@dataclass
+class SystemComponent:
+    """Represents a component in the robot system"""
+    id: str
+    name: str
+    component_type: ComponentType
+    priority: SystemPriority
+    interfaces: List[str]  # What this component connects to
+    resource_requirements: Dict[str, float]  # CPU, memory, power, etc.
+    timing_requirements: Dict[str, float]  # Frequency, latency, etc.
+    dependencies: List[str]  # Components this depends on
+    description: str
+
+class HumanoidRobotDesigner:
+    """Designs and integrates a complete humanoid robot system"""
+
+    def create_core_components(self):
+        """Create the core components of the humanoid robot"""
+        # Mechanical components
+        self.components.append(SystemComponent(
+            id="M001",
+            name="Frame and Structure",
+            component_type=ComponentType.MECHANICAL,
+            priority=SystemPriority.CRITICAL,
+            interfaces=["actuators", "sensors"],
+            resource_requirements={"weight": 15.0, "size": 1.8},  # kg, meters
+            timing_requirements={},
+            dependencies=[],
+            description="Aluminum frame providing structural support for all components"
+        ))
+
+        # Additional components would follow the same pattern...
+```
+
+### Interface and Integration Planning
+
+```python
+@dataclass
+class SystemInterface:
+    """Defines an interface between system components"""
+    id: str
+    name: str
+    protocol: InterfaceProtocol
+    source_component: str
+    target_component: str
+    data_rate: float  # bytes/second
+    latency_requirement: float  # seconds
+    reliability_requirement: float  # 0.0 to 1.0
+    description: str
+
+def generate_integration_plan(self) -> Dict[str, Any]:
+    """Generate a plan for integrating the system components"""
+    # Group components by integration phase
+    integration_phases = {
+        "Phase 1 - Core Structure": [
+            comp.id for comp in self.components
+            if comp.component_type == ComponentType.MECHANICAL
+        ],
+        "Phase 2 - Actuation System": [
+            comp.id for comp in self.components
+            if comp.component_type == ComponentType.ACTUATOR
+        ],
+        "Phase 3 - Sensing System": [
+            comp.id for comp in self.components
+            if comp.component_type == ComponentType.SENSOR
+        ],
+        "Phase 4 - Computing System": [
+            comp.id for comp in self.components
+            if comp.component_type == ComponentType.SOFTWARE
+        ],
+        "Phase 5 - Power System": [
+            comp.id for comp in self.components
+            if comp.component_type == ComponentType.ELECTRICAL
+        ],
+        "Phase 6 - Full Integration": [
+            # All components for final integration
+            comp.id for comp in self.components
+        ]
+    }
+
+    # Define integration dependencies
+    integration_dependencies = {
+        "Phase 2 - Actuation System": ["Phase 1 - Core Structure"],
+        "Phase 3 - Sensing System": ["Phase 1 - Core Structure"],
+        "Phase 4 - Computing System": ["Phase 1 - Core Structure", "Phase 3 - Sensing System"],
+        "Phase 5 - Power System": ["Phase 1 - Core Structure"],
+        "Phase 6 - Full Integration": ["Phase 1 - Core Structure", "Phase 2 - Actuation System",
+                                       "Phase 3 - Sensing System", "Phase 4 - Computing System",
+                                       "Phase 5 - Power System"]
+    }
+
+    # Define testing requirements for each phase
+    testing_requirements = {
+        "Phase 1 - Core Structure": [
+            "Structural integrity test",
+            "Joint range of motion verification",
+            "Weight distribution check"
+        ],
+        # Additional phases would have their own requirements...
+    }
+
+    return {
+        "integration_phases": integration_phases,
+        "dependencies": integration_dependencies,
+        "testing_requirements": testing_requirements,
+        "estimated_timeline": "6 months for complete integration",
+        "risk_factors": [
+            "Component compatibility issues",
+            "Timing constraint violations",
+            "Power budget overruns",
+            "Communication protocol conflicts"
+        ]
+    }
+```
+
+## Review Questions
+
+1. What are the key components of a humanoid robot system architecture?
+2. How do you prioritize components in a robotic system design?
+3. What interfaces are critical for system integration?
+4. How do you validate a system architecture for feasibility?
+5. What are the phases of system integration planning?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**What is the primary purpose of system architecture in humanoid robotics?**
+
+A) To make the robot look good
+B) To define how all subsystems connect and work together as a cohesive system
+C) To reduce manufacturing costs
+D) To simplify individual components
+
+<details>
+<summary>Answer</summary>
+B) To define how all subsystems connect and work together as a cohesive system - System architecture defines the high-level organization and interactions between all robot subsystems.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**Why is interface design critical in system integration?**
+
+A) It makes the system faster
+B) It defines how components communicate and interact, ensuring compatibility
+C) It reduces component costs
+D) It improves robot appearance
+
+<details>
+<summary>Answer</summary>
+B) It defines how components communicate and interact, ensuring compatibility - Well-designed interfaces are essential for successful integration of different subsystems.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the system design to include a detailed power distribution network. Design how power flows from the battery system to all components, including voltage regulation, power management, and safety shutoffs. Consider how power consumption varies during different robot activities and design the system to handle peak loads while maintaining safety.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Design a comprehensive system architecture for a humanoid robot
+- Define interfaces between system components
+- Create an integration plan with proper sequencing
+- Validate system designs for feasibility and safety
+- Understand the complexity of integrating robotic subsystems

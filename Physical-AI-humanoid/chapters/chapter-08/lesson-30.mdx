@@ -1,0 +1,360 @@
+---
+title: "Object Recognition and Scene Understanding"
+description: "Explore how humanoid robots identify and understand objects in their environment to enable intelligent interaction."
+tags: ["object recognition", "scene understanding", "computer vision", "embodied AI", "world modeling"]
+---
+
+import { Tabs, TabItem } from '@docusaurus/theme-common';
+
+# Object Recognition and Scene Understanding
+
+## Learning Objectives
+
+By the end of this lesson, students will be able to:
+- Explain the principles of object recognition in humanoid robotics
+- Describe different approaches to scene understanding and interpretation
+- Implement basic object detection and recognition algorithms
+- Analyze the relationship between object recognition and world modeling
+- Evaluate the challenges of real-time object recognition in dynamic environments
+
+## Key Concepts
+
+- **Object Recognition**: The process of identifying and categorizing objects in visual input
+- **Scene Understanding**: The ability to interpret the relationships between objects in a scene
+- **Feature Extraction**: Techniques for identifying distinctive characteristics of objects
+- **Deep Learning Models**: Neural networks used for object detection and classification
+- **3D Object Recognition**: Recognition of objects using depth and spatial information
+- **Contextual Understanding**: Using environmental context to improve recognition accuracy
+- **Multi-modal Recognition**: Combining visual, tactile, and other sensory information
+
+## Theory Summary
+
+Object recognition and scene understanding form critical components of embodied AI, enabling humanoid robots to identify, categorize, and interpret objects in their environment. These capabilities allow robots to interact meaningfully with their surroundings by understanding what objects are present, where they are located, and how they relate to each other and to the robot's goals.
+
+Traditional object recognition approaches relied on hand-crafted features such as SIFT (Scale-Invariant Feature Transform), HOG (Histogram of Oriented Gradients), and SURF (Speeded Up Robust Features). These methods identified distinctive visual patterns in images that could be matched across different viewpoints and lighting conditions.
+
+Modern approaches leverage deep learning, particularly Convolutional Neural Networks (CNNs), which automatically learn hierarchical feature representations from large datasets. These networks can recognize objects with high accuracy across diverse conditions and have revolutionized computer vision applications in robotics.
+
+Scene understanding goes beyond recognizing individual objects to comprehend the spatial and functional relationships between them. A humanoid robot must understand not just that a chair and table are present, but also that the chair is positioned near the table, suggesting a dining or workspace arrangement.
+
+3D object recognition extends 2D recognition by incorporating depth information from stereo vision, structured light, or LiDAR sensors. This additional spatial information enables more robust recognition and better understanding of object pose and spatial relationships.
+
+Contextual understanding uses environmental context to improve recognition accuracy. For example, a robot in a kitchen is more likely to encounter cooking utensils than tools found in a workshop, allowing it to prioritize relevant object categories during recognition.
+
+Multi-modal recognition combines visual information with other sensory inputs such as tactile feedback, auditory cues, or proprioceptive data to create more robust and comprehensive object understanding.
+
+## Hands-on Activity
+
+### Activity: Implementing a Simple Object Recognition System
+
+In this activity, you'll create a basic object recognition system that can identify simple geometric shapes in images using feature extraction and classification.
+
+<Tabs>
+<TabItem value="python" label="Python Implementation">
+
+```python
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+import random
+
+class SimpleObjectRecognizer:
+    def __init__(self):
+        self.classifier = SVC(kernel='rbf', probability=True)
+        self.feature_extractor = cv2.ORB_create(nfeatures=50)
+        self.is_trained = False
+
+    def extract_features(self, image):
+        """Extract ORB features from an image"""
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+        keypoints, descriptors = self.feature_extractor.detectAndCompute(gray, None)
+
+        if descriptors is not None:
+            # Use bag of words approach - cluster descriptors
+            # For simplicity, we'll use a fixed number of features
+            if descriptors.shape[0] >= 10:
+                # Sample 10 descriptors randomly
+                indices = np.random.choice(descriptors.shape[0], 10, replace=False)
+                sampled_descriptors = descriptors[indices]
+                # Flatten to create a fixed-size feature vector
+                features = sampled_descriptors.flatten()[:256]  # Limit to 256 features
+                if features.shape[0] < 256:
+                    features = np.pad(features, (0, 256 - features.shape[0]), 'constant')
+            else:
+                # Pad with zeros if not enough features
+                features = np.zeros(256)
+        else:
+            features = np.zeros(256)
+
+        return features
+
+    def create_synthetic_data(self):
+        """Create synthetic images for training"""
+        images = []
+        labels = []
+
+        # Generate synthetic shapes: circles, squares, triangles
+        for shape_type in ['circle', 'square', 'triangle']:
+            for i in range(50):  # 50 examples of each shape
+                img = np.ones((100, 100, 3), dtype=np.uint8) * 255  # White background
+
+                # Add some noise to make it more realistic
+                noise = np.random.randint(0, 20, (100, 100, 3), dtype=np.uint8)
+                img = np.clip(img + noise, 0, 255).astype(np.uint8)
+
+                # Draw the shape with random position, size, and color
+                center = (np.random.randint(30, 70), np.random.randint(30, 70))
+                size = np.random.randint(15, 25)
+                color = (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255))
+
+                if shape_type == 'circle':
+                    cv2.circle(img, center, size, color, -1)
+                elif shape_type == 'square':
+                    pt1 = (center[0] - size, center[1] - size)
+                    pt2 = (center[0] + size, center[1] + size)
+                    cv2.rectangle(img, pt1, pt2, color, -1)
+                elif shape_type == 'triangle':
+                    # Create triangle points
+                    points = np.array([
+                        [center[0], center[1] - size],
+                        [center[0] - size, center[1] + size],
+                        [center[0] + size, center[1] + size]
+                    ], np.int32)
+                    cv2.fillPoly(img, [points], color)
+
+                images.append(img)
+                labels.append(shape_type)
+
+        return np.array(images), np.array(labels)
+
+    def train(self, images=None, labels=None):
+        """Train the object recognizer"""
+        if images is None or labels is None:
+            # Create synthetic training data
+            print("Creating synthetic training data...")
+            images, labels = self.create_synthetic_data()
+
+        # Extract features from all images
+        features = []
+        for img in images:
+            feat = self.extract_features(img)
+            features.append(feat)
+
+        features = np.array(features)
+
+        # Train the classifier
+        self.classifier.fit(features, labels)
+        self.is_trained = True
+        print(f"Model trained on {len(images)} samples with {len(np.unique(labels))} classes")
+
+        # Evaluate on training data
+        train_pred = self.classifier.predict(features)
+        accuracy = accuracy_score(labels, train_pred)
+        print(f"Training accuracy: {accuracy:.2f}")
+
+    def predict(self, image):
+        """Predict the object class in an image"""
+        if not self.is_trained:
+            raise ValueError("Model must be trained before prediction")
+
+        features = self.extract_features(image)
+        features = features.reshape(1, -1)
+
+        prediction = self.classifier.predict(features)[0]
+        probabilities = self.classifier.predict_proba(features)[0]
+
+        # Get class names and probabilities
+        classes = self.classifier.classes_
+        prob_dict = dict(zip(classes, probabilities))
+
+        return prediction, prob_dict
+
+    def visualize_scene(self, image, predictions):
+        """Visualize the scene with object predictions"""
+        plt.figure(figsize=(10, 6))
+        plt.subplot(1, 2, 1)
+        plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        plt.title("Input Image")
+        plt.axis('off')
+
+        plt.subplot(1, 2, 2)
+        # Create a bar chart of prediction probabilities
+        if predictions:
+            classes = list(predictions.keys())
+            probs = list(predictions.values())
+            plt.bar(classes, probs)
+            plt.title("Prediction Probabilities")
+            plt.ylabel("Probability")
+            plt.xticks(rotation=45)
+        else:
+            plt.text(0.5, 0.5, 'No predictions', horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
+            plt.title("Prediction Probabilities")
+
+        plt.tight_layout()
+        plt.show()
+
+# Example usage and testing
+def test_object_recognizer():
+    """Test the object recognition system"""
+    recognizer = SimpleObjectRecognizer()
+
+    # Train the recognizer
+    recognizer.train()
+
+    # Create a test image
+    test_img = np.ones((100, 100, 3), dtype=np.uint8) * 255
+    # Add some noise
+    noise = np.random.randint(0, 15, (100, 100, 3), dtype=np.uint8)
+    test_img = np.clip(test_img + noise, 0, 255).astype(np.uint8)
+
+    # Draw a red circle
+    cv2.circle(test_img, (50, 50), 20, (0, 0, 255), -1)
+
+    # Make a prediction
+    prediction, probabilities = recognizer.predict(test_img)
+
+    print(f"Predicted object: {prediction}")
+    print(f"Probabilities: {probabilities}")
+
+    # Visualize results
+    recognizer.visualize_scene(test_img, probabilities)
+
+    return recognizer
+
+# Run the test
+recognizer = test_object_recognizer()
+print("Object recognition system test completed!")
+```
+
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python 3.7 or higher
+- OpenCV (cv2) for computer vision operations
+- NumPy for numerical computations
+- scikit-learn for machine learning algorithms
+- Matplotlib for visualization
+- Basic understanding of image processing and feature extraction
+
+## Step-by-Step Instructions
+
+1. **Initialize the Recognizer**: Create a SimpleObjectRecognizer class with feature extraction and classification capabilities
+2. **Implement Feature Extraction**: Use ORB (Oriented FAST and Rotated BRIEF) for extracting distinctive features from images
+3. **Create Synthetic Data**: Generate synthetic images of different shapes for training the recognizer
+4. **Train the Classifier**: Use Support Vector Machine (SVM) to learn to distinguish between different object types
+5. **Implement Prediction**: Create methods to predict object classes in new images
+6. **Visualize Results**: Display input images alongside prediction probabilities
+7. **Test with Various Objects**: Experiment with different shapes and configurations
+
+## Code Snippets
+
+### Feature Extraction Method
+
+```python
+def extract_features(self, image):
+    """Extract ORB features from an image"""
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+    keypoints, descriptors = self.feature_extractor.detectAndCompute(gray, None)
+
+    if descriptors is not None:
+        # Use bag of words approach - cluster descriptors
+        if descriptors.shape[0] >= 10:
+            # Sample 10 descriptors randomly
+            indices = np.random.choice(descriptors.shape[0], 10, replace=False)
+            sampled_descriptors = descriptors[indices]
+            # Flatten to create a fixed-size feature vector
+            features = sampled_descriptors.flatten()[:256]  # Limit to 256 features
+            if features.shape[0] < 256:
+                features = np.pad(features, (0, 256 - features.shape[0]), 'constant')
+        else:
+            # Pad with zeros if not enough features
+            features = np.zeros(256)
+    else:
+        features = np.zeros(256)
+
+    return features
+```
+
+### Prediction Method
+
+```python
+def predict(self, image):
+    """Predict the object class in an image"""
+    if not self.is_trained:
+        raise ValueError("Model must be trained before prediction")
+
+    features = self.extract_features(image)
+    features = features.reshape(1, -1)
+
+    prediction = self.classifier.predict(features)[0]
+    probabilities = self.classifier.predict_proba(features)[0]
+
+    # Get class names and probabilities
+    classes = self.classifier.classes_
+    prob_dict = dict(zip(classes, probabilities))
+
+    return prediction, prob_dict
+```
+
+## Review Questions
+
+1. What are the advantages of deep learning approaches over traditional feature-based methods for object recognition?
+2. How does scene understanding differ from object recognition?
+3. What challenges arise when performing object recognition in real-time on humanoid robots?
+4. How can contextual information improve object recognition accuracy?
+5. What role does multi-modal sensing play in robust object recognition?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="question1" label="Question 1">
+
+**Which approach is most effective for real-time object recognition on humanoid robots with limited computational resources?**
+
+A) Large deep neural networks
+B) Traditional feature-based methods
+C) Hybrid approaches combining both
+D) Cloud-based recognition
+
+<details>
+<summary>Answer</summary>
+C) Hybrid approaches combining both - These can balance accuracy and computational efficiency, using lightweight models for real-time recognition while maintaining good performance.
+</details>
+
+</TabItem>
+
+<TabItem value="question2" label="Question 2">
+
+**What is the primary advantage of 3D object recognition over 2D recognition?**
+
+A) Faster processing
+B) Better understanding of spatial relationships
+C) Lower memory usage
+D) Simpler algorithms
+
+<details>
+<summary>Answer</summary>
+B) Better understanding of spatial relationships - 3D recognition provides depth information that enables better understanding of object pose and spatial relationships.
+</details>
+
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Extend the object recognition system to include texture analysis capabilities. Add methods to extract texture features using Local Binary Patterns (LBP) or Gray-Level Co-occurrence Matrix (GLCM) and combine these with shape features for more robust recognition. Test your enhanced system on images with both shape and texture variations.
+
+## Expected Outcomes
+
+After completing this lesson, you should be able to:
+- Implement basic object recognition algorithms for humanoid robots
+- Understand the trade-offs between different recognition approaches
+- Create systems that combine multiple recognition techniques
+- Apply scene understanding principles to interpret object relationships
+- Design recognition systems that work with real-time constraints

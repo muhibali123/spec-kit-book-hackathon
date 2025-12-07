@@ -1,0 +1,677 @@
+---
+title: "Memory Systems and Knowledge Representation"
+description: "Implementing memory and knowledge systems for humanoid cognitive architectures"
+tags: [memory-systems, knowledge-representation, episodic-memory, semantic-memory, working-memory]
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Memory Systems and Knowledge Representation
+
+## Learning Objectives
+
+After completing this lesson, you will be able to:
+- Implement different types of memory systems for cognitive architectures
+- Design knowledge representation schemes for humanoid robots
+- Understand the relationship between memory and reasoning
+- Apply memory systems to support robot learning and adaptation
+
+## Key Concepts
+
+- **Episodic Memory**: Memory for specific events and experiences
+- **Semantic Memory**: Memory for facts, concepts, and general knowledge
+- **Working Memory**: Short-term memory for active processing
+- **Procedural Memory**: Memory for skills and procedures
+- **Memory Consolidation**: Process of transferring information between memory types
+
+## Theory Summary
+
+Memory systems in cognitive architectures for humanoid robots must support multiple types of information storage and retrieval to enable intelligent behavior. Unlike traditional computer memory, cognitive memory systems must handle uncertainty, temporal relationships, and the ability to form associations between different types of information.
+
+Episodic memory stores specific experiences and events, including the context in which they occurred. For humanoid robots, this might include specific interactions with humans, navigation episodes, or manipulation attempts. Episodic memory enables robots to learn from specific experiences and recall past situations that are similar to current ones.
+
+Semantic memory represents general knowledge about the world, including concepts, categories, and relationships. This memory system allows robots to understand object properties, spatial relationships, and social norms. Semantic memory is typically organized in structured ways such as ontologies or knowledge graphs.
+
+Working memory provides temporary storage for information currently being processed. In cognitive architectures, working memory acts as a buffer between perception and action, holding relevant information for immediate use. It's essential for tasks requiring reasoning about multiple pieces of information simultaneously.
+
+The organization and retrieval of memory significantly impact cognitive performance. Effective memory systems must balance accessibility with efficiency, allowing rapid retrieval of relevant information while managing the growing knowledge base as the robot accumulates more experiences.
+
+## Hands-On Activity
+
+<Tabs>
+<TabItem value="memory-implementation" label="Memory Implementation">
+Implement different memory systems for robot experiences.
+</TabItem>
+<TabItem value="knowledge-graph" label="Knowledge Graph">
+Create a knowledge representation system for robot knowledge.
+</TabItem>
+<TabItem value="memory-retrieval" label="Memory Retrieval">
+Design efficient memory retrieval mechanisms.
+</TabItem>
+</Tabs>
+
+## Tools & Components Required
+
+- Python with data structures and algorithms
+- Graph libraries for knowledge representation
+- Database systems for memory storage
+- Basic understanding of cognitive psychology
+
+## Step-by-Step Instructions
+
+1. Set up memory system framework
+2. Implement episodic memory with temporal indexing
+3. Create semantic memory with concept relationships
+4. Develop working memory for active processing
+5. Design memory consolidation mechanisms
+6. Test with robot interaction scenarios
+
+## Code Snippets
+
+```python
+import time
+import heapq
+from typing import Dict, List, Any, Optional, Tuple, Union
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from collections import defaultdict
+import json
+import uuid
+
+@dataclass
+class MemoryEpisode:
+    """Represents a specific episode in episodic memory"""
+    id: str
+    timestamp: float
+    content: Dict[str, Any]
+    context: Dict[str, Any] = field(default_factory=dict)
+    importance: float = 1.0
+    tags: List[str] = field(default_factory=list)
+    duration: float = 0.0
+
+    def __post_init__(self):
+        if self.id is None:
+            self.id = str(uuid.uuid4())
+
+@dataclass
+class SemanticConcept:
+    """Represents a concept in semantic memory"""
+    name: str
+    properties: Dict[str, Any] = field(default_factory=dict)
+    relationships: Dict[str, List[str]] = field(default_factory=dict)
+    category: str = ""
+    confidence: float = 1.0
+    last_accessed: float = 0.0
+
+class EpisodicMemory:
+    """Episodic memory system for storing specific experiences"""
+    def __init__(self, capacity: int = 10000):
+        self.capacity = capacity
+        self.episodes: Dict[str, MemoryEpisode] = {}
+        self.temporal_index: List[Tuple[float, str]] = []  # (timestamp, episode_id)
+        self.tag_index: Dict[str, List[str]] = defaultdict(list)  # tag -> [episode_ids]
+        self.context_index: Dict[str, List[str]] = defaultdict(list)  # context_key -> [episode_ids]
+
+    def store(self, content: Dict[str, Any], context: Dict[str, Any] = None,
+              importance: float = 1.0, tags: List[str] = None) -> str:
+        """Store a new episode in memory"""
+        episode_id = str(uuid.uuid4())
+        timestamp = time.time()
+
+        episode = MemoryEpisode(
+            id=episode_id,
+            timestamp=timestamp,
+            content=content,
+            context=context or {},
+            importance=importance,
+            tags=tags or []
+        )
+
+        # Add to main storage
+        self.episodes[episode_id] = episode
+
+        # Update temporal index
+        heapq.heappush(self.temporal_index, (timestamp, episode_id))
+
+        # Update tag index
+        for tag in episode.tags:
+            self.tag_index[tag].append(episode_id)
+
+        # Update context index
+        for key, value in episode.context.items():
+            context_key = f"{key}:{value}"
+            self.context_index[context_key].append(episode_id)
+
+        # Manage capacity
+        if len(self.episodes) > self.capacity:
+            self._manage_capacity()
+
+        return episode_id
+
+    def retrieve_by_time(self, start_time: float, end_time: float) -> List[MemoryEpisode]:
+        """Retrieve episodes within a time range"""
+        relevant_episodes = []
+        for timestamp, episode_id in self.temporal_index:
+            if start_time <= timestamp <= end_time:
+                if episode_id in self.episodes:
+                    relevant_episodes.append(self.episodes[episode_id])
+        return relevant_episodes
+
+    def retrieve_by_tags(self, tags: List[str]) -> List[MemoryEpisode]:
+        """Retrieve episodes by tags"""
+        if not tags:
+            return []
+
+        # Find intersection of episodes with all tags
+        episode_sets = [set(self.tag_index[tag]) for tag in tags if tag in self.tag_index]
+        if not episode_sets:
+            return []
+
+        common_episodes = set.intersection(*episode_sets)
+        return [self.episodes[ep_id] for ep_id in common_episodes if ep_id in self.episodes]
+
+    def retrieve_by_context(self, context_filters: Dict[str, Any]) -> List[MemoryEpisode]:
+        """Retrieve episodes by context"""
+        results = []
+        for key, value in context_filters.items():
+            context_key = f"{key}:{value}"
+            if context_key in self.context_index:
+                for episode_id in self.context_index[context_key]:
+                    if episode_id in self.episodes:
+                        results.append(self.episodes[episode_id])
+        return results
+
+    def retrieve_similar(self, content: Dict[str, Any], threshold: float = 0.5) -> List[Tuple[MemoryEpisode, float]]:
+        """Retrieve episodes similar to given content"""
+        similarities = []
+        for episode in self.episodes.values():
+            similarity = self._calculate_similarity(content, episode.content)
+            if similarity >= threshold:
+                similarities.append((episode, similarity))
+
+        # Sort by similarity (descending)
+        similarities.sort(key=lambda x: x[1], reverse=True)
+        return similarities
+
+    def _calculate_similarity(self, content1: Dict[str, Any], content2: Dict[str, Any]) -> float:
+        """Calculate similarity between two content dictionaries"""
+        # Simple similarity based on common keys and values
+        common_keys = set(content1.keys()) & set(content2.keys())
+        if not common_keys:
+            return 0.0
+
+        similarity_score = 0.0
+        total_score = 0.0
+
+        for key in common_keys:
+            total_score += 1.0
+            if content1[key] == content2[key]:
+                similarity_score += 1.0
+            elif isinstance(content1[key], (int, float)) and isinstance(content2[key], (int, float)):
+                # For numeric values, calculate inverse distance
+                diff = abs(content1[key] - content2[key])
+                similarity_score += max(0.0, 1.0 - diff)  # Normalize to [0,1]
+
+        return similarity_score / total_score if total_score > 0 else 0.0
+
+    def _manage_capacity(self):
+        """Manage memory capacity by forgetting less important episodes"""
+        # Simple approach: forget oldest episodes with lowest importance
+        sorted_episodes = sorted(
+            self.episodes.values(),
+            key=lambda x: (x.importance, x.timestamp)
+        )
+
+        to_remove = len(self.episodes) - int(self.capacity * 0.8)  # Keep 80% of capacity
+        for i in range(min(to_remove, len(sorted_episodes))):
+            episode = sorted_episodes[i]
+            self._remove_episode(episode.id)
+
+    def _remove_episode(self, episode_id: str):
+        """Remove an episode from all indexes"""
+        if episode_id not in self.episodes:
+            return
+
+        episode = self.episodes[episode_id]
+
+        # Remove from main storage
+        del self.episodes[episode_id]
+
+        # Remove from temporal index (mark as removed)
+        # In a real implementation, we'd use a more efficient approach
+        self.temporal_index = [(t, eid) for t, eid in self.temporal_index if eid != episode_id]
+
+        # Remove from tag index
+        for tag in episode.tags:
+            if tag in self.tag_index and episode_id in self.tag_index[tag]:
+                self.tag_index[tag].remove(episode_id)
+
+        # Remove from context index
+        for key, value in episode.context.items():
+            context_key = f"{key}:{value}"
+            if context_key in self.context_index and episode_id in self.context_index[context_key]:
+                self.context_index[context_key].remove(episode_id)
+
+class SemanticMemory:
+    """Semantic memory system for storing general knowledge"""
+    def __init__(self):
+        self.concepts: Dict[str, SemanticConcept] = {}
+        self.property_index: Dict[str, List[str]] = defaultdict(list)  # property -> [concept_names]
+        self.category_index: Dict[str, List[str]] = defaultdict(list)  # category -> [concept_names]
+        self.relationship_index: Dict[str, List[Tuple[str, str]]] = defaultdict(list)  # relationship -> [(source, target)]
+
+    def store_concept(self, name: str, properties: Dict[str, Any] = None,
+                     relationships: Dict[str, List[str]] = None,
+                     category: str = "") -> SemanticConcept:
+        """Store a new concept in semantic memory"""
+        concept = SemanticConcept(
+            name=name,
+            properties=properties or {},
+            relationships=relationships or {},
+            category=category,
+            last_accessed=time.time()
+        )
+
+        self.concepts[name] = concept
+
+        # Update property index
+        for prop_name in concept.properties.keys():
+            self.property_index[prop_name].append(name)
+
+        # Update category index
+        if category:
+            self.category_index[category].append(name)
+
+        # Update relationship index
+        for rel_type, related_concepts in concept.relationships.items():
+            for related_concept in related_concepts:
+                self.relationship_index[rel_type].append((name, related_concept))
+
+        return concept
+
+    def retrieve_by_property(self, property_name: str, value: Any = None) -> List[SemanticConcept]:
+        """Retrieve concepts by property"""
+        concept_names = self.property_index.get(property_name, [])
+        concepts = [self.concepts[name] for name in concept_names if name in self.concepts]
+
+        if value is not None:
+            concepts = [c for c in concepts if c.properties.get(property_name) == value]
+
+        return concepts
+
+    def retrieve_by_category(self, category: str) -> List[SemanticConcept]:
+        """Retrieve concepts by category"""
+        concept_names = self.category_index.get(category, [])
+        return [self.concepts[name] for name in concept_names if name in self.concepts]
+
+    def retrieve_by_relationship(self, relationship_type: str, related_to: str = None) -> List[SemanticConcept]:
+        """Retrieve concepts by relationship"""
+        related_pairs = self.relationship_index.get(relationship_type, [])
+
+        if related_to:
+            # Find concepts that have the specified relationship with 'related_to'
+            concept_names = [source for source, target in related_pairs if target == related_to]
+        else:
+            # Find all concepts involved in this relationship type
+            concept_names = list(set([source for source, _ in related_pairs]))
+
+        return [self.concepts[name] for name in concept_names if name in self.concepts]
+
+    def get_relationship_path(self, start_concept: str, end_concept: str, max_depth: int = 3) -> List[str]:
+        """Find a path of relationships between two concepts"""
+        if start_concept == end_concept:
+            return [start_concept]
+
+        visited = set()
+        queue = [(start_concept, [start_concept])]
+
+        while queue:
+            current, path = queue.pop(0)
+            if len(path) > max_depth:
+                continue
+
+            if current == end_concept:
+                return path
+
+            visited.add(current)
+
+            # Check all relationships from current concept
+            if current in self.concepts:
+                concept = self.concepts[current]
+                for rel_type, related_concepts in concept.relationships.items():
+                    for related in related_concepts:
+                        if related not in visited:
+                            new_path = path + [related]
+                            queue.append((related, new_path))
+
+        return []  # No path found
+
+    def update_concept(self, name: str, properties: Dict[str, Any] = None,
+                      relationships: Dict[str, List[str]] = None) -> bool:
+        """Update an existing concept"""
+        if name not in self.concepts:
+            return False
+
+        concept = self.concepts[name]
+        concept.last_accessed = time.time()
+
+        if properties:
+            concept.properties.update(properties)
+
+        if relationships:
+            for rel_type, related_concepts in relationships.items():
+                if rel_type in concept.relationships:
+                    concept.relationships[rel_type].extend(related_concepts)
+                else:
+                    concept.relationships[rel_type] = related_concepts
+
+        return True
+
+class WorkingMemory:
+    """Working memory for active information processing"""
+    def __init__(self, capacity: int = 100):
+        self.capacity = capacity
+        self.items: Dict[str, Tuple[Any, float]] = {}  # item_id -> (content, timestamp)
+        self.attention_weights: Dict[str, float] = {}  # item_id -> attention weight
+        self.context: Dict[str, Any] = {}  # Current context information
+
+    def add(self, item_id: str, content: Any, attention: float = 1.0):
+        """Add an item to working memory"""
+        timestamp = time.time()
+        self.items[item_id] = (content, timestamp)
+        self.attention_weights[item_id] = attention
+
+        # Manage capacity
+        if len(self.items) > self.capacity:
+            self._remove_lowest_priority()
+
+    def get(self, item_id: str) -> Optional[Any]:
+        """Retrieve an item from working memory"""
+        if item_id in self.items:
+            content, timestamp = self.items[item_id]
+            # Update timestamp (recent access)
+            self.items[item_id] = (content, time.time())
+            return content
+        return None
+
+    def get_all(self) -> Dict[str, Any]:
+        """Get all items in working memory"""
+        return {k: v[0] for k, v in self.items.items()}
+
+    def update_attention(self, item_id: str, attention: float):
+        """Update attention weight for an item"""
+        if item_id in self.attention_weights:
+            self.attention_weights[item_id] = attention
+
+    def decay_memory(self, decay_rate: float = 0.01):
+        """Apply decay to memory items based on time"""
+        current_time = time.time()
+        items_to_remove = []
+
+        for item_id, (content, timestamp) in self.items.items():
+            time_diff = current_time - timestamp
+            if time_diff > 3600:  # Remove items older than 1 hour
+                items_to_remove.append(item_id)
+
+        for item_id in items_to_remove:
+            self.remove(item_id)
+
+    def remove(self, item_id: str):
+        """Remove an item from working memory"""
+        if item_id in self.items:
+            del self.items[item_id]
+        if item_id in self.attention_weights:
+            del self.attention_weights[item_id]
+
+    def _remove_lowest_priority(self):
+        """Remove the lowest priority item to manage capacity"""
+        if not self.items:
+            return
+
+        # Remove item with lowest attention weight
+        lowest_priority = min(self.attention_weights.items(), key=lambda x: x[1])
+        self.remove(lowest_priority[0])
+
+    def set_context(self, key: str, value: Any):
+        """Set context information"""
+        self.context[key] = value
+
+    def get_context(self, key: str, default: Any = None) -> Any:
+        """Get context information"""
+        return self.context.get(key, default)
+
+class MemoryConsolidationSystem:
+    """System for consolidating memories between different memory types"""
+    def __init__(self, episodic_memory: EpisodicMemory, semantic_memory: SemanticMemory):
+        self.episodic_memory = episodic_memory
+        self.semantic_memory = semantic_memory
+        self.consolidation_threshold = 0.7
+        self.importance_decay_rate = 0.95
+
+    def consolidate_episode_to_semantic(self, episode_id: str):
+        """Consolidate relevant information from episodic to semantic memory"""
+        if episode_id not in self.episodic_memory.episodes:
+            return False
+
+        episode = self.episodic_memory.episodes[episode_id]
+
+        # Extract potential concepts from episode content
+        for key, value in episode.content.items():
+            if isinstance(value, (str, int, float)) and len(str(value)) > 2:
+                # Check if this represents a concept worth storing semantically
+                concept_name = f"{key}_{value}".replace(" ", "_").replace("-", "_")
+
+                # Check if concept already exists
+                if concept_name not in self.semantic_memory.concepts:
+                    properties = {key: value, "source_episodes": [episode_id]}
+                    self.semantic_memory.store_concept(concept_name, properties=properties)
+
+        # Update importance of episode based on consolidation
+        episode.importance *= self.importance_decay_rate
+        return True
+
+    def detect_patterns(self) -> List[Dict[str, Any]]:
+        """Detect patterns in episodic memory that could become semantic knowledge"""
+        patterns = []
+
+        # Group episodes by similar contexts
+        context_groups = defaultdict(list)
+        for episode in self.episodic_memory.episodes.values():
+            context_key = tuple(sorted(episode.context.items()))
+            context_groups[context_key].append(episode)
+
+        # Find recurring patterns
+        for context_key, episodes in context_groups.items():
+            if len(episodes) >= 3:  # At least 3 similar episodes
+                # Analyze common content across episodes
+                common_properties = {}
+                for key in episodes[0].content.keys():
+                    values = [ep.content.get(key) for ep in episodes if key in ep.content]
+                    if len(values) == len(episodes):  # Present in all episodes
+                        # Check if values are similar
+                        unique_values = set(values)
+                        if len(unique_values) == 1:  # Same value in all episodes
+                            common_properties[key] = values[0]
+
+                if common_properties:
+                    patterns.append({
+                        "context": dict(context_key),
+                        "common_properties": common_properties,
+                        "episode_count": len(episodes),
+                        "confidence": len(episodes) / len(self.episodic_memory.episodes)
+                    })
+
+        return patterns
+
+class CognitiveMemorySystem:
+    """Integrated cognitive memory system combining all memory types"""
+    def __init__(self):
+        self.episodic_memory = EpisodicMemory(capacity=5000)
+        self.semantic_memory = SemanticMemory()
+        self.working_memory = WorkingMemory(capacity=50)
+        self.consolidation_system = MemoryConsolidationSystem(
+            self.episodic_memory, self.semantic_memory
+        )
+        self.long_term_memory_threshold = 3600  # 1 hour
+
+    def perceive(self, sensory_input: Dict[str, Any], context: Dict[str, Any] = None):
+        """Process sensory input and store in appropriate memory systems"""
+        # Store in episodic memory as a new experience
+        episode_id = self.episodic_memory.store(
+            content=sensory_input,
+            context=context or {},
+            importance=1.0,
+            tags=["perception"]
+        )
+
+        # Add relevant information to working memory for immediate processing
+        for key, value in sensory_input.items():
+            if isinstance(value, (str, int, float)):
+                self.working_memory.add(f"perceived_{key}", value, attention=0.8)
+
+        return episode_id
+
+    def learn_from_experience(self, experience_context: Dict[str, Any], outcome: Dict[str, Any]):
+        """Learn from an experience and update memory systems"""
+        # Store the full experience
+        episode_id = self.episodic_memory.store(
+            content={**experience_context, **outcome},
+            context=experience_context,
+            importance=outcome.get("success", 0.5),
+            tags=["learning", outcome.get("result", "neutral")]
+        )
+
+        # Detect patterns and potentially create semantic knowledge
+        patterns = self.consolidation_system.detect_patterns()
+        for pattern in patterns:
+            if pattern["confidence"] > 0.5:
+                # Create semantic concept from pattern
+                concept_name = f"pattern_{len(self.semantic_memory.concepts)}"
+                self.semantic_memory.store_concept(
+                    concept_name,
+                    properties=pattern["common_properties"],
+                    category="learned_pattern"
+                )
+
+        # Consolidate important information to semantic memory
+        self.consolidation_system.consolidate_episode_to_semantic(episode_id)
+
+    def retrieve_relevant_memories(self, query: Dict[str, Any], memory_type: str = "episodic") -> List[Any]:
+        """Retrieve relevant memories based on query"""
+        if memory_type == "episodic":
+            return self.episodic_memory.retrieve_similar(query, threshold=0.3)
+        elif memory_type == "semantic":
+            results = []
+            for key, value in query.items():
+                results.extend(self.semantic_memory.retrieve_by_property(key, value))
+            return results
+        else:
+            return []
+
+    def reason_with_memory(self, query: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform reasoning using memory systems"""
+        # Retrieve relevant episodic memories
+        similar_episodes = self.episodic_memory.retrieve_similar(query, threshold=0.4)
+
+        # Retrieve relevant semantic knowledge
+        semantic_knowledge = []
+        for key, value in query.items():
+            semantic_knowledge.extend(
+                self.semantic_memory.retrieve_by_property(key, value)
+            )
+
+        # Combine information for reasoning
+        reasoning_result = {
+            "similar_experiences": len(similar_episodes),
+            "relevant_knowledge": len(semantic_knowledge),
+            "suggested_action": None,
+            "confidence": 0.0
+        }
+
+        # If we have similar experiences, suggest similar actions
+        if similar_episodes:
+            most_similar = similar_episodes[0][0]  # Get the episode with highest similarity
+            if "action" in most_similar.content:
+                reasoning_result["suggested_action"] = most_similar.content["action"]
+                reasoning_result["confidence"] = similar_episodes[0][1]  # Similarity score
+
+        return reasoning_result
+
+# Example usage
+def example_usage():
+    print("=== Cognitive Memory System Example ===")
+
+    # Create cognitive memory system
+    cms = CognitiveMemorySystem()
+
+    # Add some semantic knowledge
+    cms.semantic_memory.store_concept(
+        "human",
+        properties={"type": "person", "social": True, "height_range": [1.5, 2.0]},
+        category="entity"
+    )
+    cms.semantic_memory.store_concept(
+        "table",
+        properties={"type": "furniture", "surface": True, "height": 0.75},
+        category="object"
+    )
+
+    # Perceive some sensory input
+    sensory_input = {
+        "object_type": "human",
+        "distance": 2.5,
+        "direction": "front",
+        "height": 1.8
+    }
+    context = {"location": "room1", "time": "morning"}
+
+    episode_id = cms.perceive(sensory_input, context)
+    print(f"Stored perception with ID: {episode_id}")
+
+    # Learn from an experience
+    experience_context = {"object_type": "human", "distance": 2.5}
+    outcome = {"action": "greet", "success": 1.0, "result": "positive_response"}
+    cms.learn_from_experience(experience_context, outcome)
+
+    # Reason with memory
+    query = {"object_type": "human", "distance": 2.5}
+    reasoning_result = cms.reason_with_memory(query)
+    print(f"Reasoning result: {reasoning_result}")
+
+    # Retrieve relevant memories
+    relevant_memories = cms.retrieve_relevant_memories(query, "episodic")
+    print(f"Found {len(relevant_memories)} relevant episodic memories")
+
+# Uncomment to run example
+# example_usage()
+```
+
+## Review Questions
+
+1. What are the main differences between episodic and semantic memory?
+2. How does working memory support cognitive processing in robots?
+3. What is the role of memory consolidation in cognitive architectures?
+
+## Mini Assessment
+
+<Tabs>
+<TabItem value="memory-efficiency" label="Memory Efficiency">
+Analyze the efficiency of different memory organization strategies.
+</TabItem>
+<TabItem value="knowledge-graph" label="Knowledge Graph">
+Create a knowledge graph for robot domain knowledge.
+</TabItem>
+</Tabs>
+
+## Practical Task
+
+Design and implement a complete memory system for a humanoid robot that can store, retrieve, and reason with different types of memories. Test the system with various interaction scenarios and evaluate its effectiveness.
+
+## Expected Outcomes
+
+By the end of this lesson, you should:
+- Understand different types of memory systems in cognitive architectures
+- Be able to implement memory storage and retrieval mechanisms
+- Recognize the importance of memory organization for cognitive processing
+- Appreciate the relationship between memory and reasoning
