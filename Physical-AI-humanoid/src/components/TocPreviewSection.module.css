@@ -1,0 +1,155 @@
+.tocPreview {
+  padding: 4rem 0;
+}
+
+.sectionTitle {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--ifm-heading-color);
+}
+
+.sectionDescription {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 3rem;
+  color: var(--ifm-color-content);
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tocList {
+  background: var(--ifm-card-background-color);
+  border-radius: var(--ifm-card-border-radius);
+  padding: 2rem;
+  box-shadow: var(--ifm-card-shadow);
+  border: 1px solid rgba(135, 187, 162, 0.1);
+}
+
+.chapterItem {
+  display: flex;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(135, 187, 162, 0.1);
+}
+
+.chapterItem:last-child {
+  border-bottom: none;
+}
+
+.chapterNumber {
+  font-weight: bold;
+  color: var(--ifm-color-primary);
+  min-width: 100px;
+  padding-right: 1rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.chapterContent {
+  flex: 1;
+}
+
+.chapterTitle {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: var(--ifm-heading-color);
+}
+
+.chapterMeta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.lessonCount {
+  font-size: 0.9rem;
+  color: var(--ifm-color-primary-light);
+  background: rgba(135, 187, 162, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+.tocSidebar {
+  background: var(--ifm-card-background-color);
+  border-radius: var(--ifm-card-border-radius);
+  padding: 2rem;
+  box-shadow: var(--ifm-card-shadow);
+  border: 1px solid rgba(135, 187, 162, 0.1);
+  height: fit-content;
+  align-self: flex-start;
+}
+
+.sidebarTitle {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: var(--ifm-heading-color);
+  text-align: center;
+}
+
+.sidebarContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statNumber {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--ifm-color-primary);
+  margin-bottom: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  color: var(--ifm-color-content);
+}
+
+.ctaContainer {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.viewAllButton {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 996px) {
+  .sectionTitle {
+    font-size: 2rem;
+  }
+
+  .tocSidebar {
+    margin-top: 2rem;
+  }
+
+  .sidebarContent {
+    grid-template-columns: 1fr;
+  }
+
+  .chapterItem {
+    flex-direction: column;
+  }
+
+  .chapterNumber {
+    min-width: auto;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebarContent {
+    gap: 1rem;
+  }
+
+  .statNumber {
+    font-size: 1.5rem;
+  }
+}

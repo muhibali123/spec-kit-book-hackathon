@@ -1,0 +1,156 @@
+.aboutBook {
+  padding: 4rem 0;
+}
+
+.sectionTitle {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--ifm-heading-color);
+}
+
+.sectionDescription {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: var(--ifm-color-content);
+  line-height: 1.7;
+}
+
+.aboutImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.bookCover {
+  position: relative;
+  width: 200px;
+  height: 280px;
+  perspective: 1000px;
+}
+
+.bookSpine {
+  position: absolute;
+  width: 20px;
+  height: 280px;
+  background: linear-gradient(90deg, var(--ifm-color-primary-darkest), var(--ifm-color-primary-darker));
+  left: 0;
+  top: 0;
+  border-radius: 4px 0 0 4px;
+  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.bookFront {
+  position: absolute;
+  width: 180px;
+  height: 280px;
+  background: linear-gradient(135deg, var(--ifm-color-primary-lighter), var(--ifm-color-primary));
+  left: 20px;
+  top: 0;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: rotateY(5deg);
+}
+
+.bookTitle {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--ifm-color-content-inverse);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.bookSubtitle {
+  font-size: 0.9rem;
+  color: var(--ifm-color-content-inverse);
+  text-align: center;
+  opacity: 0.9;
+}
+
+.keyPoints {
+  margin-top: 2rem;
+}
+
+.keyPoint {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.keyPointIcon {
+  width: 30px;
+  height: 30px;
+  background: var(--ifm-color-primary-lighter);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  color: var(--ifm-color-content-inverse);
+  font-weight: bold;
+}
+
+.keyPointText {
+  font-size: 1rem;
+  color: var(--ifm-color-content);
+}
+
+@media (max-width: 996px) {
+  .aboutBook {
+    padding: 2rem 0;
+  }
+
+  .sectionTitle {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .aboutImage {
+    margin-bottom: 2rem;
+  }
+
+  .bookCover {
+    width: 150px;
+    height: 210px;
+  }
+
+  .bookSpine {
+    width: 15px;
+    height: 210px;
+  }
+
+  .bookFront {
+    width: 135px;
+    height: 210px;
+    left: 15px;
+  }
+
+  .bookTitle {
+    font-size: 0.9rem;
+  }
+
+  .bookSubtitle {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .aboutImage, .aboutContent {
+    text-align: center;
+  }
+
+  .aboutContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sectionDescription {
+    text-align: center;
+  }
+}

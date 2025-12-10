@@ -1,66 +1,810 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * Custom theme for Physical AI & Humanoid Robotics Course
+ * Color Palette:
+ * Light Mode: #C9E4CA (light green), #87BBA2 (sage), #55828B (teal), #3B6064 (forest), #364958 (charcoal)
+ * Dark Mode: Inverted for contrast and readability
  */
 
-/* You can override the default Infima variables here. */
+/* Light Mode Variables */
 :root {
-  --ifm-color-primary: #1a73e8;          /* Professional blue */
-  --ifm-color-primary-dark: #1865d0;     /* Darker blue */
-  --ifm-color-primary-darker: #175bb8;   /* Even darker blue */
-  --ifm-color-primary-darkest: #134a96;  /* Darkest blue */
-  --ifm-color-primary-light: #2a80eb;    /* Lighter blue */
-  --ifm-color-primary-lighter: #3a8bed;  /* Even lighter blue */
-  --ifm-color-primary-lightest: #5ca0f0; /* Lightest blue */
+  /* Primary colors based on the palette */
+  --ifm-color-primary: #3B6064;          /* Forest green */
+  --ifm-color-primary-dark: #2d4a4d;     /* Darker forest */
+  --ifm-color-primary-darker: #243d3f;   /* Even darker forest */
+  --ifm-color-primary-darkest: #1c3032;  /* Darkest forest */
+  --ifm-color-primary-light: #55828B;    /* Teal */
+  --ifm-color-primary-lighter: #87BBA2;  /* Sage */
+  --ifm-color-primary-lightest: #C9E4CA; /* Light green */
 
-  /* Professional neutral colors - replacing greys with deeper tones */
-  --ifm-color-secondary: #000000;        /* Pure black */
-  --ifm-color-secondary-dark: #1a1a1a;   /* Dark grey-black */
-  --ifm-color-secondary-darker: #0f0f0f; /* Darker black */
-  --ifm-color-secondary-darkest: #000000; /* Pure black */
-  --ifm-color-secondary-light: #333333;  /* Dark grey */
-  --ifm-color-secondary-lighter: #4d4d4d; /* Medium grey */
-  --ifm-color-secondary-lightest: #666666; /* Lighter grey */
+  /* Secondary colors */
+  --ifm-color-secondary: #364958;        /* Charcoal */
+  --ifm-color-secondary-dark: #2a3a46;   /* Darker charcoal */
+  --ifm-color-secondary-darker: #1e2a33; /* Even darker charcoal */
+  --ifm-color-secondary-darkest: #121a1f; /* Darkest charcoal */
+  --ifm-color-secondary-light: #5a7080;  /* Light charcoal */
+  --ifm-color-secondary-lighter: #8da0af; /* Medium charcoal */
+  --ifm-color-secondary-lightest: #bfcdd6; /* Lightest charcoal */
 
-  /* Text colors for professional appearance with proper contrast */
-  --ifm-color-content: #2c3e50;          /* Dark blue-grey text for better readability */
-  --ifm-color-content-inverse: #ffffff;   /* White text */
-  --ifm-heading-color: #1a2c3d;          /* Dark professional heading color */
-  --ifm-text-color: #2c3e50;             /* Body text color */
-  --ifm-link-color: #1a73e8;             /* Link color matching primary */
-  --ifm-link-hover-color: #0d5db9;        /* Link hover color */
+  /* Text colors with proper contrast */
+  --ifm-color-content: #364958;          /* Charcoal text for readability */
+  --ifm-color-content-inverse: #ffffff;  /* White text */
+  --ifm-heading-color: #364958;          /* Charcoal headings */
+  --ifm-text-color: #364958;             /* Body text color */
+  --ifm-link-color: #3B6064;             /* Link color matching primary */
+  --ifm-link-hover-color: #2d4a4d;       /* Darker link hover */
+
+  /* Background colors */
+  --ifm-background-color: #ffffff;       /* Pure white background */
+  --ifm-background-surface-color: #f8fafc; /* Very light background */
+
+  /* Code block colors */
+  --ifm-code-background: #f0f7f8;        /* Light teal background for code */
+  --ifm-code-color: #364958;             /* Charcoal text in code */
+
+  /* Card and section backgrounds */
+  --ifm-card-background-color: #ffffff;
+  --ifm-card-border-radius: 12px;
+  --ifm-card-shadow: 0 4px 6px rgba(54, 73, 88, 0.05);
+
+  /* Button styles */
+  --ifm-button-background-color: #3B6064;
+  --ifm-button-border-color: #3B6064;
+  --ifm-button-color: #ffffff;
+
+  /* Navbar and sidebar */
+  --ifm-navbar-background-color: #ffffff;
+  --ifm-sidebar-background-color: #f8fafc;
 
   --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --docusaurus-highlighted-code-line-bg: rgba(135, 187, 162, 0.3);
+
+  /* Animations */
+  --ifm-transition-fast: 0.2s;
+  --ifm-transition-default: 0.3s;
+  --ifm-transition-slow: 0.5s;
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* Dark Mode Variables */
 [data-theme='dark'] {
-  --ifm-color-primary: #4285f4;          /* Light blue for dark mode */
-  --ifm-color-primary-dark: #3371e3;     /* Darker blue for dark mode */
-  --ifm-color-primary-darker: #2a65d0;   /* Even darker for dark mode */
-  --ifm-color-primary-darkest: #2254b8;  /* Darkest for dark mode */
-  --ifm-color-primary-light: #5a95f5;    /* Lighter blue for dark mode */
-  --ifm-color-primary-lighter: #72a5f7;  /* Even lighter for dark mode */
-  --ifm-color-primary-lightest: #8bb5f8; /* Lightest blue for dark mode */
+  /* Primary colors adjusted for dark mode */
+  --ifm-color-primary: #87BBA2;          /* Sage green */
+  --ifm-color-primary-dark: #a4c9b4;     /* Lighter sage */
+  --ifm-color-primary-darker: #b7d3c2;   /* Even lighter sage */
+  --ifm-color-primary-darkest: #c9e4ca;  /* Light green */
+  --ifm-color-primary-light: #55828B;    /* Teal */
+  --ifm-color-primary-lighter: #3B6064;  /* Forest */
+  --ifm-color-primary-lightest: #2d4a4d; /* Dark forest */
 
-  /* Dark mode neutral colors */
-  --ifm-color-secondary: #ffffff;        /* White for dark mode */
-  --ifm-color-secondary-dark: #e6e6e6;   /* Light grey for dark mode */
-  --ifm-color-secondary-darker: #d9d9d9; /* Lighter grey for dark mode */
-  --ifm-color-secondary-darkest: #cccccc; /* Even lighter for dark mode */
-  --ifm-color-secondary-light: #bfbfbf;   /* Grey for dark mode */
-  --ifm-color-secondary-lighter: #a6a6a6; /* Darker grey for dark mode */
-  --ifm-color-secondary-lightest: #999999; /* Darker grey for dark mode */
+  /* Secondary colors for dark mode */
+  --ifm-color-secondary: #c9e4ca;        /* Light green */
+  --ifm-color-secondary-dark: #b7d3c2;   /* Medium green */
+  --ifm-color-secondary-darker: #a4c9b4; /* Lighter green */
+  --ifm-color-secondary-darkest: #87bba2; /* Sage green */
+  --ifm-color-secondary-light: #55828b;  /* Teal */
+  --ifm-color-secondary-lighter: #3b6064; /* Forest */
+  --ifm-color-secondary-lightest: #364958; /* Charcoal */
 
   /* Dark mode text colors */
-  --ifm-color-content: #e6e6e6;          /* Light text for dark mode */
-  --ifm-color-content-inverse: #000000;   /* Black text for dark mode */
-  --ifm-heading-color: #ffffff;           /* White headings for dark mode */
-  --ifm-text-color: #e6e6e6;             /* Light body text for dark mode */
-  --ifm-link-color: #5a95f5;             /* Light link color for dark mode */
-  --ifm-link-hover-color: #72a5f7;        /* Lighter link hover for dark mode */
+  --ifm-color-content: #e6eef2;          /* Light text */
+  --ifm-color-content-inverse: #1a242d;   /* Dark background */
+  --ifm-heading-color: #ffffff;          /* White headings */
+  --ifm-text-color: #e6eef2;             /* Light body text */
+  --ifm-link-color: #87BBA2;             /* Light link color */
+  --ifm-link-hover-color: #a4c9b4;       /* Lighter link hover */
 
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  /* Dark mode backgrounds */
+  --ifm-background-color: #1a242d;       /* Dark background */
+  --ifm-background-surface-color: #222f3d; /* Darker surface */
+
+  /* Dark mode code block colors */
+  --ifm-code-background: #2a3a46;        /* Dark charcoal background for code */
+  --ifm-code-color: #c9e4ca;             /* Light green text in code */
+
+  /* Dark mode card styles */
+  --ifm-card-background-color: #222f3d;
+  --ifm-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
+  /* Dark mode button styles */
+  --ifm-button-background-color: #3B6064;
+  --ifm-button-border-color: #55828B;
+  --ifm-button-color: #ffffff;
+
+  /* Dark mode navbar and sidebar */
+  --ifm-navbar-background-color: #1a242d;
+  --ifm-sidebar-background-color: #222f3d;
+
+  --docusaurus-highlighted-code-line-bg: rgba(85, 130, 139, 0.3);
+}
+
+/* Global animations and transitions */
+* {
+  transition: background-color var(--ifm-transition-default) ease,
+              border-color var(--ifm-transition-default) ease,
+              color var(--ifm-transition-default) ease;
+}
+
+/* Button hover animations */
+.button--primary:hover,
+.button--secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(59, 96, 100, 0.2);
+}
+
+/* Card hover animations */
+.card {
+  transition: transform var(--ifm-transition-default) ease,
+              box-shadow var(--ifm-transition-default) ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(54, 73, 88, 0.15);
+}
+
+/* Fade-in animation for sections */
+.fade-in-section {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover animations for navigation items */
+.navbar__item:hover,
+.navbar__link:hover {
+  color: var(--ifm-color-primary-lighter);
+}
+
+/* Custom gradients using the color palette */
+.hero-gradient {
+  background: linear-gradient(135deg, #C9E4CA 0%, #87BBA2 30%, #55828B 70%, #3B6064 100%);
+}
+
+.hero-gradient-dark {
+  background: linear-gradient(135deg, #3B6064 0%, #55828B 30%, #87BBA2 70%, #C9E4CA 100%);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom button styles */
+.button--custom {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 12px 24px;
+  transition: all var(--ifm-transition-default) ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.button--custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(59, 96, 100, 0.3);
+}
+
+.button--outline {
+  background: transparent;
+  border: 2px solid var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+}
+
+.button--outline:hover {
+  background: var(--ifm-color-primary);
+  color: white;
+}
+
+/* Custom card styles */
+.custom-card {
+  background: var(--ifm-card-background-color);
+  border-radius: var(--ifm-card-border-radius);
+  box-shadow: var(--ifm-card-shadow);
+  padding: 2rem;
+  border: 1px solid rgba(135, 187, 162, 0.1);
+  transition: all var(--ifm-transition-default) ease;
+}
+
+.custom-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(54, 73, 88, 0.2);
+}
+
+/* Feature card styles */
+.feature-card {
+  background: var(--ifm-card-background-color);
+  border-radius: var(--ifm-card-border-radius);
+  box-shadow: var(--ifm-card-shadow);
+  padding: 2rem;
+  height: 100%;
+  transition: all var(--ifm-transition-default) ease;
+  border: 1px solid rgba(135, 187, 162, 0.1);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(54, 73, 88, 0.25);
+}
+
+/* Footer styles */
+.footer {
+  background-color: var(--ifm-background-surface-color);
+  color: var(--ifm-text-color);
+  padding: 3rem 0 2rem;
+}
+
+/* Homepage section styles */
+.homepage-section {
+  padding: 4rem 0;
+}
+
+.homepage-section--dark {
+  background-color: var(--ifm-background-surface-color);
+}
+
+/* Animation delays for staggered effects */
+.fade-in-section:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.fade-in-section:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.fade-in-section:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.fade-in-section:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* Navbar animations */
+.navbar__toggle {
+  border-color: var(--ifm-color-primary);
+}
+
+/* Code block customizations */
+.prism-code {
+  border-radius: 8px;
+  font-size: 0.9em;
+}
+
+/* Table of contents preview styles */
+.toc-preview {
+  background: var(--ifm-card-background-color);
+  border-radius: var(--ifm-card-border-radius);
+  box-shadow: var(--ifm-card-shadow);
+  padding: 1.5rem;
+  border: 1px solid rgba(135, 187, 162, 0.1);
+}
+
+/* About section styles */
+.about-section {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.about-image {
+  flex: 1;
+  min-width: 300px;
+}
+
+.about-content {
+  flex: 2;
+  min-width: 300px;
+}
+
+/* Advanced scroll animations */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Enhanced gradient animation */
+.hero-gradient {
+  background: linear-gradient(135deg, #C9E4CA 0%, #87BBA2 30%, #55828B 70%, #3B6064 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Advanced button hover effects */
+.button--custom {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.button--custom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--ifm-color-primary-lighter);
+  z-index: -1;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.button--custom:hover::before {
+  transform: scaleX(1);
+}
+
+.button--custom:hover {
+  color: white;
+}
+
+.button--outline {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.button--outline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 100%;
+  background: var(--ifm-color-primary);
+  z-index: -1;
+  transition: width 0.4s ease;
+}
+
+.button--outline:hover::before {
+  width: 100%;
+}
+
+.button--outline:hover {
+  color: white;
+}
+
+/* Enhanced card hover effects */
+.custom-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.custom-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ifm-color-primary), var(--ifm-color-primary-lighter));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.custom-card:hover::before {
+  transform: scaleX(1);
+}
+
+.feature-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--ifm-color-primary), var(--ifm-color-primary-lighter));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.feature-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Pulse animation for interactive elements */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+/* Hover effect for links */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+}
+
+/* Enhanced section styling */
+.homepage-section {
+  position: relative;
+}
+
+.homepage-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--ifm-color-primary-lighter), transparent);
+}
+
+/* Floating animation for elements */
+.floating-element {
+  animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Glow effect */
+.glow-effect {
+  box-shadow: 0 0 15px rgba(135, 187, 162, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-effect:hover {
+  box-shadow: 0 0 25px rgba(135, 187, 162, 0.6);
+}
+
+/* Enhanced navbar animations */
+.navbar__toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Micro-interactions for icons */
+.icon-hover {
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.icon-hover:hover {
+  transform: translateY(-5px) scale(1.1);
+  color: var(--ifm-color-primary-lighter);
+}
+
+/* Subtle background animations */
+.background-animate {
+  position: relative;
+  overflow: hidden;
+}
+
+.background-animate::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(135, 187, 162, 0.1) 0%, transparent 70%);
+  animation: rotate 10s linear infinite;
+  z-index: -1;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Enhanced hover effects for navigation items */
+.navbar__item:hover,
+.navbar__link:hover {
+  transform: translateY(-2px);
+}
+
+/* Smooth transition for all interactive elements */
+*:hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+/* Advanced Hero Section Animations */
+.hero-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.hero-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(201, 228, 202, 0.3);
+  animation: floatParticle 6s ease-in-out infinite;
+}
+
+@keyframes floatParticle {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.3; }
+  25% { transform: translate(20px, -20px) rotate(90deg); opacity: 0.8; }
+  50% { transform: translate(0, -40px) rotate(180deg); opacity: 0.5; }
+  75% { transform: translate(-20px, -20px) rotate(270deg); opacity: 0.7; }
+}
+
+/* Hero text glow effect */
+.hero-title-glow {
+  position: relative;
+}
+
+.hero-title-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent, rgba(201, 228, 202, 0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.hero-title-glow:hover::after {
+  transform: translateX(100%);
+}
+
+/* Hero section wave animation */
+.hero-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.75,30.42,910.82,53.63,994,72.59c62.58,14.5,122.81,28.62,181.05,25.2,70.72-4.18,138.2-22.23,203.75-27.41V120H0V72.59Z' fill='%233B6064'%3E%3C/path%3E%3C/svg%3E");
+  opacity: 0.1;
+  animation: wave 10s linear infinite;
+}
+
+@keyframes wave {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-25%); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Advanced button ripple effect */
+.button-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.button-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.button-ripple:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Hero section parallax effect */
+.hero-parallax {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Advanced hover scaling */
+.scale-hover {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.scale-hover:hover {
+  transform: scale(1.05);
+}
+
+/* Single line typing animation */
+.typing-text {
+  overflow: hidden;
+  border-right: 0.15em solid #364958;
+  white-space: nowrap;
+  margin: 0 auto 0.5rem auto;
+  letter-spacing: 0.05em;
+  animation: typing 3.5s steps(30, end) 1s both, blink-caret 0.75s step-end infinite;
+  display: inline-block;
+  max-width: 100%;
+  width: 0;
+  vertical-align: top;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+    border-right-width: 0.15em;
+  }
+  to {
+    width: 100%;
+    border-right-width: 0.15em;
+  }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #364958; }
+}
+
+/* Multi-line typing effect for better professional look */
+.typing-text-multiline {
+  display: block;
+  line-height: 1.2;
+}
+
+.typing-text-multiline > span {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+.typing-text-multiline > span:first-child {
+  animation: typing-multiline-first 3s steps(15, end) 1s both, blink-caret 0.75s step-end infinite;
+  border-right: 0.15em solid #364958;
+  white-space: nowrap;
+}
+
+.typing-text-multiline > span:last-child {
+  animation: typing-multiline-second 3s steps(15, end) 4s both;
+  display: block;
+  margin-top: 0.2em;
+}
+
+@keyframes typing-multiline-first {
+  from {
+    width: 0;
+    border-right-width: 0.15em;
+  }
+  to {
+    width: 100%;
+    border-right-width: 0.15em;
+  }
+}
+
+@keyframes typing-multiline-second {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Typewriter effect for hero section */
+.typewriter-text {
+  display: block;
+  line-height: 1.4;
+}
+
+.text-line {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.text-line:first-child {
+  animation: typewriter-first 2.5s steps(15, end) 0.5s both;
+}
+
+.text-line:last-child {
+  animation: typewriter-second 2.5s steps(20, end) 3s both;
+  display: block;
+  margin-top: 0.3em;
+}
+
+@keyframes typewriter-first {
+  0% {
+    width: 0;
+    border-right: 0.15em solid #364958;
+  }
+  99% {
+    width: 100%;
+    border-right: 0.15em solid #364958;
+  }
+  100% {
+    width: 100%;
+    border-right: 0.15em solid transparent;
+  }
+}
+
+@keyframes typewriter-second {
+  0% {
+    width: 0;
+    border-right: 0.15em solid transparent;
+  }
+  99% {
+    width: 100%;
+    border-right: 0.15em solid transparent;
+  }
+  100% {
+    width: 100%;
+    border-right: 0.15em solid transparent;
+  }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #364958; }
+}
+
+@keyframes fade-out-cursor {
+  0% { border-right-color: #364958; }
+  100% { border-right-color: transparent; }
+}
+
+/* Hero section spotlight effect */
+.hero-spotlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 30%, rgba(201, 228, 202, 0.1), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Advanced card flip effect */
+.card-flip {
+  perspective: 1000px;
+}
+
+.card-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.card-flip:hover .card-flip-inner {
+  transform: rotateY(180deg);
+}
+
+.card-flip-front, .card-flip-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+}
+
+.card-flip-back {
+  transform: rotateY(180deg);
 }

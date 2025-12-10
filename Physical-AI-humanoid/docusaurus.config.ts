@@ -53,7 +53,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/Specify/Physical-AI-humanoid/edit/main/',
+            'https://github.com/muhibali123',
           routeBasePath: '/', // Serve the docs at the site's root
         },
         blog: {
@@ -65,7 +65,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/Specify/Physical-AI-humanoid/edit/main/',
+            'https://github.com/muhibali123',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -82,6 +82,8 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     colorMode: {
+      defaultMode: 'light',
+      disableSwitch: false,
       respectPrefersColorScheme: true,
     },
     navbar: {
@@ -97,9 +99,13 @@ const config: Config = {
           position: 'left',
           label: 'Course Content',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/Specify/Physical-AI-humanoid',
+          to: '/about',
+          label: 'About Author',
+          position: 'left',
+        },
+        {
+          href: 'https://github.com/muhibali123',
           label: 'GitHub',
           position: 'right',
         },
@@ -107,8 +113,48 @@ const config: Config = {
     },
     footer: {
       style: 'dark',
-      links: [],
-      copyright: `Copyright © ${new Date().getFullYear()} Physical AI & Humanoid Robotics Course.`,
+      links: [
+        {
+          title: 'Course',
+          items: [
+            {
+              label: 'Introduction',
+              to: '/chapters/chapter-01/lesson-01',
+            },
+            {
+              label: 'Physical AI Fundamentals',
+              to: '/chapters/chapter-02/lesson-05',
+            },
+            {
+              label: 'Humanoid Robotics',
+              to: '/chapters/chapter-03/lesson-09',
+            },
+          ],
+        },
+        {
+          title: 'Community',
+          items: [
+            {
+              label: 'GitHub',
+              href: 'https://github.com/muhibali123',
+            },
+            {
+              label: 'LinkedIn',
+              href: 'https://www.linkedin.com/in/muhib-ali-siddiqui-5424382b5/',
+            },
+          ],
+        },
+        {
+          title: 'More',
+          items: [
+            {
+              label: 'About Author',
+              to: '/about',
+            },
+          ],
+        },
+      ],
+      copyright: `Copyright © ${new Date().getFullYear()} Physical AI & Humanoid Robotics Course. Made By Muhib Ali Siddiqui`,
     },
     prism: {
       theme: prismThemes.github,
