@@ -4,11 +4,24 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+
+
 const config: Config = {
   title: 'Physical AI & Humanoid Robotics Course',
   tagline: 'Comprehensive educational resource for Physical AI and Humanoid Robotics',
   favicon: 'img/favicon.ico',
 
+  plugins: [
+    [
+      '@docusaurus/plugin-sitemap',
+      {
+        changefreq: 'weekly',
+        priority: 0.5,
+      },
+    ],
+  ],
+
+  
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
