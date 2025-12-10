@@ -11,16 +11,6 @@ const config: Config = {
   tagline: 'Comprehensive educational resource for Physical AI and Humanoid Robotics',
   favicon: 'img/favicon.ico',
 
-  plugins: [
-    [
-      '@docusaurus/plugin-sitemap',
-      {
-        changefreq: 'weekly',
-        priority: 0.5,
-      },
-    ],
-  ],
-
   
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
