@@ -1,0 +1,368 @@
+# API Contracts: Module 04 - Retrieval & Context Filtering Service
+
+## 1. OpenAPI Specification
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Retrieval & Context Filtering Service
+  description: FastAPI-based service for document retrieval and context filtering in RAG systems
+  version: 1.0.0
+  contact:
+    name: RAG System Team
+    email: team@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://retrieval-service.example.com
+    description: Production server
+
+paths:
+  /v1/retrieve:
+    post:
+      summary: Retrieve relevant document chunks for a query
+      description: Processes a user query, generates embeddings, performs similarity search, and returns filtered results
+      operationId: retrieve_documents
+      tags:
+        - retrieval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+            examples:
+              simple_query:
+                summary: Simple query with defaults
+                value:
+                  query: "What are the benefits of renewable energy?"
+              advanced_query:
+                summary: Query with custom parameters
+                value:
+                  query: "How does solar panel efficiency compare to wind turbines?"
+                  top_k: 10
+                  score_threshold: 0.7
+                  filters:
+                    source_type: "research_paper"
+                    year: "2023"
+      responses:
+        '200':
+          description: Successful retrieval of relevant documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+              examples:
+                success_response:
+                  summary: Successful retrieval response
+                  value:
+                    query: "What are the benefits of renewable energy?"
+                    results:
+                      - id: "doc_123_chunk_456"
+                        text: "Renewable energy sources like solar and wind provide clean electricity without greenhouse gas emissions during operation."
+                        score: 0.89
+                        metadata:
+                          source: "renewable_energy_benefits.pdf"
+                          page: 12
+                          section: "environmental_impact"
+                        source: "renewable_energy_benefits.pdf"
+                      - id: "doc_789_chunk_101"
+                        text: "The economic benefits of renewable energy include job creation in manufacturing, installation, and maintenance sectors."
+                        score: 0.82
+                        metadata:
+                          source: "economic_analysis.pdf"
+                          page: 5
+                          section: "job_creation"
+                        source: "economic_analysis.pdf"
+                    total_results: 2
+                    processing_time: 0.45
+        '400':
+          description: Bad request - invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Unprocessable entity - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the service and its dependencies
+      operationId: health_check
+      tags:
+        - health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+components:
+  schemas:
+    QueryRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: The user query text to be processed
+          minLength: 1
+          maxLength: 1000
+          example: "What are the benefits of renewable energy?"
+        top_k:
+          type: integer
+          description: Number of top results to return
+          minimum: 1
+          maximum: 100
+          default: 5
+          example: 5
+        score_threshold:
+          type: number
+          description: Minimum similarity score threshold for results
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          example: 0.7
+        filters:
+          type: object
+          description: Metadata filters to apply to results
+          additionalProperties: true
+          example:
+            source_type: "research_paper"
+            year: "2023"
+        include_metadata:
+          type: boolean
+          description: Whether to include document metadata in results
+          default: true
+          example: true
+
+    DocumentChunk:
+      type: object
+      required:
+        - id
+        - text
+        - score
+        - metadata
+        - source
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the document chunk
+          example: "doc_123_chunk_456"
+        text:
+          type: string
+          description: The text content of the document chunk
+          example: "Renewable energy sources like solar and wind provide clean electricity without greenhouse gas emissions during operation."
+        score:
+          type: number
+          description: Similarity score between query and document
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.89
+        metadata:
+          type: object
+          description: Metadata associated with the document
+          additionalProperties: true
+          example:
+            source: "renewable_energy_benefits.pdf"
+            page: 12
+            section: "environmental_impact"
+        source:
+          type: string
+          description: Source document identifier
+          example: "renewable_energy_benefits.pdf"
+
+    QueryResponse:
+      type: object
+      required:
+        - query
+        - results
+        - total_results
+        - processing_time
+      properties:
+        query:
+          type: string
+          description: Original query text
+          example: "What are the benefits of renewable energy?"
+        results:
+          type: array
+          description: List of retrieved document chunks
+          items:
+            $ref: '#/components/schemas/DocumentChunk'
+        total_results:
+          type: integer
+          description: Total number of results before filtering
+          example: 2
+        processing_time:
+          type: number
+          description: Time taken to process the query in seconds
+          example: 0.45
+
+    HealthCheckResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - dependencies
+      properties:
+        status:
+          type: string
+          description: Service health status
+          enum: [healthy, unhealthy]
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health check
+          example: "2023-12-16T10:30:00Z"
+        dependencies:
+          type: object
+          description: Status of external dependencies
+          additionalProperties:
+            type: boolean
+          example:
+            cohere_api: true
+            qdrant_db: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - error_code
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid query parameters"
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "INVALID_QUERY"
+        timestamp:
+          type: string
+          format: date-time
+          description: Time when error occurred
+          example: "2023-12-16T10:30:00Z"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+          example:
+            field: "query"
+            reason: "Query must be at least 1 character long"
+```
+
+## 2. Endpoint Specifications
+
+### POST /v1/retrieve
+**Purpose**: Main retrieval endpoint that processes user queries and returns relevant document chunks
+
+**Request Format**:
+- Method: POST
+- Content-Type: application/json
+- Authentication: None (or API key if required)
+
+**Response Format**:
+- Success: 200 OK with QueryResponse object
+- Validation Error: 422 Unprocessable Entity with ErrorResponse
+- Server Error: 500 Internal Server Error with ErrorResponse
+
+**Rate Limiting**:
+- Per IP: 100 requests/minute
+- Per API key: 1000 requests/minute
+
+### GET /v1/health
+**Purpose**: Health check endpoint for monitoring and orchestration
+
+**Request Format**:
+- Method: GET
+- No request body required
+
+**Response Format**:
+- Success: 200 OK with HealthCheckResponse object
+- Service Unavailable: 503 Service Unavailable with HealthCheckResponse
+
+## 3. Error Handling
+
+### HTTP Status Codes
+- 200: Success - Query processed successfully
+- 400: Bad Request - Invalid request parameters
+- 422: Unprocessable Entity - Validation errors
+- 429: Too Many Requests - Rate limit exceeded
+- 500: Internal Server Error - Unexpected server error
+- 502: Bad Gateway - External service (Cohere/Qdrant) unavailable
+- 503: Service Unavailable - Service temporarily unavailable
+
+### Error Codes
+- `INVALID_QUERY`: Query validation failed
+- `EMBEDDING_ERROR`: Error generating embeddings
+- `SEARCH_ERROR`: Error performing vector search
+- `SERVICE_UNAVAILABLE`: External dependency unavailable
+- `INTERNAL_ERROR`: Unexpected internal error
+- `RATE_LIMIT_EXCEEDED`: Rate limit exceeded
+
+## 4. Security Considerations
+
+### Authentication
+- Optional API key authentication via header: `X-API-Key`
+- Rate limiting per API key or IP address
+
+### Input Validation
+- Query length limited to 1000 characters
+- Parameter validation for all numeric inputs
+- JSON schema validation for all request bodies
+
+### Output Filtering
+- No sensitive system information in error responses
+- Sanitized content in document chunks
+
+## 5. Performance Requirements
+
+### Response Time
+- 95th percentile: <2 seconds
+- 99th percentile: <5 seconds
+
+### Throughput
+- Minimum 100 concurrent requests
+- Minimum 1000 requests/second sustained
+
+### Resource Usage
+- Memory: <200MB under normal load
+- CPU: <80% under normal load
+
+## 6. Monitoring and Observability
+
+### Required Metrics
+- Request count and rate
+- Response time percentiles
+- Error rates by type
+- External dependency status
+- Cache hit rates (if caching implemented)
+
+### Required Logs
+- Request/response logging (excluding sensitive data)
+- Error logs with stack traces
+- Performance logs for slow queries
+- Dependency interaction logs

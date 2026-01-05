@@ -1,0 +1,12 @@
+/* Import all chat component styles */
+@import '../components/chat/ChatContainer.css';
+@import '../components/chat/MessageList.css';
+@import '../components/chat/UserMessage.css';
+@import '../components/chat/AIMessage.css';
+@import '../components/chat/Citation.css';
+@import '../components/chat/InputArea.css';
+@import '../components/chat/LoadingIndicator.css';
+@import '../components/chat/ErrorMessage.css';
+
+/* Additional global styles for the chat interface */
+/* Theme variables are already defined in custom.css, so we don't need to redefine them here */

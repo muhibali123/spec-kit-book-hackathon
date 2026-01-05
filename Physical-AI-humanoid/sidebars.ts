@@ -139,6 +139,11 @@ const sidebars: SidebarsConfig = {
         'chapters/chapter-12/lesson-48'
       ],
     },
+    {
+      type: 'link',
+      label: 'AI Chat Interface',
+      href: '/chat',
+    },
   ],
 };
 
