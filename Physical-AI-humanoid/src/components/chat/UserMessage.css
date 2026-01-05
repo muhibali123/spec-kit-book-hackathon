@@ -1,0 +1,92 @@
+.message.user {
+  align-self: flex-end;
+  background-color: var(--ifm-color-primary, #3B6064);
+  border: 1px solid var(--ifm-color-primary-dark, #2d4a4d);
+  border-radius: 16px;
+  border-bottom-right-radius: 4px;
+  margin-left: auto;
+  margin-right: 0;
+  padding: 1rem 1.25rem;
+  max-width: 75%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ifm-color-content-inverse, #ffffff);
+}
+
+/* Dark mode specific overrides for better contrast */
+[data-theme='dark'] .message.user {
+  background-color: #2d4a4d; /* Darker saturated background */
+  border-color: #243d3f; /* Darker border */
+  color: #ffffff; /* Pure white text */
+}
+
+[data-theme='dark'] .message.user .message-content {
+  color: #ffffff; /* Pure white text */
+}
+
+[data-theme='dark'] .message.user .user-label {
+  color: #c9e4ca; /* Light green for better visibility */
+}
+
+[data-theme='dark'] .message.user .message-timestamp {
+  color: #e5e7eb; /* Muted light color for timestamp */
+}
+
+.message.user::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 8px solid var(--ifm-color-primary, #3B6064);
+  border-top: 8px solid transparent;
+  border-bottom: 0px solid transparent;
+}
+
+/* Update the triangle pointer in dark mode */
+[data-theme='dark'] .message.user::after {
+  border-left: 8px solid #2d4a4d; /* Match the new background */
+}
+
+.user-label {
+  color: var(--ifm-color-primary-lighter, #87BBA2);
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.message-content {
+  color: var(--ifm-color-content-inverse, #ffffff);
+  line-height: 1.6;
+  font-size: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-timestamp {
+  color: var(--ifm-color-emphasis-600, #a0aec0);
+  font-size: 0.75rem;
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 767px) {
+  .message.user {
+    max-width: 85%;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Increase max width on larger screens for better readability */
+@media (min-width: 1024px) {
+  .message.user {
+    max-width: 80%;
+  }
+}

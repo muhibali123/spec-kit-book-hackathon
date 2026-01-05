@@ -1,0 +1,278 @@
+openapi: 3.0.3
+info:
+  title: RAG Agent & Answer Generation Service
+  description: Service that generates grounded, context-aware answers using retrieved context from Module 04
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://rag-agent.example.com
+    description: Production server
+
+paths:
+  /v1/answer:
+    post:
+      summary: Generate an answer to a user query using retrieved context
+      description: Accepts a user query, retrieves relevant context from Module 04, and generates a grounded answer with citations
+      operationId: generateAnswer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Successfully generated answer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Query validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /v1/conversation:
+    post:
+      summary: Start a new conversation
+      description: Creates a new conversation context for multi-turn interactions
+      operationId: startConversation
+      responses:
+        '200':
+          description: Successfully created conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /v1/health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the service and its dependencies
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token for API authentication
+
+  schemas:
+    QueryRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: The user's natural language query
+          example: "What are the main benefits of renewable energy?"
+        conversation_id:
+          type: string
+          description: Optional conversation ID for multi-turn interactions
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        filters:
+          type: object
+          description: Optional filters to apply when retrieving context
+          additionalProperties: true
+          example:
+            source: "scientific_papers"
+            year: 2023
+        top_k:
+          type: integer
+          description: Number of context chunks to retrieve (default: 5)
+          minimum: 1
+          maximum: 20
+          default: 5
+
+    AnswerResponse:
+      type: object
+      required:
+        - query
+        - answer
+        - citations
+        - conversation_id
+        - processing_time
+      properties:
+        query:
+          type: string
+          description: The original user query
+          example: "What are the main benefits of renewable energy?"
+        answer:
+          type: string
+          description: The generated answer text
+          example: "Renewable energy offers several key benefits including reduced environmental impact, lower long-term costs, and energy independence..."
+        citations:
+          type: array
+          description: Source citations for the information in the answer
+          items:
+            $ref: '#/components/schemas/Citation'
+        conversation_id:
+          type: string
+          format: uuid
+          description: The conversation ID for this interaction
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Confidence in the answer's accuracy
+          example: 0.85
+        processing_time:
+          type: number
+          format: float
+          description: Time taken to process the query in seconds
+          example: 2.34
+
+    Citation:
+      type: object
+      required:
+        - source_id
+        - source_title
+        - excerpt
+      properties:
+        source_id:
+          type: string
+          description: Unique identifier for the source document
+          example: "doc_12345"
+        source_title:
+          type: string
+          description: Title of the source document
+          example: "Renewable Energy Benefits Report 2023"
+        excerpt:
+          type: string
+          description: Relevant excerpt from the source
+          example: "Renewable energy sources such as solar and wind power have significantly lower carbon emissions compared to fossil fuels."
+        page_number:
+          type: integer
+          description: Page number in the original document
+          example: 15
+        section_reference:
+          type: string
+          description: Section identifier in the document
+          example: "section_3.2"
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Relevance of this citation to the query
+          example: 0.92
+
+    ConversationResponse:
+      type: object
+      required:
+        - conversation_id
+        - status
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the conversation
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: string
+          enum: [active, inactive]
+          description: Current status of the conversation
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          description: When the conversation was created
+          example: "2023-10-20T10:30:00Z"
+
+    HealthCheckResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - dependencies
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: Overall health status
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the health check was performed
+          example: "2023-10-20T10:30:00Z"
+        dependencies:
+          type: object
+          description: Health status of external dependencies
+          properties:
+            retrieval_service:
+              type: boolean
+              description: Status of Module 04 retrieval service
+              example: true
+            llm_service:
+              type: boolean
+              description: Status of LLM service (OpenAI)
+              example: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - error_code
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Query validation failed"
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "QUERY_VALIDATION_ERROR"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+          example: "2023-10-20T10:30:00Z"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true

@@ -103,6 +103,11 @@ const config: Config = {
           label: 'Course Content',
         },
         {
+          to: '/chat',
+          label: 'AI Assistant',
+          position: 'left',
+        },
+        {
           to: '/about',
           label: 'About Author',
           position: 'left',
@@ -131,6 +136,10 @@ const config: Config = {
             {
               label: 'Humanoid Robotics',
               to: '/chapters/chapter-03/lesson-09',
+            },
+            {
+              label: 'AI Assistant',
+              to: '/chat',
             },
           ],
         },

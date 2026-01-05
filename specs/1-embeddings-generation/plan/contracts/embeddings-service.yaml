@@ -1,0 +1,86 @@
+# API Contract: Embeddings Generation Service
+
+**Feature**: 1-embeddings-generation
+**Created**: 2025-12-14
+**Version**: 1.0
+
+## Service Overview
+
+The Embeddings Generation Service converts structured book content chunks into vector embeddings using the Cohere API. It accepts content chunks from Module 01 and produces embedding records suitable for downstream vector database storage.
+
+## Input Contract
+
+### Request Format
+```
+POST /generate-embeddings
+Content-Type: application/json
+Authorization: Bearer {COHERE_API_KEY}
+```
+
+### Request Body Schema
+```json
+{
+  "chunks": [
+    {
+      "chunk_id": "string (required)",
+      "text": "string (required, non-empty)",
+      "metadata": "object (required)"
+    }
+  ],
+  "model": "string (optional, default: 'embed-english-v3.0')",
+  "batch_size": "number (optional, default: 64)"
+}
+```
+
+### Validation Rules
+- `chunks` array must contain 1-1000 items
+- Each chunk must have non-empty `chunk_id` and `text`
+- `metadata` must be a valid JSON object
+- `model` must be a valid Cohere embedding model identifier
+- `batch_size` must be between 1-96
+
+## Output Contract
+
+### Response Format
+```
+Status: 200 OK
+Content-Type: application/json
+```
+
+### Response Body Schema
+```json
+{
+  "process_id": "string",
+  "results": [
+    {
+      "chunk_id": "string",
+      "embedding": "number[]",
+      "text": "string",
+      "metadata": "object",
+      "embedding_model": "string",
+      "embedding_dimension": "number"
+    }
+  ],
+  "summary": {
+    "total_chunks": "number",
+    "successful": "number",
+    "failed": "number",
+    "processing_time_ms": "number"
+  }
+}
+```
+
+### Error Responses
+```
+400 Bad Request: Invalid input format
+401 Unauthorized: Invalid or missing API key
+429 Too Many Requests: Rate limit exceeded
+500 Internal Server Error: Processing error
+```
+
+## Processing Guarantees
+
+- **Integrity**: Original text and metadata preserved unchanged
+- **Completeness**: All valid input chunks produce corresponding output records
+- **Consistency**: Same input always produces identical embeddings
+- **Traceability**: Process ID allows for audit and debugging

@@ -1,0 +1,13 @@
+{
+  "chunk_size": {
+    "min_words": 300,
+    "max_words": 500
+  },
+  "input_directory": "./chapters",
+  "output_format": "json",
+  "allowed_file_extensions": [".md", ".markdown"],
+  "security": {
+    "max_file_size_mb": 10,
+    "allowed_directories": ["chapters"]
+  }
+}

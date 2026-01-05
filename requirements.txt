@@ -1,0 +1,3 @@
+# Requirements for Book Content Extraction & Structuring module
+# Note: This module uses standard Python libraries primarily
+# No external dependencies required beyond Python standard library

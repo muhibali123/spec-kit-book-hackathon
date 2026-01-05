@@ -3,20 +3,42 @@
 
 # Production
 /build
+/dist
+/out
+
+# Environment variables
+.env*
+!.env.example
 
 # Generated files
 .docusaurus
 .cache-loader
 
-# Misc
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage
+coverage/
+
+# OS generated files
 .DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Misc
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 .vercel

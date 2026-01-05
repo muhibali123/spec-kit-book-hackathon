@@ -1,0 +1,58 @@
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin: 0.5rem 0;
+  border: 1px solid #ffcdd2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.error-text {
+  flex: 1;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.error-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.error-retry-button,
+.error-dismiss-button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #c62828;
+  background-color: white;
+  color: #c62828;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.2s;
+}
+
+.error-retry-button:hover,
+.error-dismiss-button:hover {
+  background-color: #ffcdd2;
+}
+
+.error-retry-button:focus,
+.error-dismiss-button:focus {
+  outline: 2px solid #c62828;
+  outline-offset: 2px;
+}
